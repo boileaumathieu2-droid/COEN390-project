@@ -19,7 +19,6 @@ public class TimerModel {
     }
 
     public void startTimer() {
-        // set to running
         if (!isRunning)
             isRunning = true;
     }
