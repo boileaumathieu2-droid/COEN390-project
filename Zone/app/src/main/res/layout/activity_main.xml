@@ -5,27 +5,74 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.MainView">
+    android:background="#FFFFFF"
+    tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:textSize="32sp"
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginBottom="96dp"/>
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Timer Settings"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="32dp"/>
+        <TextView
+            android:id="@+id/dailyObjectiveText"
+            android:layout_width="281dp"
+            android:layout_height="45dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Daily Objective"
+            android:textColor="#000000"
+            android:textSize="24sp"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/dailyObjectiveView"
+            android:layout_width="288dp"
+            android:layout_height="172dp"
+            android:layout_gravity="center"
+            android:background="@drawable/textview_border"
+            android:gravity="center"
+            android:padding="10dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:text="This is where the daily objective will be displayed. Tapping this brings you to the calender activity."
+            android:textColor="#000000"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/studyTipTextView"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:layout_width="263dp"
+            android:layout_height="93dp"
+            android:layout_gravity="center"
+            android:text="A study tip will be displayed here"
+            android:textColor="#000000" />
+
+        <Button
+            android:id="@+id/startStuddySeshButton"
+            android:layout_width="322dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:text="Start Study Session" />
+
+        <Button
+            android:id="@+id/gradesTrackerButton"
+            android:layout_width="322dp"
+            android:layout_height="74dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:text="Grades Tracker" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
