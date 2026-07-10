@@ -8,5 +8,7 @@
         </activity>
         <activity android:name=".view.MainView" android:exported="true"/>
         <activity android:name=".view.LoginView" android:exported="true"/>
+        <activity android:name=".view.SettingsView" android:exported="true"/>
     </application>
 </manifest>
+
