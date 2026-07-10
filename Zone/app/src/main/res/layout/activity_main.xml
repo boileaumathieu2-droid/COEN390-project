@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
-    tools:context=".MainActivity">
+    tools:context=".view.MainView">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -57,7 +57,16 @@
             android:textColor="#000000" />
 
         <Button
-            android:id="@+id/startStuddySeshButton"
+            android:id="@+id/timerSettings"
+            android:layout_width="322dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
+            android:text="Timer Settings" />
+
+        <Button
+            android:id="@+id/startStudySeshButton"
             android:layout_width="322dp"
             android:layout_height="72dp"
             android:layout_gravity="center_horizontal"
