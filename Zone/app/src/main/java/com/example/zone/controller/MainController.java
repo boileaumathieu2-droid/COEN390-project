@@ -13,7 +13,7 @@ public class MainController {
 
     public void onTimerSettingsClicked() {
         // TODO: decision logic could go here later
-
-        MainView.openTimerSettings();
+        // this is useless for now
+        mainView.openTimerSettings();
     }
 }
