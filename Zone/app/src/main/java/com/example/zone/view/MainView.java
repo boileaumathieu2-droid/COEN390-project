@@ -13,6 +13,26 @@ import com.example.zone.R;
 import com.example.zone.controller.MainController;
 
 public class MainView extends AppCompatActivity {
+        @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.action_menu, menu);
+        return true;}
+    public boolean onOptionsItemSelected(MenuItem option) {
+        int id = option.getItemId();
+
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(MainView.this, SettingsView.class);
+            startActivity(intent);
+
+        }
+
+        return super.onOptionsItemSelected(option);
+    }
 
     private MainController mainController;
 
