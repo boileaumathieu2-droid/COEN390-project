@@ -1,6 +1,9 @@
 package com.example.zone.view;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,9 +22,15 @@ public class SettingsView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.settings_menu);
+        TextView logout = findViewById(R.id.logoutButton);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+        logout.setOnClickListener(v -> {
+            Intent intent = new Intent(this, LoginView.class);
+            startActivity(intent);
+            Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
+        });
         }
     }
