@@ -24,7 +24,7 @@ public class SettingsView extends AppCompatActivity {
         setContentView(R.layout.settings_menu);
         TextView logout = findViewById(R.id.logoutButton);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            getSupportActionBar().setTitle("Settings");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         logout.setOnClickListener(v -> {
