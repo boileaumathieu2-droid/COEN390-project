@@ -18,7 +18,6 @@ public class TimerSettingsController {
         // Link the switch to the toggle logic
         CompoundButton breakTimerSwitch = activity.findViewById(R.id.switch_break_timer);
         if (breakTimerSwitch != null) {
-            // TODO: Make sure that the switch has memory
             breakTimerSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> onBreakTimerToggled(isChecked));
         }
 
@@ -34,6 +33,32 @@ public class TimerSettingsController {
         }
     }
 
+    /**
+     * Controller function: Loads data from Model and populates the View.
+     */
+    public void initializeView() {
+        int studyMin = timerModel.getStudyDuration() / 60;
+        int studySec = timerModel.getStudyDuration() % 60;
+        int breakMin = timerModel.getBreakDuration() / 60;
+        int breakSec = timerModel.getBreakDuration() % 60;
+
+        // Restore switch state
+        timerSettingsView.setBreakEnabled(timerModel.isBreakEnabled());
+        onBreakTimerToggled(timerModel.isBreakEnabled()); // Manually trigger visibility update
+
+        // Display current saved values
+        timerSettingsView.setStudyMins(String.valueOf(studyMin));
+        timerSettingsView.setStudySecs(String.valueOf(studySec));
+
+        if (timerModel.getBreakDuration() > 0) {
+            timerSettingsView.setBreakMins(String.valueOf(breakMin));
+            timerSettingsView.setBreakSecs(String.valueOf(breakSec));
+        }
+    }
+
+    /**
+     * Controller function: Handles the UI visibility logic based on switch state.
+     */
     public void onBreakTimerToggled(boolean isChecked) {
         int visibility = isChecked ? android.view.View.VISIBLE : android.view.View.GONE;
         
@@ -50,21 +75,44 @@ public class TimerSettingsController {
         if (breakSec != null) breakSec.setVisibility(visibility);
     }
 
+    /**
+     * Controller function: Gathers data from View, validates/parses it, and updates the Model.
+     */
     public void saveSettings() {
-        // save the total study time in the class
-        int studyTotal = timerSettingsView.getStudyMins() * 60 + timerSettingsView.getStudySecs();
-        timerModel.setStudyDuration(studyTotal);
+        int studyMins = parseOrDefault(timerSettingsView.getStudyMinsText(), "smin");
+        int studySecs = parseOrDefault(timerSettingsView.getStudySecsText(), "ssec");
+        timerModel.setStudyDuration(studyMins * 60 + studySecs);
 
-        // save the break time and its enabled status
-        int breakTotal = timerSettingsView.getBreakMins() * 60 + timerSettingsView.getBreakSecs();
-        timerModel.setBreakDuration(breakTotal);
+        int breakMins = parseOrDefault(timerSettingsView.getBreakMinsText(), "bmin");
+        int breakSecs = parseOrDefault(timerSettingsView.getBreakSecsText(), "bsec");
+        timerModel.setBreakDuration(breakMins * 60 + breakSecs);
+        
         timerModel.setBreakEnabled(timerSettingsView.isBreakTimerEnabled());
 
-        timerSettingsView.finish(); // go back to main menu
+        timerSettingsView.finish(); 
     }
 
     public void cancelSettings() {
-        // leave without saving
         timerSettingsView.finish();
+    }
+
+    /**
+     * Controller helper: Logic for parsing inputs with default values.
+     */
+    private int parseOrDefault(String text, String type) {
+        if (text == null || text.trim().isEmpty()) {
+            switch (type) {
+                case "smin": return 25;
+                case "ssec": return 0;
+                case "bmin": return 5;
+                case "bsec": return 0;
+                default: return 0;
+            }
+        }
+        try {
+            return Integer.parseInt(text.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }

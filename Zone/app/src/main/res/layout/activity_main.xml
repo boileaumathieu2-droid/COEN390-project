@@ -35,7 +35,7 @@
         <TextView
             android:id="@+id/dailyObjectiveView"
             android:layout_width="288dp"
-            android:layout_height="172dp"
+            android:layout_height="112dp"
             android:layout_gravity="center"
             android:background="@drawable/textview_border"
             android:gravity="center"
@@ -51,37 +51,87 @@
             android:layout_marginTop="18dp"
             android:layout_marginBottom="18dp"
             android:layout_width="263dp"
-            android:layout_height="93dp"
+            android:layout_height="33dp"
             android:layout_gravity="center"
             android:text="A study tip will be displayed here"
             android:textColor="#000000" />
 
         <Button
             android:id="@+id/timerSettings"
-            android:layout_width="322dp"
-            android:layout_height="72dp"
+            android:layout_width="222dp"
+            android:layout_height="52dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
             android:text="Timer Settings" />
 
         <Button
             android:id="@+id/startStudySeshButton"
-            android:layout_width="322dp"
-            android:layout_height="72dp"
+            android:layout_width="222dp"
+            android:layout_height="52dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
             android:text="Start Study Session" />
 
         <Button
             android:id="@+id/gradesTrackerButton"
-            android:layout_width="322dp"
-            android:layout_height="74dp"
+            android:layout_width="222dp"
+            android:layout_height="52dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
             android:text="Grades Tracker" />
+
+        <TextView
+            android:id="@+id/timerTitle"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="8dp"
+            android:layout_width="263dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="Study Time"
+            android:textColor="#000000"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/timerDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="18dp"
+            android:text="00:00"
+            android:textColor="#000000"
+            android:textSize="48sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/pauseTimer"
+            android:layout_width="111dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:visibility="gone"
+            android:text="Pause" />
+
+        <Button
+            android:id="@+id/resetTimer"
+            android:layout_width="111dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:visibility="gone"
+            android:text="Reset" />
+
+        <Button
+            android:id="@+id/completeTimer"
+            android:layout_width="111dp"
+            android:layout_height="42dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:visibility="gone"
+            android:text="Complete" />
+
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
