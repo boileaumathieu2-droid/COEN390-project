@@ -31,6 +31,7 @@ public class SettingsView extends AppCompatActivity {
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);
             Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
+            finish();
         });
         }
     }
