@@ -65,4 +65,16 @@ public class StudySessionModel {
     public void setStatus(Status status) {
         this.status = status;
     }
+    public boolean isActive() {
+        return status == Status.ACTIVE;
+    }
+    public void endSession(int duration) {
+        if (status != Status.ACTIVE || duration < 0) {
+            return;
+        }
+
+        this.duration = duration;
+        this.endTime = System.currentTimeMillis();
+        this.status = Status.COMPLETE;
+    }
 }
