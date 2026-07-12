@@ -1,31 +1,23 @@
 package com.example.zone.view;
 
 import android.os.Bundle;
-
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import android.content.Intent;
-import com.example.zone.model.TimerModel;
 import androidx.core.view.WindowInsetsCompat;
-import com.example.zone.controller.TimerSettingsController;
 import android.widget.EditText;
-import android.widget.TextView;
+import com.example.zone.controller.TimerSettingsController;
 import com.example.zone.R;
 
+public class TimerSettingsView extends AppCompatActivity {
 
-public class TimerSettingsView extends AppCompatActivity{
-
-    // define variables for the user input
-    EditText studyMinutes;
-    EditText studySeconds;
-    EditText breakMinutes;
-    EditText breakSeconds;
-
-    private TimerSettingsController timerSettingsController;
-    private TimerModel timerModel;
+    private EditText studyMinutes;
+    private EditText studySeconds;
+    private EditText breakMinutes;
+    private EditText breakSeconds;
     private androidx.appcompat.widget.SwitchCompat breakTimerSwitch;
+    private TimerSettingsController timerSettingsController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,9 +25,7 @@ public class TimerSettingsView extends AppCompatActivity{
         EdgeToEdge.enable(this);
         setContentView(R.layout.timer_settings);
 
-        timerModel = TimerModel.getInstance();
-
-        // get the user inputs inside variables
+        // Initialize UI components
         studyMinutes = findViewById(R.id.edit_study_minutes);
         studySeconds = findViewById(R.id.edit_study_seconds);
         breakMinutes = findViewById(R.id.edit_break_minutes);
@@ -51,77 +41,24 @@ public class TimerSettingsView extends AppCompatActivity{
             });
         }
 
+        // Initialize Controller
         timerSettingsController = new TimerSettingsController(this);
-        loadSavedValues();
+        timerSettingsController.initializeView();
     }
 
+    // --- View setters (called by Controller) ---
+    public void setStudyMins(String mins) { studyMinutes.setText(mins); }
+    public void setStudySecs(String secs) { studySeconds.setText(secs); }
+    public void setBreakMins(String mins) { breakMinutes.setText(mins); }
+    public void setBreakSecs(String secs) { breakSeconds.setText(secs); }
+    public void setBreakEnabled(boolean enabled) { breakTimerSwitch.setChecked(enabled); }
 
-    private void loadSavedValues() {
-        TimerModel model = TimerModel.getInstance();
-
-        int studyMin = model.getStudyDuration() / 60;
-        int studySec = model.getStudyDuration() % 60;
-        int breakMin = model.getBreakDuration() / 60;
-        int breakSec = model.getBreakDuration() % 60;
-
-        // Restore switch state
-        breakTimerSwitch.setChecked(model.isBreakEnabled());
-
-        // Only show non-zero saved values (optional — avoids showing "0" on first launch)
-        if (model.getStudyDuration() > 0) {
-            studyMinutes.setText(String.valueOf(studyMin));
-            studySeconds.setText(String.valueOf(studySec));
-        }
-        if (model.getBreakDuration() > 0) {
-            breakMinutes.setText(String.valueOf(breakMin));
-            breakSeconds.setText(String.valueOf(breakSec));
-        }
-    }
-
-    // Functions here return the user input from the text fields
-    public int getStudyMins() {
-        return parseOrDefault(studyMinutes.getText().toString(), "smin");
-    }
-
-    public int getStudySecs() {
-        return parseOrDefault(studySeconds.getText().toString(), "ssec");
-    }
-
-    public int getBreakMins() {
-        return parseOrDefault(breakMinutes.getText().toString(), "bmin");
-    }
-
-    public int getBreakSecs() {
-        return parseOrDefault(breakSeconds.getText().toString(), "bsec");
-    }
-
-
+    // --- View getters (called by Controller) ---
+    public String getStudyMinsText() { return studyMinutes.getText().toString(); }
+    public String getStudySecsText() { return studySeconds.getText().toString(); }
+    public String getBreakMinsText() { return breakMinutes.getText().toString(); }
+    public String getBreakSecsText() { return breakSeconds.getText().toString(); }
     public boolean isBreakTimerEnabled() {
         return breakTimerSwitch != null && breakTimerSwitch.isChecked();
     }
-
-    // take care of null input case
-    private int parseOrDefault(String text, String type) {
-        if (text == null || text.trim().isEmpty()) {
-            // default time for each case
-            switch (type) {
-                case "smin":
-                    return 25;
-                case "ssec":
-                    return 0;
-                case "bmin":
-                    return 5;
-                case "bsec":
-                    return 0;
-                default:
-                    return 0;
-            }
-        }
-        try {
-            return Integer.parseInt(text.trim());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
 }
