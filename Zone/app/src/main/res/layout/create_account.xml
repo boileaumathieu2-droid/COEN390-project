@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
     android:orientation="vertical"
     android:paddingStart="73dp"
     android:paddingEnd="73dp">
@@ -68,6 +69,14 @@
         android:layout_height="40dp"
         android:layout_marginTop="18dp"
         android:text="Create Account"
+        android:textColor="#3C6AFF"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/alreadyHaveAccountButton"
+        android:layout_width="288dp"
+        android:layout_height="34dp"
+        android:text="Already have an account? Sign in."
         android:textColor="#3C6AFF"
         android:textSize="16sp" />
 
