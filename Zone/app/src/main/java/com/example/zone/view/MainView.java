@@ -2,6 +2,8 @@ package com.example.zone.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +30,27 @@ public class MainView extends AppCompatActivity {
     private Button completeButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.action_menu, menu);
+        return true;}
+    public boolean onOptionsItemSelected(MenuItem option) {
+        int id = option.getItemId();
+
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(MainView.this, SettingsView.class);
+            startActivity(intent);
+
+        }
+
+        return super.onOptionsItemSelected(option);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -164,3 +187,4 @@ public class MainView extends AppCompatActivity {
 
 
 }
+
