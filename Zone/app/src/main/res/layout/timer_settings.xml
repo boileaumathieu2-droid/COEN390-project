@@ -1,159 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/timer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/timer"
+    android:orientation="vertical"
     android:padding="24dp"
     tools:context=".view.TimerSettingsView">
-
-    <TextView
-        android:id="@+id/text_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Timer Settings"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/text_study_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Study Time"
-        app:layout_constraintTop_toBottomOf="@id/text_title"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp"
+        android:text="Study Time" />
 
-    <TextView
-        android:id="@+id/label_study_minutes"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Min:"
-        app:layout_constraintBottom_toBottomOf="@id/edit_study_minutes"
-        app:layout_constraintEnd_toStartOf="@id/edit_study_minutes"
-        app:layout_constraintHorizontal_bias="0"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/edit_study_minutes" />
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp">
 
-    <EditText
-        android:id="@+id/edit_study_minutes"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:inputType="number"
-        app:layout_constraintEnd_toStartOf="@id/label_study_seconds"
-        app:layout_constraintStart_toEndOf="@id/label_study_minutes"
-        app:layout_constraintTop_toBottomOf="@id/text_study_label" />
+        <TextView
+            android:id="@+id/label_study_minutes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Min:" />
 
-    <TextView
-        android:id="@+id/label_study_seconds"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Sec:"
-        app:layout_constraintBottom_toBottomOf="@id/edit_study_seconds"
-        app:layout_constraintEnd_toStartOf="@id/edit_study_seconds"
-        app:layout_constraintStart_toEndOf="@id/edit_study_minutes"
-        app:layout_constraintTop_toTopOf="@id/edit_study_seconds" />
+        <EditText
+            android:id="@+id/edit_study_minutes"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:inputType="number"
+            android:maxLength="3" />
 
-    <EditText
-        android:id="@+id/edit_study_seconds"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:inputType="number"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/label_study_seconds"
-        app:layout_constraintTop_toTopOf="@id/edit_study_minutes" />
+        <TextView
+            android:id="@+id/label_study_seconds"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Sec:" />
+
+        <EditText
+            android:id="@+id/edit_study_seconds"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:inputType="number"
+            android:maxLength="2" />
+    </LinearLayout>
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switch_break_timer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enable Break Timer"
-        app:layout_constraintTop_toBottomOf="@id/edit_study_minutes"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="24dp"
+        android:text="Enable Break Timer" />
 
     <TextView
         android:id="@+id/text_break_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:text="Break Time"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/switch_break_timer"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
+        />
 
-    <TextView
-        android:id="@+id/label_break_minutes"
+    <LinearLayout
+        android:id="@+id/break_time_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp">
+
+        <TextView
+            android:id="@+id/label_break_minutes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Min:" />
+
+        <EditText
+            android:id="@+id/edit_break_minutes"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:inputType="number"
+            android:maxLength="3" />
+
+        <TextView
+            android:id="@+id/label_break_seconds"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Sec:" />
+
+        <EditText
+            android:id="@+id/edit_break_seconds"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:inputType="number"
+            android:maxLength="2" />
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Min:"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/edit_break_minutes"
-        app:layout_constraintEnd_toStartOf="@id/edit_break_minutes"
-        app:layout_constraintHorizontal_bias="0"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/edit_break_minutes" />
+        android:layout_gravity="center"
+        android:layout_marginTop="32dp"
+        android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/edit_break_minutes"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:inputType="number"
-        android:visibility="gone"
-        app:layout_constraintEnd_toStartOf="@id/label_break_seconds"
-        app:layout_constraintStart_toEndOf="@id/label_break_minutes"
-        app:layout_constraintTop_toBottomOf="@id/text_break_label" />
+        <Button
+            android:id="@+id/button_save_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save" />
 
-    <TextView
-        android:id="@+id/label_break_seconds"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Sec:"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/edit_break_seconds"
-        app:layout_constraintEnd_toStartOf="@id/edit_break_seconds"
-        app:layout_constraintStart_toEndOf="@id/edit_break_minutes"
-        app:layout_constraintTop_toTopOf="@id/edit_break_seconds" />
+        <Button
+            android:id="@+id/button_cancel_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Cancel" />
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/edit_break_seconds"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:inputType="number"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/label_break_seconds"
-        app:layout_constraintTop_toTopOf="@id/edit_break_minutes" />
-
-    <Button
-        android:id="@+id/button_save_settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Save"
-        app:layout_constraintTop_toBottomOf="@id/edit_break_seconds"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="32dp" />
-
-    <Button
-        android:id="@+id/button_cancel_settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
-        android:text="Cancel"
-        app:layout_constraintStart_toEndOf="@id/button_save_settings"
-        app:layout_constraintTop_toTopOf="@id/button_save_settings" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
