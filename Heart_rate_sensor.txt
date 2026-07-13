@@ -1,0 +1,235 @@
+const int HEART_PIN = A0;
+const int LED_PIN = 13;
+
+
+int rawValue = 0;
+int smoothValue = 0;
+
+
+int windowMin = 1023;
+int windowMax = 0;
+int signalRange = 0;
+int threshold = 512;
+
+
+bool beatDetected = false;
+bool signalGood = false;
+
+
+unsigned long lastBeatTime = 0;
+unsigned long lastSendTime = 0;
+unsigned long windowStartTime = 0;
+
+
+int bpm = 0;
+int bpmAverage = 0;
+
+
+const int BPM_HISTORY_SIZE = 5;
+int bpmHistory[BPM_HISTORY_SIZE] = {0, 0, 0, 0, 0};
+int bpmIndex = 0;
+
+
+
+
+const int WINDOW_TIME = 2000;          
+const int MIN_SIGNAL_RANGE = 30;      
+const int NO_BEAT_TIMEOUT = 3500;     
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+
+
+  Serial.begin(115200);
+  delay(1000);
+
+
+  smoothValue = analogRead(HEART_PIN);
+  windowStartTime = millis();
+
+
+  Serial.println("BLUNO_SEN0203_IMPROVED_START");
+  Serial.println("HR,raw,signalRange,bpm,status");
+}
+
+
+void loop() {
+  rawValue = analogRead(HEART_PIN);
+
+
+  
+  smoothValue = (smoothValue * 8 + rawValue * 2) / 10;
+
+
+  unsigned long currentTime = millis();
+
+
+  updateSignalWindow(currentTime);
+  checkSignalQuality(currentTime);
+
+
+  if (signalGood) {
+    detectHeartBeat(currentTime);
+  } else {
+    resetBpmToZero();
+  }
+
+
+  if (currentTime - lastBeatTime > NO_BEAT_TIMEOUT) {
+    resetBpmToZero();
+  }
+
+
+  
+  if (currentTime - lastSendTime >= 250) {
+    sendData();
+    lastSendTime = currentTime;
+  }
+
+
+  delay(10);
+}
+
+
+void updateSignalWindow(unsigned long currentTime) {
+  if (smoothValue < windowMin) {
+    windowMin = smoothValue;
+  }
+
+
+  if (smoothValue > windowMax) {
+    windowMax = smoothValue;
+  }
+
+
+  if (currentTime - windowStartTime >= WINDOW_TIME) {
+    signalRange = windowMax - windowMin;
+
+
+    
+    threshold = windowMin + (signalRange * 60 / 100);
+
+
+    windowMin = 1023;
+    windowMax = 0;
+    windowStartTime = currentTime;
+  }
+}
+
+
+void checkSignalQuality(unsigned long currentTime) {
+  
+  if (rawValue < 10) {
+    signalGood = false;
+    return;
+  }
+
+
+ 
+  if (rawValue > 1010) {
+    signalGood = false;
+    return;
+  }
+
+
+  
+  if (signalRange < MIN_SIGNAL_RANGE) {
+    signalGood = false;
+    return;
+  }
+
+
+  signalGood = true;
+}
+
+
+void detectHeartBeat(unsigned long currentTime) {
+  if (smoothValue > threshold && beatDetected == false) {
+    beatDetected = true;
+    digitalWrite(LED_PIN, HIGH);
+
+
+    if (lastBeatTime > 0) {
+      unsigned long beatInterval = currentTime - lastBeatTime;
+
+
+  
+      if (beatInterval > 300 && beatInterval < 2000) {
+        int newBpm = 60000 / beatInterval;
+
+
+        if (newBpm >= 30 && newBpm <= 200) {
+          addBpmToAverage(newBpm);
+        }
+      }
+    }
+
+
+    lastBeatTime = currentTime;
+  }
+
+
+  if (smoothValue < threshold - 10) {
+    beatDetected = false;
+    digitalWrite(LED_PIN, LOW);
+  }
+}
+
+
+void addBpmToAverage(int newBpm) {
+  bpmHistory[bpmIndex] = newBpm;
+  bpmIndex++;
+
+
+  if (bpmIndex >= BPM_HISTORY_SIZE) {
+    bpmIndex = 0;
+  }
+
+
+  int sum = 0;
+  int count = 0;
+
+
+  for (int i = 0; i < BPM_HISTORY_SIZE; i++) {
+    if (bpmHistory[i] > 0) {
+      sum += bpmHistory[i];
+      count++;
+    }
+  }
+
+
+  if (count > 0) {
+    bpmAverage = sum / count;
+    bpm = bpmAverage;
+  }
+}
+
+
+void resetBpmToZero() {
+  bpm = 0;
+  bpmAverage = 0;
+  beatDetected = false;
+  digitalWrite(LED_PIN, LOW);
+
+
+  for (int i = 0; i < BPM_HISTORY_SIZE; i++) {
+    bpmHistory[i] = 0;
+  }
+}
+
+
+void sendData() {
+  Serial.print("HR,");
+  Serial.print(rawValue);
+  Serial.print(",");
+  Serial.print(signalRange);
+  Serial.print(",");
+  Serial.print(bpm);
+  Serial.print(",");
+
+
+  if (!signalGood) {
+    Serial.println("NO_SIGNAL");
+  } else {
+    Serial.println("OK");
+  }
+}
