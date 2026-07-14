@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "database.db";
@@ -20,7 +22,9 @@ public class Database extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
 
-        Log.d("DATABASE", "CREATING users table");
+        Log.d("DATABASE", "CREATING tables");
+
+
 
         String userQuery =
                 "CREATE TABLE users (" +
@@ -29,7 +33,25 @@ public class Database extends SQLiteOpenHelper {
                         "password TEXT" +
                         ")";
 
+        String subjectQuery =
+                "CREATE TABLE subjects (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "user_id INTEGER," +
+                        "subject_name TEXT," +
+                        "FOREIGN KEY(user_id) REFERENCES users(id)" +
+                        ")";
+
+        String gradeQuery =
+                "CREATE TABLE grades (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "subject_id INTEGER," +
+                        "grade TEXT," +
+                        "FOREIGN KEY(subject_id) REFERENCES subjects(id)" +
+                        ")";
+
         db.execSQL(userQuery);
+        db.execSQL(subjectQuery);
+        db.execSQL(gradeQuery);
     }
 
     @Override
@@ -51,6 +73,8 @@ public class Database extends SQLiteOpenHelper {
 
         return result != -1L;
     }
+
+
 
     public boolean verifyUser(String username) {
         SQLiteDatabase db = getReadableDatabase();
@@ -102,5 +126,127 @@ public class Database extends SQLiteOpenHelper {
         }
         return true;
     }
+
+    public int getUserID(String username) {
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.query(
+                "users",
+                new String[]{"id"},
+                "username=?",
+                new String[]{username},
+                null,
+                null,
+                null
+        );
+
+        int userID = -1;
+
+        if(cursor.moveToFirst()) {
+            userID = cursor.getInt(
+                    cursor.getColumnIndexOrThrow("id")
+            );
+        }
+
+        cursor.close();
+
+        return userID;
+    }
+
+    public long addSubject(int userID, String subjectName){
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("user_id", userID);
+        values.put("subject_name", subjectName);
+
+        return db.insert("subjects", null, values);
+    }
+
+    public ArrayList<Subject> getSubjects(int userID){
+
+        ArrayList<Subject> subjects = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+
+
+        Cursor cursor = db.query(
+                "subjects",
+                null,
+                "user_id=?",
+                new String[]{String.valueOf(userID)},
+                null,
+                null,
+                null
+        );
+
+
+        while(cursor.moveToNext()){
+
+            int subjectID = cursor.getInt(
+                    cursor.getColumnIndexOrThrow("id")
+            );
+
+            String name = cursor.getString(
+                    cursor.getColumnIndexOrThrow("subject_name")
+            );
+
+
+            ArrayList<String> grades = getGrades(subjectID);
+
+
+            subjects.add(new Subject(name, grades));
+        }
+
+
+        cursor.close();
+
+        return subjects;
+    }
+
+    public ArrayList<String> getGrades(int subjectID){
+
+        ArrayList<String> grades = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+
+
+        Cursor cursor = db.query(
+                "grades",
+                null,
+                "subject_id=?",
+                new String[]{String.valueOf(subjectID)},
+                null,
+                null,
+                null
+        );
+
+
+        while(cursor.moveToNext()){
+
+            grades.add(
+                    cursor.getString(
+                            cursor.getColumnIndexOrThrow("grade")
+                    )
+            );
+        }
+
+
+        cursor.close();
+
+        return grades;
+    }
+
+    public boolean addGrade(long subjectID, String grade){
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("subject_id", subjectID);
+        values.put("grade", grade);
+
+        return db.insert("grades", null, values) != -1;
+    }
 }
+
 
