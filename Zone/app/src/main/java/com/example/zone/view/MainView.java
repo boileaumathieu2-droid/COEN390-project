@@ -24,10 +24,12 @@ public class MainView extends AppCompatActivity {
 
     private MainController mainController;
     private TextView timerDisplay;
+    private TextView objectiveView;
     private Button pauseButton;
     private Button resetButton;
     private Button startButton;
     private Button completeButton;
+    private Button gradesButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
 
@@ -64,8 +66,10 @@ public class MainView extends AppCompatActivity {
         startButton = findViewById(R.id.startStudySeshButton);
         pauseButton = findViewById(R.id.pauseTimer);
         resetButton = findViewById(R.id.resetTimer);
+        gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
         timerDisplay = findViewById(R.id.timerDisplay);
+        objectiveView = findViewById(R.id.dailyObjectiveView);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -80,6 +84,11 @@ public class MainView extends AppCompatActivity {
         pauseButton.setOnClickListener(v -> {
             TimerModel.getInstance().pauseTimer();
             updateTimerUI();
+        });
+
+        gradesButton.setOnClickListener(v->{
+            Intent intent = new Intent(this, GradesTrackerView.class);
+            startActivity(intent);
         });
 
         resetButton.setOnClickListener(v -> {
@@ -181,10 +190,11 @@ public class MainView extends AppCompatActivity {
     }
 
     public void openTimerSettings() {
-        Intent intent = new Intent(this, TimerSettingsView.class);
-        startActivity(intent);
+        Intent intent1 = new Intent(this, TimerSettingsView.class);
+        startActivity(intent1);
     }
 
 
 }
+
 
