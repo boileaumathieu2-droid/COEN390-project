@@ -50,7 +50,7 @@ public class GradesTrackerView extends AppCompatActivity {
 
         return super.onOptionsItemSelected(option);
     }
-    private void refresh() {
+    private void  refresh() {
         subjects.clear();
         subjects.addAll(controller.getSubjects(Session.getUserID()));
         adapter.notifyDataSetChanged();
@@ -71,6 +71,20 @@ public class GradesTrackerView extends AppCompatActivity {
         Button newSubject = findViewById(R.id.newSubjectButton);
         controller = new GradesTracker(new Database(this));
         refresh();
+        subjectList.setOnItemClickListener((parent, view, position, id) -> {
+
+            Subject selectedSubject = subjects.get(position);
+
+            Intent intent = new Intent(
+                    GradesTrackerView.this,
+                    SubjectView.class
+            );
+
+            intent.putExtra("subjectName", selectedSubject.getSubjectName());
+            intent.putExtra("subjectID", selectedSubject.getSubjectID());
+
+            startActivity(intent);
+        });
         newSubject.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(GradesTrackerView.this);
             View popupView = getLayoutInflater().inflate(R.layout.add_subject_popup, null);
@@ -81,15 +95,26 @@ public class GradesTrackerView extends AppCompatActivity {
             EditText subjectName = popupView.findViewById(R.id.subjectEditText);
             cancel.setOnClickListener(x -> dialog.dismiss());
             save.setOnClickListener(View -> {
-                Subject s = new Subject(
-                        subjectName.getText().toString(),
-                        new ArrayList<>()
-                );
-                if (subjectName.getText().toString().isEmpty()) {
+
+                String name = subjectName.getText().toString();
+
+                if (name.isEmpty()) {
                     subjectName.setError("Error: Input a valid subject name");
                 }
+                else if (controller.subjectAlreadyExists(
+                        Session.getUserID(),
+                        name
+                )) {
+                    subjectName.setError(
+                            "Error: You already have a subject called " + name
+                    );
+                }
                 else {
-                    controller.addSubject(s, Session.getUserID());
+                    controller.addSubject(
+                            name,
+                            Session.getUserID()
+                    );
+
                     refresh();
                     dialog.dismiss();
                 }
