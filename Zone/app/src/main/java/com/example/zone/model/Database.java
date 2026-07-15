@@ -58,6 +58,8 @@ public class Database extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
         db.execSQL("DROP TABLE IF EXISTS users");
+        db.execSQL("DROP TABLE IF EXISTS subjects");
+        db.execSQL("DROP TABLE IF EXISTS users");
         onCreate(db);
     }
 
@@ -164,6 +166,29 @@ public class Database extends SQLiteOpenHelper {
         return db.insert("subjects", null, values);
     }
 
+    public boolean subjectAlreadyExists(int userID, String subjectName) {
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.query(
+                "subjects",
+                null,
+                "user_id=? AND subject_name=?",
+                new String[]{
+                        String.valueOf(userID),
+                        subjectName
+                },
+                null,
+                null,
+                null
+        );
+
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+
+        return exists;
+    }
+
     public ArrayList<Subject> getSubjects(int userID){
 
         ArrayList<Subject> subjects = new ArrayList<>();
@@ -196,13 +221,25 @@ public class Database extends SQLiteOpenHelper {
             ArrayList<String> grades = getGrades(subjectID);
 
 
-            subjects.add(new Subject(name, grades));
+            subjects.add(new Subject(subjectID, name, grades));
         }
 
 
         cursor.close();
 
         return subjects;
+    }
+
+    public boolean deleteSubject(int subjectID){
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(
+                "grades", "subject_id=?", new String[]{String.valueOf(subjectID)});
+        int deleted = db.delete(
+                "subjects",
+                "id=?",
+                new String[]{String.valueOf(subjectID)}
+        );
+        return deleted == 1;
     }
 
     public ArrayList<String> getGrades(int subjectID){
@@ -248,5 +285,6 @@ public class Database extends SQLiteOpenHelper {
         return db.insert("grades", null, values) != -1;
     }
 }
+
 
 
