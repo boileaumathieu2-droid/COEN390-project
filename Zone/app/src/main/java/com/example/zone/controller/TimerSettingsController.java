@@ -61,13 +61,15 @@ public class TimerSettingsController {
      */
     public void onBreakTimerToggled(boolean isChecked) {
         int visibility = isChecked ? android.view.View.VISIBLE : android.view.View.GONE;
-        
+
+        android.view.View breakRow = timerSettingsView.findViewById(R.id.break_time_row);
         android.view.View breakLabel = timerSettingsView.findViewById(R.id.text_break_label);
         android.view.View breakMinLabel = timerSettingsView.findViewById(R.id.label_break_minutes);
         android.view.View breakMin = timerSettingsView.findViewById(R.id.edit_break_minutes);
         android.view.View breakSecLabel = timerSettingsView.findViewById(R.id.label_break_seconds);
         android.view.View breakSec = timerSettingsView.findViewById(R.id.edit_break_seconds);
-
+        
+        if (breakRow != null) breakRow.setVisibility(visibility);
         if (breakLabel != null) breakLabel.setVisibility(visibility);
         if (breakMinLabel != null) breakMinLabel.setVisibility(visibility);
         if (breakMin != null) breakMin.setVisibility(visibility);

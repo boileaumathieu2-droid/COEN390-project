@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.zone.R;
 import com.example.zone.controller.Login;
 import com.example.zone.model.Database;
+import com.example.zone.model.Session;
 
 
 public class LoginView extends AppCompatActivity {
@@ -18,6 +19,7 @@ public class LoginView extends AppCompatActivity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+        Session.init(this);
         setContentView(R.layout.login_page);
         EditText username = findViewById(R.id.usernameEditText);
         EditText password = findViewById(R.id.passwordEditText);
@@ -32,6 +34,8 @@ public class LoginView extends AppCompatActivity {
             );
             if (success) {
                 Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                Session.setUsername(username.getText().toString());
+                Session.setUserID(controller.getUserID(Session.getUsername()));
                 Intent intent = new Intent(this, MainView.class);
                 startActivity(intent);
                 finish();

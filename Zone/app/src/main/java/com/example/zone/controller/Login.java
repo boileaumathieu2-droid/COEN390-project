@@ -17,6 +17,11 @@ public class Login {
         this.database = database;
     }
 
+    public int getUserID(String user){
+        return database.getUserID(user);
+    }
+
+
     public boolean login(String username, String password) {
 
         if (!database.verifyUser(username)) {
