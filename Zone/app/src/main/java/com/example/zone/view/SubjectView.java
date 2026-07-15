@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -18,10 +17,6 @@ import com.example.zone.R;
 import com.example.zone.controller.SubjectController;
 import com.example.zone.model.Database;
 import com.example.zone.model.GradeAdapter;
-import com.example.zone.model.Session;
-import com.example.zone.model.Subject;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
