@@ -24,12 +24,10 @@ public class MainView extends AppCompatActivity {
 
     private MainController mainController;
     private TextView timerDisplay;
-    private TextView objectiveView;
     private Button pauseButton;
     private Button resetButton;
     private Button startButton;
     private Button completeButton;
-    private Button gradesButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
 
@@ -62,14 +60,13 @@ public class MainView extends AppCompatActivity {
 
         mainController = new MainController(this);
 
+        // define buttons
         Button timerSettingsButton = findViewById(R.id.timerSettings);
         startButton = findViewById(R.id.startStudySeshButton);
         pauseButton = findViewById(R.id.pauseTimer);
         resetButton = findViewById(R.id.resetTimer);
-        gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
         timerDisplay = findViewById(R.id.timerDisplay);
-        objectiveView = findViewById(R.id.dailyObjectiveView);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -82,13 +79,15 @@ public class MainView extends AppCompatActivity {
         startButton.setOnClickListener(v -> startCountdown());
 
         pauseButton.setOnClickListener(v -> {
-            TimerModel.getInstance().pauseTimer();
+            // Checks if timer is counting down
+            if (TimerModel.getInstance().isRunning()) {
+                // pause timer if it was running
+                TimerModel.getInstance().pauseTimer();
+            } else {
+                // resume timer if it was paused
+                resumeCountdown();
+            }
             updateTimerUI();
-        });
-
-        gradesButton.setOnClickListener(v->{
-            Intent intent = new Intent(this, GradesTrackerView.class);
-            startActivity(intent);
         });
 
         resetButton.setOnClickListener(v -> {
@@ -140,7 +139,18 @@ public class MainView extends AppCompatActivity {
     private void startCountdown() {
         TimerModel model = TimerModel.getInstance();
         if (!model.isRunning()) {
+            // function inside of Timer Model
             model.startTimer();
+            updateTimerUI();
+            timerHandler.postDelayed(timerRunnable, 1000);
+        }
+    }
+
+    private void resumeCountdown() {
+        TimerModel model = TimerModel.getInstance();
+        if (!model.isRunning()) {
+            // resume countdown by keeping time instead
+            model.resumeTimer();
             updateTimerUI();
             timerHandler.postDelayed(timerRunnable, 1000);
         }
@@ -167,11 +177,10 @@ public class MainView extends AppCompatActivity {
         TimerModel model = TimerModel.getInstance();
         int minutes = model.getMinutes();
         int seconds = model.getSeconds();
-        timerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+        timerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)); // format the text
 
         // Logic for button visibility
-        // Fix: Compare remaining time against the correct duration for the current mode
-        int currentDuration = model.isBreakTime() ? model.getBreakDuration() : model.getStudyDuration();
+        int currentDuration = model.isBreakTime() ? model.getBreakDuration() : model.getStudyDuration();    // change display depending on mode
         boolean isTimerActive = model.isRunning() || (model.getRemainingTime() < currentDuration && model.getRemainingTime() > 0);
         
         int visibility = isTimerActive ? android.view.View.VISIBLE : android.view.View.GONE;
@@ -183,6 +192,7 @@ public class MainView extends AppCompatActivity {
         TextView timerTitle = findViewById(R.id.timerTitle);
         timerTitle.setText(model.isBreakTime() ? "Break Time" : "Time for Study");
 
+        // state is true : false
         pauseButton.setText(model.isRunning() ? "Pause" : "Resume");
 
         // Hide start button if timer is running or paused mid-session
@@ -190,11 +200,10 @@ public class MainView extends AppCompatActivity {
     }
 
     public void openTimerSettings() {
-        Intent intent1 = new Intent(this, TimerSettingsView.class);
-        startActivity(intent1);
+        Intent intent = new Intent(this, TimerSettingsView.class);
+        startActivity(intent);
     }
 
 
 }
-
 

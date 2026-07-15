@@ -7,7 +7,7 @@ public class TimerModel {
     private int breakDuration;    // duration of break in seconds defined by user
     private boolean isRunning;  // true if the timer is currently running
     private boolean breakTime;    // true if there is a break after the study session
-    private boolean breakEnabled; // true if the break timer is enabled
+    private boolean breakEnabled; // keeps track of the break switch
     private int remainingTime;  // remaining time in seconds, used for the display
 
 
@@ -47,10 +47,6 @@ public class TimerModel {
 
     public boolean isBreakEnabled() {
         return breakEnabled;
-    }
-
-    public void setBreakTime(boolean isBreak) {
-        breakTime = isBreak;
     }
 
     public boolean tick() {
@@ -109,6 +105,8 @@ public class TimerModel {
     public void pauseTimer() {
         isRunning = false;
     }
+
+    public void resumeTimer() {isRunning = true;}
 
     public void stopAndReset() {
         isRunning = false;

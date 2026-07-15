@@ -91,7 +91,8 @@ public class TimerSettingsController {
         
         timerModel.setBreakEnabled(timerSettingsView.isBreakTimerEnabled());
 
-        timerSettingsView.finish(); 
+        timerSettingsView.finish();
+        timerModel.stopAndReset();
     }
 
     public void cancelSettings() {
