@@ -6,12 +6,23 @@ public class Subject {
     private String subjectName;
     private ArrayList<String> grades;
 
-    private long subjectID;
+    private int subjectID;
 
-    public Subject(String subjectName, ArrayList<String> grades){
+    public Subject(int subjectID, String subjectName, ArrayList<String> grades) {
         this.subjectName = subjectName;
         this.grades = grades;
+        this.subjectID = subjectID;
     }
-    public String getSubjectName(){ return subjectName; }
-    public ArrayList<String> getGrades(){ return grades; }
+
+    public String getSubjectName() {
+        return subjectName;
+    }
+
+    public ArrayList<String> getGrades() {
+        return grades;
+    }
+
+    public int getSubjectID() {
+        return subjectID;
+    }
 }
