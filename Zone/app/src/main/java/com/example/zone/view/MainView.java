@@ -27,6 +27,7 @@ public class MainView extends AppCompatActivity {
     private Button pauseButton;
     private Button resetButton;
     private Button startButton;
+    private Button gradesButton;
     private Button completeButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
@@ -65,6 +66,7 @@ public class MainView extends AppCompatActivity {
         startButton = findViewById(R.id.startStudySeshButton);
         pauseButton = findViewById(R.id.pauseTimer);
         resetButton = findViewById(R.id.resetTimer);
+        gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
         timerDisplay = findViewById(R.id.timerDisplay);
 
@@ -72,6 +74,11 @@ public class MainView extends AppCompatActivity {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+
+        gradesButton.setOnClickListener(v->{
+            Intent intent = new Intent(this, GradesTrackerView.class);
+            startActivity(intent);
         });
 
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
