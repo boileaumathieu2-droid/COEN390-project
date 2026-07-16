@@ -14,6 +14,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.zone.R;
 import com.example.zone.controller.MainController;
 import com.example.zone.model.TimerModel;
+
+import android.widget.ScrollView;
 import android.widget.TextView;
 import java.util.Locale;
 import android.os.Handler;
@@ -29,6 +31,8 @@ public class MainView extends AppCompatActivity {
     private Button startButton;
     private Button gradesButton;
     private Button completeButton;
+    private ScrollView objectiveWindow;
+    private TextView objectiveText;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
 
@@ -69,11 +73,18 @@ public class MainView extends AppCompatActivity {
         gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
         timerDisplay = findViewById(R.id.timerDisplay);
+        objectiveWindow = findViewById(R.id.dailyObjectiveWindow);
+        objectiveText = findViewById(R.id.objectiveScrollableText);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+
+        objectiveText.setOnClickListener( v-> {
+            Intent intent = new Intent(this, ObjectiveView.class);
+            startActivity(intent);
         });
 
         gradesButton.setOnClickListener(v->{
@@ -82,7 +93,7 @@ public class MainView extends AppCompatActivity {
         });
 
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
-        
+
         startButton.setOnClickListener(v -> startCountdown());
 
         pauseButton.setOnClickListener(v -> {
@@ -105,7 +116,7 @@ public class MainView extends AppCompatActivity {
         completeButton.setOnClickListener(v -> {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
-            
+
             // Show toast for manual completion
             String message;
             if(model.isBreakEnabled()) {
@@ -114,7 +125,7 @@ public class MainView extends AppCompatActivity {
                 message = "Study Finished!";
             }
             Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
-            
+
             updateTimerUI();
         });
 
@@ -189,7 +200,7 @@ public class MainView extends AppCompatActivity {
         // Logic for button visibility
         int currentDuration = model.isBreakTime() ? model.getBreakDuration() : model.getStudyDuration();    // change display depending on mode
         boolean isTimerActive = model.isRunning() || (model.getRemainingTime() < currentDuration && model.getRemainingTime() > 0);
-        
+
         int visibility = isTimerActive ? android.view.View.VISIBLE : android.view.View.GONE;
         pauseButton.setVisibility(visibility);
         resetButton.setVisibility(visibility);
