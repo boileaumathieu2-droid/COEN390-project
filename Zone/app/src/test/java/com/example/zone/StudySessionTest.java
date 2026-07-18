@@ -4,11 +4,13 @@ import com.example.zone.model.StudySessionModel;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
+
 public class StudySessionTest {
 
     @Test
     public void testSessionStart() {
-        StudySessionModel session = new StudySessionModel();
+        StudySessionModel session = new StudySessionModel("testing");
 
         session.startSession();
 
@@ -17,7 +19,7 @@ public class StudySessionTest {
 
     @Test
     public void testEndSessionValidDuration() {
-        StudySessionModel session = new StudySessionModel();
+        StudySessionModel session = new StudySessionModel("testing");
 
         session.startSession();
 
@@ -26,12 +28,12 @@ public class StudySessionTest {
 
         assertEquals(StudySessionModel.Status.COMPLETE, session.getStatus());
         assertEquals(duration, session.getDuration());
-        assertTrue(session.getEndTime() <= System.currentTimeMillis());
+        assertTrue(session.getEndTime() == LocalDateTime.now());
     }
 
     @Test
     public void testEndSessionNegativeDuration() {
-        StudySessionModel session = new StudySessionModel();
+        StudySessionModel session = new StudySessionModel("testing");
 
         session.startSession();
 
@@ -45,14 +47,14 @@ public class StudySessionTest {
 
     @Test
     public void testConstructor() {
-        StudySessionModel session = new StudySessionModel();
+        StudySessionModel session = new StudySessionModel("testing");
 
         assertEquals(StudySessionModel.Status.INACTIVE, session.getStatus());
     }
 
     @Test
     public void testEndSessionWithoutStarting() {
-        StudySessionModel session = new StudySessionModel();
+        StudySessionModel session = new StudySessionModel("testing");
 
         int duration = 2700;
 

@@ -8,7 +8,7 @@ import com.example.zone.model.StudySessionModel;
 import org.junit.Test;
 
 public class testStudySessionModel {
-    StudySessionModel model = new StudySessionModel();
+    StudySessionModel model = new StudySessionModel("testing");
 
     @Test
     public void testStartSession() {
