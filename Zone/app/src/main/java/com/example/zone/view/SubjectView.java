@@ -122,8 +122,5 @@ public class SubjectView extends AppCompatActivity {
             });
             dialog.show();
         });
-
-
     }
-
 }
