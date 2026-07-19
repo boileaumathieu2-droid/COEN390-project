@@ -1,0 +1,10 @@
+Hardware team meeting
+Duration: 
+Attendees Mark (9:00 AM), John (9:45 AM), Fouad (11:12 AM) 
+
+Solving connectivity problems of Bluno nano.
+Re-running the model on Arduino IDE and through the APK file on Android phone.
+Data acquisition precision not adequate.
+Troubleshooting problems on Mark's laptop, synch issues in Arduino IDE. -> Problem solved: In serial monitor, select "No Line Ending", "115 200 bauds".
+Display successful in serial Monitor on Mark's laptop.
+
