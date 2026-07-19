@@ -24,6 +24,7 @@ public class SettingsView extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.settings_menu);
         TextView logout = findViewById(R.id.logoutButton);
+        TextView connectDevice = findViewById(R.id.connectDeviceButton);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Settings");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -33,6 +34,11 @@ public class SettingsView extends AppCompatActivity {
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);
             Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
+        });
+
+        connectDevice.setOnClickListener(v -> {
+            Intent intent = new Intent(this, HeartRateMonitorView.class);
+            startActivity(intent);
         });
         }
     }
