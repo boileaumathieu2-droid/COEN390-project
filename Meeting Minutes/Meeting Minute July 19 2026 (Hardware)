@@ -7,4 +7,4 @@ Re-running the model on Arduino IDE and through the APK file on Android phone.
 Data acquisition precision not adequate.
 Troubleshooting problems on Mark's laptop, synch issues in Arduino IDE. -> Problem solved: In serial monitor, select "No Line Ending", "115 200 bauds".
 Display successful in serial Monitor on Mark's laptop.
-
+Keep a short distance between the finger and the sensor for optimal data acquisition. 
