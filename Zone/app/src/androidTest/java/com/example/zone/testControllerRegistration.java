@@ -74,11 +74,3 @@ public class testControllerRegistration {
         assertNotEquals(password, password3);
     }
 
-
-
-
-
-
-
-
-}
