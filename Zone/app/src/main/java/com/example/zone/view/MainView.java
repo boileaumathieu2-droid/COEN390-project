@@ -15,7 +15,6 @@ import com.example.zone.R;
 import com.example.zone.controller.MainController;
 import com.example.zone.model.TimerModel;
 
-import android.widget.ScrollView;
 import android.widget.TextView;
 import java.util.Locale;
 import android.os.Handler;
@@ -31,7 +30,6 @@ public class MainView extends AppCompatActivity {
     private Button startButton;
     private Button gradesButton;
     private Button completeButton;
-    private ScrollView objectiveWindow;
     private TextView objectiveText;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
@@ -73,8 +71,7 @@ public class MainView extends AppCompatActivity {
         gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
         timerDisplay = findViewById(R.id.timerDisplay);
-        objectiveWindow = findViewById(R.id.dailyObjectiveWindow);
-        objectiveText = findViewById(R.id.objectiveScrollableText);
+        objectiveText = findViewById(R.id.dailyObjectiveView);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -222,6 +219,4 @@ public class MainView extends AppCompatActivity {
         startActivity(intent);
     }
 
-
 }
-
