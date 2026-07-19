@@ -49,19 +49,9 @@ public class Database extends SQLiteOpenHelper {
                         "FOREIGN KEY(subject_id) REFERENCES subjects(id)" +
                         ")";
 
-        String objectiveQuery =
-                "CREATE TABLE objectives (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "user_id INTEGER," +
-                        "objective_text TEXT," +
-                        "objective_date TEXT," +
-                        "FOREIGN KEY(user_id) REFERENCES users(id)" +
-                        ")";
-
         db.execSQL(userQuery);
         db.execSQL(subjectQuery);
         db.execSQL(gradeQuery);
-        db.execSQL(objectiveQuery);
     }
 
     @Override
@@ -69,8 +59,7 @@ public class Database extends SQLiteOpenHelper {
 
         db.execSQL("DROP TABLE IF EXISTS users");
         db.execSQL("DROP TABLE IF EXISTS subjects");
-        db.execSQL("DROP TABLE IF EXISTS grades");
-        db.execSQL("DROP TABLE IF EXISTS objectives");
+        db.execSQL("DROP TABLE IF EXISTS users");
         onCreate(db);
     }
 
@@ -295,91 +284,4 @@ public class Database extends SQLiteOpenHelper {
 
         return db.insert("grades", null, values) != -1;
     }
-
-    public long addObjective(int userID, String text, String date) {
-
-        SQLiteDatabase db = getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put("user_id", userID);
-        values.put("objective_text", text);
-        values.put("objective_date", date);
-
-        return db.insert("objectives", null, values);
-    }
-
-    public ArrayList<Objective> getObjectives(int userID) {
-
-        ArrayList<Objective> objectives = new ArrayList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-
-        Cursor cursor = db.query(
-                "objectives",
-                null,
-                "user_id=?",
-                new String[]{String.valueOf(userID)},
-                null,
-                null,
-                "objective_date ASC"
-        );
-
-        while (cursor.moveToNext()) {
-
-            int objectiveID = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
-
-            String text = cursor.getString(cursor.getColumnIndexOrThrow("objective_text"));
-
-            String date = cursor.getString(cursor.getColumnIndexOrThrow("objective_date"));
-
-            objectives.add(new Objective(objectiveID, text, date));
-        }
-
-        cursor.close();
-
-        return objectives;
-    }
-
-    public ArrayList<Objective> getObjectivesForDate(int userID, String date) {
-
-        ArrayList<Objective> objectives = new ArrayList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-
-        Cursor cursor = db.query(
-                "objectives",
-                null,
-                "user_id=? AND objective_date=?",
-                new String[]{String.valueOf(userID), date},
-                null,
-                null,
-                null
-        );
-
-        while (cursor.moveToNext()) {
-
-            objectives.add(new Objective(
-                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("objective_text")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("objective_date"))
-            ));
-        }
-
-        cursor.close();
-        return objectives;
-    }
-
-    public boolean deleteObjective(int objectiveID){
-        SQLiteDatabase db = getWritableDatabase();
-        int deleted = db.delete(
-                "objectives",
-                "id=?",
-                new String[]{String.valueOf(objectiveID)}
-        );
-        return deleted == 1;
-    }
-
 }
-
-
-
