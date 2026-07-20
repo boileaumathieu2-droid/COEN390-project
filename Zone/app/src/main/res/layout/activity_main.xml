@@ -80,6 +80,14 @@
             android:layout_marginTop="18dp"
             android:text="Grades Tracker" />
 
+        <Button
+            android:id="@+id/analyticsButton"
+            android:layout_width="222dp"
+            android:layout_height="52dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="18dp"
+            android:text="Analytics" />
+
         <TextView
             android:id="@+id/timerTitle"
             android:layout_marginTop="18dp"

@@ -55,11 +55,10 @@ public class StudySessionModel {
     // attributes for functions to use and keep track
 
     // Constructor
-    public StudySessionModel(String objective) {    // constructed at start of session
+    public StudySessionModel() {    // constructed at start of session
         startTime = LocalDateTime.now();
         duration = 0;
         status = Status.INACTIVE;
-        this.objective = objective; // input is objective for session
     }
 
     public void startSession() {

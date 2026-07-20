@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public Database(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -49,16 +49,54 @@ public class Database extends SQLiteOpenHelper {
                         "FOREIGN KEY(subject_id) REFERENCES subjects(id)" +
                         ")";
 
+        String sessionQuery =
+                "CREATE TABLE sessions (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "user_id INTEGER," +
+                        "start_time TEXT," +
+                        "end_time TEXT," +
+                        "duration INTEGER," +
+                        "status TEXT," +
+                        "objective TEXT," +
+                        "objective_met INTEGER," +
+                        "productivity_rating INTEGER," +
+                        "resting_heart_rate INTEGER," +
+                        "avg_heart_rate INTEGER," +
+                        "max_heart_rate INTEGER," +
+                        "min_heart_rate INTEGER," +
+                        "heart_rate_data TEXT," +
+                        "FOREIGN KEY(user_id) REFERENCES users(id)" +
+                        ")";
+
         db.execSQL(userQuery);
         db.execSQL(subjectQuery);
         db.execSQL(gradeQuery);
+        db.execSQL(sessionQuery);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-        db.execSQL("DROP TABLE IF EXISTS users");
-        onCreate(db);
+        if (oldVersion < 2) {
+            String sessionQuery =
+                    "CREATE TABLE sessions (" +
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                            "user_id INTEGER," +
+                            "start_time TEXT," +
+                            "end_time TEXT," +
+                            "duration INTEGER," +
+                            "status TEXT," +
+                            "objective TEXT," +
+                            "objective_met INTEGER," +
+                            "productivity_rating INTEGER," +
+                            "resting_heart_rate INTEGER," +
+                            "avg_heart_rate INTEGER," +
+                            "max_heart_rate INTEGER," +
+                            "min_heart_rate INTEGER," +
+                            "heart_rate_data TEXT," +
+                            "FOREIGN KEY(user_id) REFERENCES users(id)" +
+                            ")";
+            db.execSQL(sessionQuery);
+        }
     }
 
     public boolean addUser(String username, String passwordHash) {
@@ -246,6 +284,36 @@ public class Database extends SQLiteOpenHelper {
         values.put("grade", grade);
 
         return db.insert("grades", null, values) != -1;
+    }
+
+    public long addSession(int userID, StudySessionModel session) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("user_id", userID);
+        values.put("start_time", session.getStartTime().toString());
+        values.put("end_time", session.getEndTime() != null ? session.getEndTime().toString() : null);
+        values.put("duration", session.getDuration());
+        values.put("status", session.getStatus().name());
+        values.put("objective", session.getObjective());
+        values.put("objective_met", session.getObjectiveMet() ? 1 : 0);
+        values.put("productivity_rating", session.getProductivityRating());
+        values.put("resting_heart_rate", session.getRestingHeartRate());
+        values.put("avg_heart_rate", session.getHeartRate());
+        values.put("max_heart_rate", session.getMaxHeartRate());
+        values.put("min_heart_rate", session.getMinHeartRate());
+
+        // Serialize int[] to CSV
+        StringBuilder sb = new StringBuilder();
+        int[] data = session.getHeartRateData();
+        if (data != null) {
+            for (int i = 0; i < data.length; i++) {
+                sb.append(data[i]);
+                if (i < data.length - 1) sb.append(",");
+            }
+        }
+        values.put("heart_rate_data", sb.toString());
+
+        return db.insert("sessions", null, values);
     }
 }
 
