@@ -10,12 +10,12 @@ public class GradesTracker {
     private Database database;
     public GradesTracker(Database database) {this.database = database;}
 
-    public long addSubject(Subject subject, int userID) {
+    public void addSubject(String subjectName, int userID) {
+        database.addSubject(userID, subjectName);
+    }
 
-        return database.addSubject(
-                userID,
-                subject.getSubjectName()
-        );
+    public boolean subjectAlreadyExists(int userID, String subjectName) {
+        return database.subjectAlreadyExists(userID, subjectName);
     }
     public ArrayList<Subject> getSubjects(int userID) {
         return database.getSubjects(userID);

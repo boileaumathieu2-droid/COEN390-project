@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="1dp"
+        android:background="#FFFFFF"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <CalendarView
+            android:id="@+id/objectiveCalendar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="70dp"
+            android:unfocusedMonthDateColor="#000000"
+            android:weekNumberColor="#000000"
+            android:weekSeparatorLineColor="#000000" />
+
+        <Button
+            android:id="@+id/newObjectiveButton"
+            android:layout_width="265dp"
+            android:layout_height="59dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:text="New Objective"
+            android:textColor="#FFFFFF"
+            app:icon="@drawable/outline_add_24"
+            app:iconGravity="textStart"
+            app:iconSize="20dp" />
+
+        <Button
+            android:id="@+id/myObjectivesButton"
+            android:layout_width="265dp"
+            android:layout_height="59dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:text="My Objectives"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
