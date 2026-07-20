@@ -13,13 +13,13 @@ public class Objective {
         this.objectiveDate = objectiveDate;
     }
 
-    String getObjectiveText(){
+    public String getObjectiveText(){
         return objectiveText;
     }
-    String getObjectiveDate(){
+    public String getObjectiveDate(){
         return objectiveDate;
     }
-    int getObjectiveID(){
+    public int getObjectiveID(){
         return objectiveID;
     }
 }
