@@ -46,7 +46,7 @@
             android:textSize="24sp" />
 
         <ListView
-            android:id="@+id/objectivesObjectivesList"
+            android:id="@+id/futureObjectivesList"
             android:layout_width="match_parent"
             android:layout_height="200dp" />
 
