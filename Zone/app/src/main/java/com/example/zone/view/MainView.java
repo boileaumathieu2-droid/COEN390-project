@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,8 +14,19 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.zone.R;
 import com.example.zone.controller.MainController;
+import com.example.zone.controller.ObjectiveController;
+import com.example.zone.model.Database;
+import com.example.zone.model.MainViewObjectiveAdapter;
+import com.example.zone.model.Objective;
+import com.example.zone.model.Session;
 import com.example.zone.model.TimerModel;
+
+import android.widget.ListView;
 import android.widget.TextView;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,10 +39,18 @@ import com.example.zone.view.TimerSettingsView;
 public class MainView extends AppCompatActivity {
 
     private MainController mainController;
+    private ObjectiveController objectiveController;
+    private MainViewObjectiveAdapter adapter;
+    private String today;
+
     private TextView timerDisplay;
+    private ListView dailyGoals;
+    private TextView objectivesPrompt;
+    private ArrayList<Objective> dailyGoalsArray;
     private Button pauseButton;
     private Button resetButton;
     private Button startButton;
+    private Button gradesButton;
     private Button completeButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
@@ -57,23 +77,55 @@ public class MainView extends AppCompatActivity {
         return super.onOptionsItemSelected(option);
     }
 
+    private void refresh(){
+        dailyGoalsArray.clear();
+
+        dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(Session.getUserID(), today));
+        adapter.notifyDataSetChanged();
+        if (dailyGoalsArray.isEmpty()) {
+            dailyGoals.setVisibility(View.GONE);
+            objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
+        }
+        else{
+            dailyGoals.setVisibility(View.VISIBLE);
+            objectivesPrompt.setText("New Study Goal");
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        today = new SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.getDefault()
+        ).format(new Date());
+
+        objectiveController = new ObjectiveController(new Database(this));
         mainController = new MainController(this);
+
 
         // define buttons
         Button timerSettingsButton = findViewById(R.id.timerSettings);
         startButton = findViewById(R.id.startStudySeshButton);
         pauseButton = findViewById(R.id.pauseTimer);
         resetButton = findViewById(R.id.resetTimer);
+        gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
         Button gradesButton = findViewById(R.id.gradesTrackerButton);
         Button analyticsButton = findViewById(R.id.analyticsButton);
         timerDisplay = findViewById(R.id.timerDisplay);
+        objectivesPrompt = findViewById(R.id.goalPrompt);
+
+        dailyGoals = findViewById(R.id.dailyGoalsListView);
+        dailyGoalsArray = new ArrayList<>();
+        adapter = new MainViewObjectiveAdapter(this, dailyGoalsArray);
+
+        dailyGoals.setAdapter(adapter);
+
+        refresh();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -81,8 +133,18 @@ public class MainView extends AppCompatActivity {
             return insets;
         });
 
+        objectivesPrompt.setOnClickListener(v->{
+            Intent intent = new Intent(this,ObjectiveView.class);
+            startActivity(intent);
+        });
+
+        gradesButton.setOnClickListener(v->{
+            Intent intent = new Intent(this, GradesTrackerView.class);
+            startActivity(intent);
+        });
+
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
-        
+
         startButton.setOnClickListener(v -> startCountdown());
 
         pauseButton.setOnClickListener(v -> {
@@ -105,7 +167,7 @@ public class MainView extends AppCompatActivity {
         completeButton.setOnClickListener(v -> {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
-            
+
             // Show toast for manual completion
             String message;
             if(model.isBreakEnabled()) {
@@ -114,7 +176,7 @@ public class MainView extends AppCompatActivity {
                 message = "Study Finished!";
             }
             Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
-            
+
             updateTimerUI();
         });
 
@@ -176,6 +238,7 @@ public class MainView extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        refresh();
         updateTimerUI();
         // If the timer is already running (e.g. returning from settings), resume the UI updates
         if (TimerModel.getInstance().isRunning()) {
@@ -199,7 +262,7 @@ public class MainView extends AppCompatActivity {
         // Logic for button visibility
         int currentDuration = model.isBreakTime() ? model.getBreakDuration() : model.getStudyDuration();    // change display depending on mode
         boolean isTimerActive = model.isRunning() || (model.getRemainingTime() < currentDuration && model.getRemainingTime() > 0);
-        
+
         int visibility = isTimerActive ? android.view.View.VISIBLE : android.view.View.GONE;
         pauseButton.setVisibility(visibility);
         resetButton.setVisibility(visibility);
@@ -223,4 +286,3 @@ public class MainView extends AppCompatActivity {
 
 
 }
-

@@ -9,10 +9,11 @@
     tools:context=".view.MainView">
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="417dp"
+        android:layout_height="727dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
+        android:isScrollContainer="true"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -24,35 +25,38 @@
             android:layout_width="281dp"
             android:layout_height="45dp"
             android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
             android:gravity="center"
-            android:text="Daily Objective"
+            android:text="Daily Objectives"
             android:textColor="#000000"
             android:textSize="24sp"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/dailyObjectiveView"
-            android:layout_width="288dp"
-            android:layout_height="112dp"
+        <ListView
+            android:id="@+id/dailyGoalsListView"
+            android:layout_width="370dp"
+            android:layout_height="126dp"
             android:layout_gravity="center"
-            android:background="@drawable/textview_border"
+            android:background="@drawable/textview_border" />
+
+        <TextView
+            android:id="@+id/goalPrompt"
+            android:layout_width="353dp"
+            android:layout_height="61dp"
+            android:layout_gravity="center"
             android:gravity="center"
-            android:padding="10dp"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
-            android:text="This is where the daily objective will be displayed. Tapping this brings you to the calender activity."
+            android:text="You have not set any goals for today. Set your study session goal here."
             android:textColor="#000000"
-            android:textSize="16sp" />
+            android:textSize="18dp" />
 
         <TextView
             android:id="@+id/studyTipTextView"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
             android:layout_width="263dp"
             android:layout_height="33dp"
             android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="18dp"
             android:text="A study tip will be displayed here"
             android:textColor="#000000" />
 
@@ -61,7 +65,7 @@
             android:layout_width="222dp"
             android:layout_height="52dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="10dp"
             android:text="Timer Settings" />
 
         <Button
@@ -90,11 +94,11 @@
 
         <TextView
             android:id="@+id/timerTitle"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="8dp"
             android:layout_width="263dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="8dp"
             android:gravity="center"
             android:text="Study Time"
             android:textColor="#000000"
@@ -118,8 +122,8 @@
             android:layout_height="42dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
-            android:visibility="gone"
-            android:text="Pause" />
+            android:text="Pause"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/resetTimer"
@@ -127,8 +131,8 @@
             android:layout_height="42dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
-            android:visibility="gone"
-            android:text="Reset" />
+            android:text="Reset"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/completeTimer"
@@ -136,8 +140,8 @@
             android:layout_height="42dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="18dp"
-            android:visibility="gone"
-            android:text="Complete" />
+            android:text="Complete"
+            android:visibility="gone" />
 
 
     </LinearLayout>

@@ -50,9 +50,4 @@ public class testControllerLogin {
         boolean result = login.verifyPassword("Username", "Password");
         assertTrue(result);
     }
-
-
-
-
-
 }

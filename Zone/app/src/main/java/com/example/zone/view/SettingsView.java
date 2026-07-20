@@ -9,6 +9,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
+import com.example.zone.model.Session;
 
 public class SettingsView extends AppCompatActivity {
     @Override
@@ -23,15 +24,21 @@ public class SettingsView extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.settings_menu);
         TextView logout = findViewById(R.id.logoutButton);
+        TextView connectDevice = findViewById(R.id.connectDeviceButton);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Settings");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         logout.setOnClickListener(v -> {
+            Session.logout();
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);
             Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
-            finish();
+        });
+
+        connectDevice.setOnClickListener(v -> {
+            Intent intent = new Intent(this, HeartRateMonitorView.class);
+            startActivity(intent);
         });
         }
     }

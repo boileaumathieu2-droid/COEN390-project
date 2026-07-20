@@ -28,5 +28,8 @@
         <activity android:name=".view.TimerSettingsView" android:exported="true"/>
         <activity android:name=".view.GradesTrackerView" android:exported="true"/>
         <activity android:name=".view.AnalyticsView" android:exported="true"/>
+        <activity android:name=".view.SubjectView" android:exported="true"/>
+        <activity android:name=".view.ObjectiveView" android:exported="true"/>
+        <activity android:name=".view.ObjectivesPageView" android:exported="true"/>
     </application>
 </manifest>
