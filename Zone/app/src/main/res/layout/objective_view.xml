@@ -37,6 +37,18 @@
             android:layout_gravity="center"
             android:layout_marginTop="18dp"
             android:text="New Objective"
+            android:textColor="#FFFFFF"
+            app:icon="@drawable/outline_add_24"
+            app:iconGravity="textStart"
+            app:iconSize="20dp" />
+
+        <Button
+            android:id="@+id/myObjectivesButton"
+            android:layout_width="265dp"
+            android:layout_height="59dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:text="My Objectives"
             android:textColor="#FFFFFF" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
