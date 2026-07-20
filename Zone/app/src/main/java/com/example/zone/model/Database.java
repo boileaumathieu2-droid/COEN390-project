@@ -49,6 +49,25 @@ public class Database extends SQLiteOpenHelper {
                         "FOREIGN KEY(subject_id) REFERENCES subjects(id)" +
                         ")";
 
+        String sessionQuery =
+                "CREATE TABLE sessions (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "user_id INTEGER," +
+                        "start_time TEXT," +
+                        "end_time TEXT," +
+                        "duration INTEGER," +
+                        "status TEXT," +
+                        "objective TEXT," +
+                        "objective_met INTEGER," +
+                        "productivity_rating INTEGER," +
+                        "resting_heart_rate INTEGER," +
+                        "avg_heart_rate INTEGER," +
+                        "max_heart_rate INTEGER," +
+                        "min_heart_rate INTEGER," +
+                        "heart_rate_data TEXT," +
+                        "FOREIGN KEY(user_id) REFERENCES users(id)" +
+                        ")";
+
         String objectiveQuery =
                 "CREATE TABLE objectives (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -61,16 +80,17 @@ public class Database extends SQLiteOpenHelper {
         db.execSQL(userQuery);
         db.execSQL(subjectQuery);
         db.execSQL(gradeQuery);
+        db.execSQL(sessionQuery);
         db.execSQL(objectiveQuery);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
         db.execSQL("DROP TABLE IF EXISTS users");
         db.execSQL("DROP TABLE IF EXISTS subjects");
         db.execSQL("DROP TABLE IF EXISTS grades");
         db.execSQL("DROP TABLE IF EXISTS objectives");
+        db.execSQL("DROP TABLE IF EXISTS sessions");
         onCreate(db);
     }
 
@@ -177,29 +197,6 @@ public class Database extends SQLiteOpenHelper {
         return db.insert("subjects", null, values);
     }
 
-    public boolean subjectAlreadyExists(int userID, String subjectName) {
-
-        SQLiteDatabase db = getReadableDatabase();
-
-        Cursor cursor = db.query(
-                "subjects",
-                null,
-                "user_id=? AND subject_name=?",
-                new String[]{
-                        String.valueOf(userID),
-                        subjectName
-                },
-                null,
-                null,
-                null
-        );
-
-        boolean exists = cursor.moveToFirst();
-        cursor.close();
-
-        return exists;
-    }
-
     public ArrayList<Subject> getSubjects(int userID){
 
         ArrayList<Subject> subjects = new ArrayList<>();
@@ -232,25 +229,13 @@ public class Database extends SQLiteOpenHelper {
             ArrayList<String> grades = getGrades(subjectID);
 
 
-            subjects.add(new Subject(subjectID, name, grades));
+            subjects.add(new Subject(name, grades));
         }
 
 
         cursor.close();
 
         return subjects;
-    }
-
-    public boolean deleteSubject(int subjectID){
-        SQLiteDatabase db = getWritableDatabase();
-        db.delete(
-                "grades", "subject_id=?", new String[]{String.valueOf(subjectID)});
-        int deleted = db.delete(
-                "subjects",
-                "id=?",
-                new String[]{String.valueOf(subjectID)}
-        );
-        return deleted == 1;
     }
 
     public ArrayList<String> getGrades(int subjectID){
@@ -294,6 +279,36 @@ public class Database extends SQLiteOpenHelper {
         values.put("grade", grade);
 
         return db.insert("grades", null, values) != -1;
+    }
+
+    public long addSession(int userID, StudySessionModel session) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("user_id", userID);
+        values.put("start_time", session.getStartTime().toString());
+        values.put("end_time", session.getEndTime() != null ? session.getEndTime().toString() : null);
+        values.put("duration", session.getDuration());
+        values.put("status", session.getStatus().name());
+        values.put("objective", session.getObjective());
+        values.put("objective_met", session.getObjectiveMet() ? 1 : 0);
+        values.put("productivity_rating", session.getProductivityRating());
+        values.put("resting_heart_rate", session.getRestingHeartRate());
+        values.put("avg_heart_rate", session.getHeartRate());
+        values.put("max_heart_rate", session.getMaxHeartRate());
+        values.put("min_heart_rate", session.getMinHeartRate());
+
+        // Serialize int[] to CSV
+        StringBuilder sb = new StringBuilder();
+        int[] data = session.getHeartRateData();
+        if (data != null) {
+            for (int i = 0; i < data.length; i++) {
+                sb.append(data[i]);
+                if (i < data.length - 1) sb.append(",");
+            }
+        }
+        values.put("heart_rate_data", sb.toString());
+
+        return db.insert("sessions", null, values);
     }
 
     public long addObjective(int userID, String text, String date) {
@@ -410,6 +425,4 @@ public class Database extends SQLiteOpenHelper {
         );
         return deleted == 1;
     }
-
 }
-

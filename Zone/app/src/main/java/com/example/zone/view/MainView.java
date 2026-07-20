@@ -31,6 +31,10 @@ import java.util.Locale;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
+import com.example.zone.model.StudySessionModel;
+import com.example.zone.view.SettingsView;
+import com.example.zone.view.TimerSettingsView;
+
 
 public class MainView extends AppCompatActivity {
 
@@ -50,6 +54,7 @@ public class MainView extends AppCompatActivity {
     private Button completeButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
+    private StudySessionModel session;  // use to get the live session
 
     @Override
     public boolean onSupportNavigateUp() {
@@ -109,6 +114,8 @@ public class MainView extends AppCompatActivity {
         resetButton = findViewById(R.id.resetTimer);
         gradesButton = findViewById(R.id.gradesTrackerButton);
         completeButton = findViewById(R.id.completeTimer);
+        Button gradesButton = findViewById(R.id.gradesTrackerButton);
+        Button analyticsButton = findViewById(R.id.analyticsButton);
         timerDisplay = findViewById(R.id.timerDisplay);
         objectivesPrompt = findViewById(R.id.goalPrompt);
 
@@ -173,6 +180,16 @@ public class MainView extends AppCompatActivity {
             updateTimerUI();
         });
 
+        gradesButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GradesTrackerView.class);
+            startActivity(intent);
+        });
+
+        analyticsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AnalyticsView.class);
+            startActivity(intent);
+        });
+
         timerRunnable = new Runnable() {
             @Override
             public void run() {
@@ -202,7 +219,7 @@ public class MainView extends AppCompatActivity {
         TimerModel model = TimerModel.getInstance();
         if (!model.isRunning()) {
             // function inside of Timer Model
-            model.startTimer();
+            model.startTimer(); // get the live session instance to upload data in
             updateTimerUI();
             timerHandler.postDelayed(timerRunnable, 1000);
         }

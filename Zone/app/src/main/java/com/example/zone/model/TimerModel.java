@@ -9,6 +9,8 @@ public class TimerModel {
     private boolean breakTime;    // true if there is a break after the study session
     private boolean breakEnabled; // keeps track of the break switch
     private int remainingTime;  // remaining time in seconds, used for the display
+    private StudySessionModel session;  // use to get the live session
+
 
 
     // functions:
@@ -73,6 +75,12 @@ public class TimerModel {
     }
 
     public void completeSession() {
+        // finalize study session
+        if(!breakTime){
+            session.endSession(studyDuration - remainingTime);
+        }
+
+
         isRunning = false;
         if (!breakTime && breakEnabled) {
             switchToBreak();
@@ -93,12 +101,19 @@ public class TimerModel {
 
     // interract with start/stop
 
-    public void startTimer() {
+    public void startTimer() { // take the objective to build the studySessionModel
         if (!isRunning) {
-            if (remainingTime <= 0) {
+            // reset timer duration in case
+            if (remainingTime < studyDuration) {
                 remainingTime = studyDuration;
             }
             isRunning = true;
+
+            // create StudySessionModel object if study session
+            if(!breakTime){
+                session = new StudySessionModel();
+                session.startSession(); // creates and starts the session
+            }
         }
     }
 
@@ -112,6 +127,8 @@ public class TimerModel {
         isRunning = false;
         breakTime = false;
         remainingTime = studyDuration;
+        // end the live session tracker
+        session.endSession(studyDuration - remainingTime);
     }
 
     public void resetTimer() {
@@ -142,6 +159,9 @@ public class TimerModel {
     }
     public int getBreakDuration(){
         return breakDuration;
+    }
+    public StudySessionModel getLiveSession(){
+        return session;
     }
 
 }
