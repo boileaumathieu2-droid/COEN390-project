@@ -86,36 +86,12 @@ public class Database extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 2) {
-            String sessionQuery =
-                    "CREATE TABLE sessions (" +
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                            "user_id INTEGER," +
-                            "start_time TEXT," +
-                            "end_time TEXT," +
-                            "duration INTEGER," +
-                            "status TEXT," +
-                            "objective TEXT," +
-                            "objective_met INTEGER," +
-                            "productivity_rating INTEGER," +
-                            "resting_heart_rate INTEGER," +
-                            "avg_heart_rate INTEGER," +
-                            "max_heart_rate INTEGER," +
-                            "min_heart_rate INTEGER," +
-                            "heart_rate_data TEXT," +
-                            "FOREIGN KEY(user_id) REFERENCES users(id)" +
-                            ")";
-            String objectiveQuery =
-                    "CREATE TABLE objectives (" +
-                            "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                            "user_id INTEGER," +
-                            "objective_text TEXT," +
-                            "objective_date TEXT," +
-                            "FOREIGN KEY(user_id) REFERENCES users(id)" +
-                            ")";
-            db.execSQL(sessionQuery);
-            db.execSQL(objectiveQuery);
-        }
+        db.execSQL("DROP TABLE IF EXISTS users");
+        db.execSQL("DROP TABLE IF EXISTS subjects");
+        db.execSQL("DROP TABLE IF EXISTS grades");
+        db.execSQL("DROP TABLE IF EXISTS objectives");
+        db.execSQL("DROP TABLE IF EXISTS sessions");
+        onCreate(db);
     }
 
     public boolean addUser(String username, String passwordHash) {
@@ -450,4 +426,3 @@ public class Database extends SQLiteOpenHelper {
         return deleted == 1;
     }
 }
-
