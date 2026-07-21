@@ -12,6 +12,8 @@ public class StudySessionModel {
         ACTIVE,
         COMPLETE
     }
+     private static StudySessionModel instance;
+
 
     private class heartRateInstances {
         private int index;
@@ -59,6 +61,14 @@ public class StudySessionModel {
         startTime = LocalDateTime.now();
         duration = 0;
         status = Status.INACTIVE;
+    }
+    public static StudySessionModel getInstance() {
+
+        if(instance == null) {
+            instance = new StudySessionModel();
+        }
+
+        return instance;
     }
 
     public void startSession() {
