@@ -29,4 +29,8 @@ public class ObjectiveController {
         return database.getObjectivesForFuture(userID, date);
     }
 
+    public int deletePastObjectives(int userID, String date){
+        return database.deletePastObjectives(userID, date);
+    }
+
 }
