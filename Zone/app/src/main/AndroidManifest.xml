@@ -19,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Zone">
         <service
-            android:name=".view.BlockApplications"
+            android:name=".controller.BlockApplication"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
             <intent-filter>
@@ -30,7 +30,7 @@
                 android:resource="@xml/blocked_apps"/>
         </service>
         <activity
-            android:name=".view.BlockedApplication"
+            android:name=".model.DetectBlockedApplication"
             android:exported="false"/>
 
         <activity
