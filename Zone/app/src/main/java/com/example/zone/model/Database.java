@@ -425,4 +425,18 @@ public class Database extends SQLiteOpenHelper {
         );
         return deleted == 1;
     }
+
+        public int deletePastObjectives(int userID, String date) {
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        return db.delete(
+                "objectives",
+                "user_id=? AND objective_date<?",
+                new String[]{
+                        String.valueOf(userID),
+                        date
+                }
+        );
+    }
 }
