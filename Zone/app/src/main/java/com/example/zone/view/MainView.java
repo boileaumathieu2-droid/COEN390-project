@@ -10,7 +10,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsCompat;s
 
 import com.example.zone.R;
 import com.example.zone.controller.MainController;
@@ -54,7 +54,7 @@ public class MainView extends AppCompatActivity {
     private Button completeButton;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
-    private StudySessionModel session;  // use to get the live session
+    private StudySessionModel StudySession = StudySessionModel.getInstance();
 
     @Override
     public boolean onSupportNavigateUp() {
@@ -282,6 +282,62 @@ public class MainView extends AppCompatActivity {
     public void openTimerSettings() {
         Intent intent = new Intent(this, TimerSettingsView.class);
         startActivity(intent);
+    }
+    public void manageDnD(boolean enable) {
+        NotificationManager notificationManager =
+                getSystemService(NotificationManager.class);
+        if (enable) {
+            notificationManager.setInterruptionFilter(
+                    NotificationManager.INTERRUPTION_FILTER_NONE);
+
+        } else {
+            notificationManager.setInterruptionFilter(
+                    NotificationManager.INTERRUPTION_FILTER_ALL);
+        }
+        Log.d("DND", "Current filter: " +
+                notificationManager.getCurrentInterruptionFilter());
+    }
+    private void showDndPermissionDialog() {
+
+        new AlertDialog.Builder(this)
+                .setTitle("Enable Focus Mode")
+                .setMessage("Do you want to allow Do Not Disturb access for study sessions?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    Intent intent = new Intent(
+                            Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS
+                    );
+
+                    startActivity(intent);
+
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    dialog.dismiss();
+                    startCountdown();
+
+
+                })
+                .show();
+    }
+    private boolean hasDndAccess() {
+        NotificationManager notificationManager =
+                getSystemService(NotificationManager.class);
+        boolean y = notificationManager.isNotificationPolicyAccessGranted();
+        if (y) {
+            System.out.println("TRUE");
+        } else {
+            System.out.println("FALSE");
+
+        }
+        return y;
+    }
+    public void showStatus() {
+        if (StudySession.getStatus() == StudySessionModel.Status.COMPLETE) {
+            Toast.makeText(MainView.this, "COMPLETE", Toast.LENGTH_SHORT).show();
+        } else if (StudySession.getStatus() == StudySessionModel.Status.INACTIVE) {
+            Toast.makeText(MainView.this, "INACTIVE", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
+        }
     }
 
 
