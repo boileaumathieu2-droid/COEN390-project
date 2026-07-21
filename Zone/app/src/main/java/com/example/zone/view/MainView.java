@@ -1,19 +1,27 @@
 package com.example.zone.view;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;s
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.zone.R;
 import com.example.zone.controller.MainController;
+import com.example.zone.controller.NotificationController;
 import com.example.zone.controller.ObjectiveController;
 import com.example.zone.model.Database;
 import com.example.zone.model.MainViewObjectiveAdapter;
@@ -145,36 +153,66 @@ public class MainView extends AppCompatActivity {
 
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
 
-        startButton.setOnClickListener(v -> startCountdown());
+         startButton.setOnClickListener(v ->  { startCountdown();
+            TimerModel model = TimerModel.getInstance();
+            if (!hasDndAccess()) {
+                showDndPermissionDialog();
+            }
+            if (hasDndAccess()) {
+                manageDnD(true);
+                startCountdown();
+            }
+            if (model.isBreakTime()) {
+                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
+            } else {
+                StudySession.startSession();
+            }
+            showStatus();
+        });
 
-        pauseButton.setOnClickListener(v -> {
+       pauseButton.setOnClickListener(v -> {
             // Checks if timer is counting down
             if (TimerModel.getInstance().isRunning()) {
+                manageDnD(false);
+                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
                 // pause timer if it was running
                 TimerModel.getInstance().pauseTimer();
+
             } else {
-                // resume timer if it was paused
                 resumeCountdown();
+                StudySession.setStatus(StudySessionModel.Status.ACTIVE);
+                manageDnD(true);
+            }
+            if (TimerModel.getInstance().isBreakTime()) {
+                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             }
             updateTimerUI();
         });
 
-        resetButton.setOnClickListener(v -> {
+         resetButton.setOnClickListener(v -> {
             TimerModel.getInstance().stopAndReset();
             updateTimerUI();
+            StudySession.setStatus(StudySessionModel.Status.INACTIVE);
+            showStatus();
+            manageDnD(false);
         });
 
         completeButton.setOnClickListener(v -> {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
-
+            StudySession.setStatus(StudySessionModel.Status.COMPLETE);
+            showStatus();
+            manageDnD(false);
             // Show toast for manual completion
             String message;
             if(model.isBreakEnabled()) {
                 message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
+                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
                 message = "Study Finished!";
             }
+            StudySession.setStatus(StudySessionModel.Status.COMPLETE);
+
             Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
 
             updateTimerUI();
@@ -274,6 +312,14 @@ public class MainView extends AppCompatActivity {
 
         // state is true : false
         pauseButton.setText(model.isRunning() ? "Pause" : "Resume");
+        if (minutes == 0 && seconds == 0) {
+            manageDnD(false);
+            StudySession.setStatus(StudySessionModel.Status.INACTIVE);
+            NotificationController notificationHelper = new NotificationController(this);
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                notificationHelper.sendNotifications("STUDY APP", "GET BACK TO WORK!");
+            }
+        }
 
         // Hide start button if timer is running or paused mid-session
         startButton.setVisibility(isTimerActive ? android.view.View.GONE : android.view.View.VISIBLE);
@@ -298,7 +344,6 @@ public class MainView extends AppCompatActivity {
                 notificationManager.getCurrentInterruptionFilter());
     }
     private void showDndPermissionDialog() {
-
         new AlertDialog.Builder(this)
                 .setTitle("Enable Focus Mode")
                 .setMessage("Do you want to allow Do Not Disturb access for study sessions?")
