@@ -13,6 +13,14 @@ public class Objective {
         this.objectiveDate = objectiveDate;
     }
 
+    public void setObjectiveText(String objectiveText){
+        this.objectiveText = objectiveText;
+    }
+
+    public void setObjectiveDate(String objectiveDate){
+        this.objectiveDate = objectiveDate;
+    }
+
     public String getObjectiveText(){
         return objectiveText;
     }
