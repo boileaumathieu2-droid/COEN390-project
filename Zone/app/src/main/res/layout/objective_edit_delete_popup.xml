@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="221dp"
+        android:layout_marginStart="34dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="34dp"
+        android:background="#FFFFFF"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/editDeleteEdit"
+            android:layout_width="159dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"
+            android:text="Edit"
+            android:textSize="18dp" />
+
+        <Button
+            android:id="@+id/editDeleteDelete"
+            android:layout_width="159dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="15dp"
+            android:text="Delete"
+            android:textSize="18dp" />
+
+        <Button
+            android:id="@+id/editDeleteCancel"
+            android:layout_width="159dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="15dp"
+            android:text="Cancel"
+            android:textSize="18dp" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
