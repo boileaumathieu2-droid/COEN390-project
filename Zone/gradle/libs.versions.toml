@@ -25,4 +25,3 @@ desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", ver
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
