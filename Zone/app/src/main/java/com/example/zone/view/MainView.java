@@ -124,6 +124,7 @@ public class MainView extends AppCompatActivity {
         completeButton = findViewById(R.id.completeTimer);
         Button gradesButton = findViewById(R.id.gradesTrackerButton);
         Button analyticsButton = findViewById(R.id.analyticsButton);
+        Button objectivesButton = findViewById(R.id.objectivesButton);
         timerDisplay = findViewById(R.id.timerDisplay);
         objectivesPrompt = findViewById(R.id.goalPrompt);
 
@@ -143,6 +144,11 @@ public class MainView extends AppCompatActivity {
 
         objectivesPrompt.setOnClickListener(v->{
             Intent intent = new Intent(this,ObjectiveView.class);
+            startActivity(intent);
+        });
+
+        objectivesButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ObjectiveView.class);
             startActivity(intent);
         });
 
@@ -384,6 +390,4 @@ public class MainView extends AppCompatActivity {
             Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
         }
     }
-
-
 }
