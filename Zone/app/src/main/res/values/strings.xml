@@ -12,13 +12,10 @@
     <string name="raw_value">Raw: %1$d</string>
     <string name="signal_range">Range: %1$d</string>
     <string name="connect_your_sensor">Connect your sensor</string>
-    <string name="connect_sensor_instructions">Turn on the Bluno Nano, tap Scan, then select the Bluno device below.</string>
-    <string name="connect_sensor_instructions_v13">Turn on the Bluno Nano and tap Scan. Names can appear after a few seconds; likely Bluno devices move to the top.</string>
     <string name="connect_by_device_id_title">Connect directly to your Bluno</string>
     <string name="default_bluno_device_id">D0:39:72:DF:D5:0E</string>
     <string name="device_id_hint">AA:BB:CC:DD:EE:FF</string>
     <string name="connect_by_device_id">Connect to D0:39:72:DF:D5:0E</string>
-    <string name="device_id_help">Use this direct connection when the Bluno does not appear in scan results.</string>
     <string name="invalid_bluetooth_address">Enter a Bluetooth ID in AA:BB:CC:DD:EE:FF format.</string>
     <string name="connecting_device_id">Connecting directly to %1$s…</string>
     <string name="scan_for_bluno">Scan for Bluno</string>
@@ -33,6 +30,7 @@
     <string name="scanning_for_devices">Scanning for nearby BLE devices…</string>
     <string name="scanning">Scanning…</string>
     <string name="scan_failed">BLE scan failed (code %1$d).</string>
+    <string name="scan_start_failed">The BLE scan could not start. Turn Bluetooth off and on, then try again.</string>
     <string name="no_ble_devices_found">No BLE devices found. Move closer to the Bluno and scan again.</string>
     <string name="select_bluno_device">Select your Bluno from the list.</string>
     <string name="unnamed_ble_device">Unnamed BLE device</string>
@@ -52,4 +50,40 @@
     <string name="no_signal_instructions">No signal — place your finger firmly on the sensor</string>
     <string name="calculating_bpm">Signal found — keep still while BPM is calculated</string>
     <string name="live_reading">Live heart-rate reading</string>
+
+    <string name="manage_blocked_apps">Manage blocked apps</string>
+    <string name="manage_blocked_apps_subtitle">Choose which apps are unavailable during an active study session.</string>
+    <string name="no_launchable_apps">No launchable apps were found.</string>
+    <string name="blocked_app_package">Package: %1$s</string>
+    <string name="selected_date_tasks">Tasks for %1$s</string>
+    <string name="no_tasks_for_date">No tasks for this date. Tap New Objective to add one.</string>
+    <string name="edit_task">Edit task</string>
+    <string name="delete_task">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="task_cannot_be_empty">Task cannot be empty.</string>
+    <string name="delete_task_question">Delete this task?</string>
+    <string name="delete_task_message">This action cannot be undone.</string>
+    <string name="create_task">Create Task</string>
+    <string name="edit_task_title">Edit Task</string>
+    <string name="event_name">Event name</string>
+    <string name="event_name_hint">Enter the task name</string>
+    <string name="due_date">Due date</string>
+    <string name="completion_time">Completion time</string>
+    <string name="completion_time_hint">Estimated time in minutes</string>
+    <string name="task_type">Task type</string>
+    <string name="objectives">Objectives</string>
+    <string name="objectives_hint">Enter the objectives for this task</string>
+    <string name="save_task">Save Task</string>
+    <string name="task_saved">Task saved</string>
+    <string name="event_name_required">Enter an event name.</string>
+    <string name="completion_time_required">Enter the estimated completion time.</string>
+    <string name="task_details">Type: %1$s\nDue: %2$s\nEstimated time: %3$s\n\nObjectives:\n%4$s</string>
+    <string name="minutes_value">%1$s minutes</string>
+    <string name="not_set">Not set</string>
+    <string-array name="task_types">
+        <item>Assignment</item>
+        <item>Exam</item>
+        <item>Project</item>
+        <item>Other</item>
+    </string-array>
 </resources>
