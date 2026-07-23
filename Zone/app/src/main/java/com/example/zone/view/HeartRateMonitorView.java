@@ -60,6 +60,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
             UUID.fromString("0000dfb2-0000-1000-8000-00805f9b34fb");
     private static final UUID CLIENT_CONFIGURATION_UUID =
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    private static final String TARGET_BLUNO_ADDRESS = "D0:39:72:DF:D5:0E";
     private static final long SCAN_DURATION_MS = 15_000L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -398,6 +399,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
     @SuppressLint("MissingPermission")
     private void beginScan() {
+        scanAfterPermission = false;
         if (bluetoothAdapter == null) {
             showConnectionState(getString(R.string.ble_not_supported), false);
             return;
@@ -432,7 +434,14 @@ public class HeartRateMonitorView extends AppCompatActivity {
         scanning = true;
         scanButton.setEnabled(false);
         showConnectionState(getString(R.string.scanning), false);
-        bluetoothLeScanner.startScan(null, scanSettings, scanCallback);
+        try {
+            bluetoothLeScanner.startScan(null, scanSettings, scanCallback);
+        } catch (SecurityException | IllegalStateException error) {
+            scanning = false;
+            scanButton.setEnabled(true);
+            showConnectionState(getString(R.string.scan_start_failed), false);
+            return;
+        }
         mainHandler.removeCallbacks(scanTimeout);
         mainHandler.postDelayed(scanTimeout, SCAN_DURATION_MS);
     }
@@ -483,7 +492,9 @@ public class HeartRateMonitorView extends AppCompatActivity {
         boolean nameLooksLikeBluno = normalizedName.contains("bluno")
                 || normalizedName.contains("dfrobot")
                 || normalizedName.contains("df robot");
-        boolean isBlunoCandidate = advertisesBlunoService || nameLooksLikeBluno;
+        boolean isBlunoCandidate = address.equalsIgnoreCase(TARGET_BLUNO_ADDRESS)
+                || advertisesBlunoService
+                || nameLooksLikeBluno;
         String finalReportedName = reportedName;
         boolean finalIsBlunoCandidate = isBlunoCandidate;
         runOnUiThread(() -> {
