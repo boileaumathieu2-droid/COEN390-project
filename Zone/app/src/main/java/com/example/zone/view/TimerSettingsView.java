@@ -36,7 +36,7 @@ public class TimerSettingsView extends AppCompatActivity {
         int id = option.getItemId();
 
         if (id == R.id.action_settings) {
-            Intent intent = new Intent(TimerSettingsView.this, SettingsView.class);
+            Intent intent = new Intent(this, SettingsView.class);
             startActivity(intent);
 
         }
