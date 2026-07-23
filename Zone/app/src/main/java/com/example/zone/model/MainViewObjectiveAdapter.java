@@ -34,7 +34,7 @@ public class MainViewObjectiveAdapter extends ArrayAdapter<Objective> {
 
         if (objective != null) {
 
-            String display = objective.getObjectiveText();
+            String display = objective.getEventName();
 
             objectiveText.setText(display);
         }
