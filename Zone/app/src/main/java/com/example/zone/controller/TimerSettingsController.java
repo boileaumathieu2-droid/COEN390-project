@@ -2,6 +2,7 @@ package com.example.zone.controller;
 
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.Toast;
 import com.example.zone.model.TimerModel;
 import com.example.zone.R;
 import com.example.zone.view.TimerSettingsView;
@@ -83,16 +84,31 @@ public class TimerSettingsController {
     public void saveSettings() {
         int studyMins = parseOrDefault(timerSettingsView.getStudyMinsText(), "smin");
         int studySecs = parseOrDefault(timerSettingsView.getStudySecsText(), "ssec");
-        timerModel.setStudyDuration(studyMins * 60 + studySecs);
-
         int breakMins = parseOrDefault(timerSettingsView.getBreakMinsText(), "bmin");
         int breakSecs = parseOrDefault(timerSettingsView.getBreakSecsText(), "bsec");
-        timerModel.setBreakDuration(breakMins * 60 + breakSecs);
-        
-        timerModel.setBreakEnabled(timerSettingsView.isBreakTimerEnabled());
 
-        timerSettingsView.finish();
+        if (studyMins < 0 || studySecs < 0 || studySecs > 59
+                || studyMins * 60 + studySecs <= 0) {
+            Toast.makeText(timerSettingsView,
+                    "Enter a study time greater than 0 (seconds must be 0–59).",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        boolean breakEnabled = timerSettingsView.isBreakTimerEnabled();
+        if (breakEnabled && (breakMins < 0 || breakSecs < 0 || breakSecs > 59
+                || breakMins * 60 + breakSecs <= 0)) {
+            Toast.makeText(timerSettingsView,
+                    "Enter a break time greater than 0 (seconds must be 0–59).",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
         timerModel.stopAndReset();
+        timerModel.setStudyDuration(studyMins * 60 + studySecs);
+        timerModel.setBreakDuration(breakMins * 60 + breakSecs);
+        timerModel.setBreakEnabled(breakEnabled);
+        timerSettingsView.finish();
     }
 
     public void cancelSettings() {

@@ -1,12 +1,10 @@
 package com.example.zone.view;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -103,6 +101,7 @@ public class MainView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Session.init(getApplicationContext());
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
@@ -159,19 +158,19 @@ public class MainView extends AppCompatActivity {
 
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
 
-         startButton.setOnClickListener(v ->  { startCountdown();
+         startButton.setOnClickListener(v ->  {
+            startCountdown();
             TimerModel model = TimerModel.getInstance();
-            if (!hasDndAccess()) {
-                showDndPermissionDialog();
-            }
             if (hasDndAccess()) {
                 manageDnD(true);
-                startCountdown();
             }
             if (model.isBreakTime()) {
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
-                StudySession.startSession();
+                StudySessionModel liveSession = model.getLiveSession();
+                if (liveSession != null) {
+                    StudySession = liveSession;
+                }
             }
             showStatus();
         });
@@ -338,48 +337,28 @@ public class MainView extends AppCompatActivity {
     public void manageDnD(boolean enable) {
         NotificationManager notificationManager =
                 getSystemService(NotificationManager.class);
-        if (enable) {
-            notificationManager.setInterruptionFilter(
-                    NotificationManager.INTERRUPTION_FILTER_NONE);
-
-        } else {
-            notificationManager.setInterruptionFilter(
-                    NotificationManager.INTERRUPTION_FILTER_ALL);
+        if (notificationManager == null
+                || !notificationManager.isNotificationPolicyAccessGranted()) {
+            Log.d("DND", "Notification policy access is not granted; timer continues normally.");
+            return;
         }
-        Log.d("DND", "Current filter: " +
-                notificationManager.getCurrentInterruptionFilter());
+
+        try {
+            notificationManager.setInterruptionFilter(enable
+                    ? NotificationManager.INTERRUPTION_FILTER_NONE
+                    : NotificationManager.INTERRUPTION_FILTER_ALL);
+            Log.d("DND", "Current filter: "
+                    + notificationManager.getCurrentInterruptionFilter());
+        } catch (SecurityException exception) {
+            Log.w("DND", "Could not change Do Not Disturb state.", exception);
+        }
     }
-    private void showDndPermissionDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Enable Focus Mode")
-                .setMessage("Do you want to allow Do Not Disturb access for study sessions?")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    Intent intent = new Intent(
-                            Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS
-                    );
 
-                    startActivity(intent);
-
-                })
-                .setNegativeButton("No", (dialog, which) -> {
-                    dialog.dismiss();
-                    startCountdown();
-
-
-                })
-                .show();
-    }
     private boolean hasDndAccess() {
         NotificationManager notificationManager =
                 getSystemService(NotificationManager.class);
-        boolean y = notificationManager.isNotificationPolicyAccessGranted();
-        if (y) {
-            System.out.println("TRUE");
-        } else {
-            System.out.println("FALSE");
-
-        }
-        return y;
+        return notificationManager != null
+                && notificationManager.isNotificationPolicyAccessGranted();
     }
     public void showStatus() {
         if (StudySession.getStatus() == StudySessionModel.Status.COMPLETE) {
@@ -390,4 +369,6 @@ public class MainView extends AppCompatActivity {
             Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
         }
     }
+
+
 }
