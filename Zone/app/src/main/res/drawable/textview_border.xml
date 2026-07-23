@@ -4,5 +4,4 @@
     <stroke
         android:color="@color/black"
         android:width="5dp" />
-
 </shape>
