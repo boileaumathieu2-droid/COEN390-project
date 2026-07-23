@@ -31,6 +31,4 @@
         android:layout_width="353dp"
         android:layout_height="wrap_content"
         android:text="Go back to study Timer" />
-
 </LinearLayout>
-
