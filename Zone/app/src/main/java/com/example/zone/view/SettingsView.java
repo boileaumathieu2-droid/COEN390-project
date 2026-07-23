@@ -25,6 +25,7 @@ public class SettingsView extends AppCompatActivity {
         setContentView(R.layout.settings_menu);
         TextView logout = findViewById(R.id.logoutButton);
         TextView connectDevice = findViewById(R.id.connectDeviceButton);
+        TextView appRestrict = findViewById(R.id.appRestrictButton);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Settings");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -38,6 +39,11 @@ public class SettingsView extends AppCompatActivity {
 
         connectDevice.setOnClickListener(v -> {
             Intent intent = new Intent(this, HeartRateMonitorView.class);
+            startActivity(intent);
+        });
+
+        appRestrict.setOnClickListener(v -> {
+            Intent intent = new Intent(this, BlockedAppsView.class);
             startActivity(intent);
         });
         }
