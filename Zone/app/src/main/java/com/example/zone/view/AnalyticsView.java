@@ -11,6 +11,12 @@ import com.example.zone.R;
 public class AnalyticsView extends AppCompatActivity {
 
     @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.action_menu, menu);
         return true;
