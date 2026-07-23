@@ -20,19 +20,19 @@
             android:layout_width="match_parent"
             android:layout_height="42dp"
             android:gravity="center"
-            android:text="New Grade"
+            android:text="New Subject"
             android:textColor="#FFFFFF"
             android:textSize="24sp" />
 
         <EditText
-            android:id="@+id/gradeEditText"
+            android:id="@+id/subjectEditText"
             android:layout_width="337dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
             android:backgroundTint="#FFFFFF"
             android:ems="10"
-            android:hint="Grade"
-            android:inputType="number|numberDecimal"
+            android:hint="Subject name"
+            android:inputType="textCapWords"
             android:textColorHint="#FFFFFF" />
 
         <LinearLayout
