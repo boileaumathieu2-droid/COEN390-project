@@ -24,11 +24,14 @@ public class StudySessionTest {
         session.startSession();
 
         int duration = 2700; // about 45 minutes
+        LocalDateTime beforeEnd = LocalDateTime.now();
         session.endSession(duration);
+        LocalDateTime afterEnd = LocalDateTime.now();
 
         assertEquals(StudySessionModel.Status.COMPLETE, session.getStatus());
         assertEquals(duration, session.getDuration());
-        assertTrue(session.getEndTime() == LocalDateTime.now());
+        assertFalse(session.getEndTime().isBefore(beforeEnd));
+        assertFalse(session.getEndTime().isAfter(afterEnd));
     }
 
     @Test

@@ -33,14 +33,14 @@ public class TimerModel {
 
     // setters and getters
     public void setStudyDuration(int duration) {
-        studyDuration = duration;
+        studyDuration = Math.max(1, duration);
         if (!isRunning) {
-            remainingTime = duration;
+            remainingTime = studyDuration;
         }
     }
 
     public void setBreakDuration(int duration) {
-        breakDuration = duration;
+        breakDuration = Math.max(1, duration);
     }
 
     public void setBreakEnabled(boolean enabled) {
@@ -52,21 +52,36 @@ public class TimerModel {
     }
 
     public boolean tick() {
-        if (isRunning && remainingTime > 0) {
+        if (!isRunning) {
+            return false;
+        }
+
+        if (remainingTime > 0) {
             remainingTime--;
+        }
+
+        if (remainingTime > 0) {
             return true;
         }
-        if (remainingTime <= 0) {
-            isRunning = false;
-            if (!breakTime && breakEnabled) {
-                switchToBreak();
-            } else {
-                // If it was already a break, or no break is enabled, go back to study state
-                breakTime = false;
-                remainingTime = studyDuration;
-            }
-        }
+
+        finishCurrentPeriod();
         return false;
+    }
+
+    private void finishCurrentPeriod() {
+        isRunning = false;
+        if (!breakTime && session != null) {
+            session.endSession(studyDuration);
+        }
+
+        if (!breakTime && breakEnabled) {
+            switchToBreak();
+        } else {
+            // If it was already a break, or no break is enabled, go back to study state.
+            breakTime = false;
+            remainingTime = studyDuration;
+            session = null;
+        }
     }
 
     private void switchToBreak() {
@@ -76,7 +91,7 @@ public class TimerModel {
 
     public void completeSession() {
         // finalize study session
-        if(!breakTime){
+        if (!breakTime && session != null) {
             session.endSession(studyDuration - remainingTime);
         }
 
@@ -103,9 +118,9 @@ public class TimerModel {
 
     public void startTimer() { // take the objective to build the studySessionModel
         if (!isRunning) {
-            // reset timer duration in case
-            if (remainingTime < studyDuration) {
-                remainingTime = studyDuration;
+            int currentDuration = breakTime ? breakDuration : studyDuration;
+            if (remainingTime <= 0 || remainingTime > currentDuration) {
+                remainingTime = currentDuration;
             }
             isRunning = true;
 
@@ -121,14 +136,20 @@ public class TimerModel {
         isRunning = false;
     }
 
-    public void resumeTimer() {isRunning = true;}
+    public void resumeTimer() {
+        if (remainingTime > 0) {
+            isRunning = true;
+        }
+    }
 
     public void stopAndReset() {
         isRunning = false;
+        if (session != null) {
+            session.endSession(Math.max(0, studyDuration - remainingTime));
+        }
         breakTime = false;
         remainingTime = studyDuration;
-        // end the live session tracker
-        session.endSession(studyDuration - remainingTime);
+        session = null;
     }
 
     public void resetTimer() {

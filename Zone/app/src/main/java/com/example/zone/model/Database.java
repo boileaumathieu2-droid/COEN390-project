@@ -107,7 +107,9 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public boolean addUser(String username, String passwordHash) {
-        if (username.length() < 6 || passwordHash.length() < 6 || !verifyUsername(username)) {
+        if (username == null || passwordHash == null
+                || username.length() < 6 || passwordHash.length() < 6
+                || !verifyUsername(username)) {
             return false;
         }
         SQLiteDatabase db = getWritableDatabase();

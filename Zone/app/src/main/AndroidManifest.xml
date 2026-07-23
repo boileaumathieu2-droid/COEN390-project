@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.zone">
+    xmlns:tools="http://schemas.android.com/tools">
     
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission
@@ -35,6 +34,7 @@
     </queries>
 
     <application
+        android:name=".ZoneApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -60,6 +60,9 @@
 
         <activity
             android:name=".view.RegistrationView"
+            android:exported="false" />
+        <activity
+            android:name=".view.LoginView"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -68,7 +71,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".view.MainView" android:exported="true"/>
-        <activity android:name=".view.LoginView" android:exported="true"/>
         <activity android:name=".view.SettingsView" android:exported="true"/>
         <activity android:name=".view.HeartRateMonitorView" android:exported="false"/>
         <activity android:name=".view.BlockedAppsView" android:exported="false"/>

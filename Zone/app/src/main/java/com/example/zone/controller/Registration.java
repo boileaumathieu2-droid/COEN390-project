@@ -19,7 +19,8 @@ public class Registration {
 
     public boolean confirmRegistration(String username, String password, String confirmPassword) {
 
-        if (!username.matches("^[a-zA-Z0-9]+$")) {
+        if (username == null || password == null || confirmPassword == null
+                || !username.matches("^[a-zA-Z0-9]+$")) {
             return false;
         }
 
@@ -29,9 +30,12 @@ public class Registration {
 
         String hashedPassword = hashPassword(password);
 
-        return database.addUser(username, hashedPassword);
+        return hashedPassword != null && database.addUser(username, hashedPassword);
     }
 
+    public int getUserID(String username) {
+        return database.getUserID(username);
+    }
 
     public String hashPassword(String password) {
 

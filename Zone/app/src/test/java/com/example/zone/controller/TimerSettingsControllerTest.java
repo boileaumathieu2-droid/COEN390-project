@@ -9,11 +9,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
+@Config(sdk = 34)
 public class TimerSettingsControllerTest {
 
     private TimerSettingsController controller;
