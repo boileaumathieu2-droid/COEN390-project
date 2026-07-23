@@ -1,107 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    tools:context=".view.MainView">
+    android:background="@color/white"
+    android:fillViewport="true">
 
     <LinearLayout
-        android:layout_width="417dp"
-        android:layout_height="727dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:isScrollContainer="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:paddingStart="20dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="32dp">
 
         <TextView
             android:id="@+id/dailyObjectiveText"
-            android:layout_width="281dp"
-            android:layout_height="45dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:text="Daily Objectives"
-            android:textColor="#000000"
+            android:textColor="@color/zone_text_primary"
             android:textSize="24sp"
             android:textStyle="bold" />
 
         <ListView
             android:id="@+id/dailyGoalsListView"
-            android:layout_width="370dp"
+            android:layout_width="match_parent"
             android:layout_height="126dp"
-            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
             android:background="@drawable/textview_border" />
 
         <TextView
             android:id="@+id/goalPrompt"
-            android:layout_width="353dp"
-            android:layout_height="61dp"
-            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:gravity="center"
+            android:minHeight="54dp"
+            android:padding="8dp"
             android:text="You have not set any goals for today. Set your study session goal here."
-            android:textColor="#000000"
-            android:textSize="18dp" />
+            android:textColor="@color/zone_text_primary"
+            android:textSize="17sp" />
+
+        <Button
+            android:id="@+id/objectivesButton"
+            android:layout_width="260dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:text="Calendar / Objectives"
+            android:textColor="@color/white" />
 
         <TextView
             android:id="@+id/studyTipTextView"
-            android:layout_width="263dp"
-            android:layout_height="33dp"
-            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:layout_marginBottom="18dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
             android:text="A study tip will be displayed here"
-            android:textColor="#000000" />
+            android:textColor="@color/zone_text_primary" />
 
         <Button
             android:id="@+id/timerSettings"
-            android:layout_width="222dp"
+            android:layout_width="260dp"
             android:layout_height="52dp"
-            android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
             android:text="Timer Settings" />
 
         <Button
             android:id="@+id/startStudySeshButton"
-            android:layout_width="222dp"
+            android:layout_width="260dp"
             android:layout_height="52dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="12dp"
             android:text="Start Study Session" />
 
         <Button
             android:id="@+id/gradesTrackerButton"
-            android:layout_width="222dp"
+            android:layout_width="260dp"
             android:layout_height="52dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="12dp"
             android:text="Grades Tracker" />
 
         <Button
             android:id="@+id/analyticsButton"
-            android:layout_width="222dp"
+            android:layout_width="260dp"
             android:layout_height="52dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="12dp"
             android:text="Analytics" />
 
         <TextView
             android:id="@+id/timerTitle"
-            android:layout_width="263dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginTop="18dp"
-            android:layout_marginBottom="8dp"
             android:gravity="center"
             android:text="Study Time"
-            android:textColor="#000000"
+            android:textColor="@color/zone_text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -109,41 +106,35 @@
             android:id="@+id/timerDisplay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginBottom="18dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"
             android:text="00:00"
-            android:textColor="#000000"
+            android:textColor="@color/zone_text_primary"
             android:textSize="48sp"
             android:textStyle="bold" />
 
         <Button
             android:id="@+id/pauseTimer"
-            android:layout_width="111dp"
-            android:layout_height="42dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_width="140dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
             android:text="Pause"
             android:visibility="gone" />
 
         <Button
             android:id="@+id/resetTimer"
-            android:layout_width="111dp"
-            android:layout_height="42dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_width="140dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
             android:text="Reset"
             android:visibility="gone" />
 
         <Button
             android:id="@+id/completeTimer"
-            android:layout_width="111dp"
-            android:layout_height="42dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_width="140dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
             android:text="Complete"
             android:visibility="gone" />
-
-
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
