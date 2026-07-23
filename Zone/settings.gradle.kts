@@ -24,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Zone"
 include(":app")
- 
