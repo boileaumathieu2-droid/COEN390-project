@@ -1,7 +1,18 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Zone" parent="Theme.Material3.DayNight">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+<resources>
+    <!-- Keep the study screens readable when the phone itself uses dark mode. -->
+    <style name="Base.Theme.Zone" parent="Theme.Material3.Light">
+        <item name="colorPrimary">@color/zone_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/zone_heart</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorSurfaceContainer">@color/zone_surface</item>
+        <item name="colorOnSurface">@color/zone_text_primary</item>
+        <item name="android:colorAccent">@color/zone_primary</item>
+        <item name="android:textColorPrimary">@color/zone_text_primary</item>
+        <item name="android:textColorSecondary">@color/zone_text_secondary</item>
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:statusBarColor">@color/zone_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/zone_background</item>
     </style>
 </resources>
