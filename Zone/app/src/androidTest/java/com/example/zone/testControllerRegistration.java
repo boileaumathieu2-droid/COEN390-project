@@ -73,4 +73,3 @@ public class testControllerRegistration {
         String password3 = registration.hashPassword("hashing2");
         assertNotEquals(password, password3);
     }
-
