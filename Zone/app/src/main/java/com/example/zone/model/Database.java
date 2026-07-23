@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     public Database(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -74,6 +74,9 @@ public class Database extends SQLiteOpenHelper {
                         "user_id INTEGER," +
                         "objective_text TEXT," +
                         "objective_date TEXT," +
+                        "event_name TEXT," +
+                        "completion_time TEXT," +
+                        "task_type TEXT," +
                         "FOREIGN KEY(user_id) REFERENCES users(id)" +
                         ")";
 
@@ -86,12 +89,21 @@ public class Database extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS users");
-        db.execSQL("DROP TABLE IF EXISTS subjects");
-        db.execSQL("DROP TABLE IF EXISTS grades");
-        db.execSQL("DROP TABLE IF EXISTS objectives");
-        db.execSQL("DROP TABLE IF EXISTS sessions");
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("DROP TABLE IF EXISTS users");
+            db.execSQL("DROP TABLE IF EXISTS subjects");
+            db.execSQL("DROP TABLE IF EXISTS grades");
+            db.execSQL("DROP TABLE IF EXISTS objectives");
+            db.execSQL("DROP TABLE IF EXISTS sessions");
+            onCreate(db);
+            return;
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE objectives ADD COLUMN event_name TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE objectives ADD COLUMN completion_time TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE objectives ADD COLUMN task_type TEXT NOT NULL DEFAULT 'Other'");
+            db.execSQL("UPDATE objectives SET event_name=objective_text WHERE event_name='' ");
+        }
     }
 
     public boolean addUser(String username, String passwordHash) {
@@ -229,13 +241,44 @@ public class Database extends SQLiteOpenHelper {
             ArrayList<String> grades = getGrades(subjectID);
 
 
-            subjects.add(new Subject(name, grades));
+            subjects.add(new Subject(subjectID, name, grades));
         }
 
 
         cursor.close();
 
         return subjects;
+    }
+
+    public boolean subjectAlreadyExists(int userID, String subjectName) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                "subjects",
+                new String[]{"id"},
+                "user_id=? AND subject_name=? COLLATE NOCASE",
+                new String[]{String.valueOf(userID), subjectName.trim()},
+                null,
+                null,
+                null,
+                "1"
+        );
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    public boolean deleteSubject(int subjectID) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.delete("grades", "subject_id=?", new String[]{String.valueOf(subjectID)});
+            int deleted = db.delete(
+                    "subjects", "id=?", new String[]{String.valueOf(subjectID)});
+            db.setTransactionSuccessful();
+            return deleted == 1;
+        } finally {
+            db.endTransaction();
+        }
     }
 
     public ArrayList<String> getGrades(int subjectID){
@@ -319,7 +362,28 @@ public class Database extends SQLiteOpenHelper {
         values.put("user_id", userID);
         values.put("objective_text", text);
         values.put("objective_date", date);
+        values.put("event_name", text);
+        values.put("completion_time", "");
+        values.put("task_type", "Other");
 
+        return db.insert("objectives", null, values);
+    }
+
+    public long addTask(
+            int userID,
+            String eventName,
+            String dueDate,
+            String completionTime,
+            String taskType,
+            String objectives) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("user_id", userID);
+        values.put("event_name", eventName);
+        values.put("objective_date", dueDate);
+        values.put("completion_time", completionTime);
+        values.put("task_type", taskType);
+        values.put("objective_text", objectives);
         return db.insert("objectives", null, values);
     }
 
@@ -341,13 +405,7 @@ public class Database extends SQLiteOpenHelper {
 
         while (cursor.moveToNext()) {
 
-            int objectiveID = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
-
-            String text = cursor.getString(cursor.getColumnIndexOrThrow("objective_text"));
-
-            String date = cursor.getString(cursor.getColumnIndexOrThrow("objective_date"));
-
-            objectives.add(new Objective(objectiveID, text, date));
+            objectives.add(readObjective(cursor));
         }
 
         cursor.close();
@@ -373,11 +431,7 @@ public class Database extends SQLiteOpenHelper {
 
         while (cursor.moveToNext()) {
 
-            objectives.add(new Objective(
-                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("objective_text")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("objective_date"))
-            ));
+            objectives.add(readObjective(cursor));
         }
 
         cursor.close();
@@ -405,11 +459,7 @@ public class Database extends SQLiteOpenHelper {
 
         while (cursor.moveToNext()) {
 
-            objectives.add(new Objective(
-                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("objective_text")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("objective_date"))
-            ));
+            objectives.add(readObjective(cursor));
         }
 
         cursor.close();
@@ -426,7 +476,59 @@ public class Database extends SQLiteOpenHelper {
         return deleted == 1;
     }
 
-        public int deletePastObjectives(int userID, String date) {
+    public boolean updateObjective(int objectiveID, String text, String date) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("objective_text", text);
+        values.put("objective_date", date);
+        int updated = db.update(
+                "objectives",
+                values,
+                "id=?",
+                new String[]{String.valueOf(objectiveID)}
+        );
+        return updated == 1;
+    }
+
+    public boolean updateTask(
+            int objectiveID,
+            String eventName,
+            String dueDate,
+            String completionTime,
+            String taskType,
+            String objectives) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("event_name", eventName);
+        values.put("objective_date", dueDate);
+        values.put("completion_time", completionTime);
+        values.put("task_type", taskType);
+        values.put("objective_text", objectives);
+        int updated = db.update(
+                "objectives",
+                values,
+                "id=?",
+                new String[]{String.valueOf(objectiveID)}
+        );
+        return updated == 1;
+    }
+
+    private Objective readObjective(Cursor cursor) {
+        String objectiveText = cursor.getString(
+                cursor.getColumnIndexOrThrow("objective_text"));
+        String eventName = cursor.getString(
+                cursor.getColumnIndexOrThrow("event_name"));
+        return new Objective(
+                cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                eventName,
+                cursor.getString(cursor.getColumnIndexOrThrow("objective_date")),
+                cursor.getString(cursor.getColumnIndexOrThrow("completion_time")),
+                cursor.getString(cursor.getColumnIndexOrThrow("task_type")),
+                objectiveText
+        );
+    }
+
+    public int deletePastObjectives(int userID, String date) {
 
         SQLiteDatabase db = getWritableDatabase();
 
