@@ -6,4 +6,5 @@
     android:layout_height="wrap_content"
     android:background="@drawable/textview_border1"
     android:padding="16dp"
+    android:textColor="@color/zone_text_primary"
     android:textSize="20sp" />
