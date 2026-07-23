@@ -13,8 +13,34 @@ public class ObjectiveController {
         return database.addObjective(userID, text, date);
     }
 
+    public long addTask(
+            int userID,
+            String eventName,
+            String dueDate,
+            String completionTime,
+            String taskType,
+            String objectives) {
+        return database.addTask(
+                userID, eventName, dueDate, completionTime, taskType, objectives);
+    }
+
     public boolean deleteObjective(int objectiveID){
         return database.deleteObjective(objectiveID);
+    }
+
+    public boolean updateObjective(int objectiveID, String text, String date) {
+        return database.updateObjective(objectiveID, text, date);
+    }
+
+    public boolean updateTask(
+            int objectiveID,
+            String eventName,
+            String dueDate,
+            String completionTime,
+            String taskType,
+            String objectives) {
+        return database.updateTask(
+                objectiveID, eventName, dueDate, completionTime, taskType, objectives);
     }
 
     public ArrayList<Objective> getObjectives(int userID){
