@@ -9,6 +9,31 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- BLE permissions for the Bluno Nano. Android 12+ uses the Bluetooth
+         permissions; Android 11 and older require location while scanning. -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="false" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Allows the App Restrict page to list apps that can be launched. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -45,11 +70,14 @@
         <activity android:name=".view.MainView" android:exported="true"/>
         <activity android:name=".view.LoginView" android:exported="true"/>
         <activity android:name=".view.SettingsView" android:exported="true"/>
+        <activity android:name=".view.HeartRateMonitorView" android:exported="false"/>
+        <activity android:name=".view.BlockedAppsView" android:exported="false"/>
         <activity android:name=".view.TimerSettingsView" android:exported="true"/>
         <activity android:name=".view.GradesTrackerView" android:exported="true"/>
         <activity android:name=".view.AnalyticsView" android:exported="true"/>
         <activity android:name=".view.SubjectView" android:exported="true"/>
         <activity android:name=".view.ObjectiveView" android:exported="true"/>
         <activity android:name=".view.ObjectivesPageView" android:exported="true"/>
+        <activity android:name=".view.TaskCreationView" android:exported="false"/>
     </application>
 </manifest>
