@@ -34,7 +34,7 @@ public class ObjectiveAdapter extends ArrayAdapter<Objective> {
 
         if (objective != null) {
 
-            String display = objective.getObjectiveDate() + " - " + objective.getObjectiveText();
+            String display = objective.getObjectiveDate() + " - " + objective.getEventName();
 
             objectiveText.setText(display);
         }
