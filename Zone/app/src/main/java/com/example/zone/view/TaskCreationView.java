@@ -1,5 +1,7 @@
 package com.example.zone.view;
 
+import static android.content.Intent.getIntent;
+
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;

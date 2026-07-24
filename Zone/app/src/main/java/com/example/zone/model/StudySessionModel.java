@@ -4,6 +4,8 @@ import static java.sql.Types.NULL;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StudySessionModel {
 
@@ -15,12 +17,12 @@ public class StudySessionModel {
      private static StudySessionModel instance;
 
 
-    private class heartRateInstances {
+    public static class HeartRateInstance {
         private int index;
         private int heartRate;
 
         // constructor
-        public heartRateInstances(int index, int heartRate) {
+        public HeartRateInstance(int index, int heartRate) {
             this.index = index;
             this.heartRate = heartRate;
         }
@@ -41,24 +43,24 @@ public class StudySessionModel {
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private int id;
     private int duration;
     private Status status;
     private int restingHeartRate;   // take heart rate value at time 0
-    private String objective = "";  // default case
     private Boolean objectiveMet = false;   // default, rating at session end
     private int productivityRating; // rated on session completion
-    private int[] heartRateData;    // save the heart rate values every 15 seconds
-    private int currentHeartRate;
+    private List<Integer> heartRateDataList = new ArrayList<>();    // save the heart rate values every 15 seconds
+    private int averageHeartRate;
+    private HeartRateReading currentHeartRateReading;
     // Peak and valley heart rate values and times
-    private heartRateInstances maxHeartRate;
-    private heartRateInstances minHeartRate;
+    private HeartRateInstance maxHeartRate;
+    private HeartRateInstance minHeartRate;
 
 
     // attributes for functions to use and keep track
 
     // Constructor
     public StudySessionModel() {    // constructed at start of session
-        startTime = LocalDateTime.now();
         duration = 0;
         status = Status.INACTIVE;
     }
@@ -70,20 +72,55 @@ public class StudySessionModel {
 
         return instance;
     }
-
+    // function that gets the current heart rate value from HeartRateMonitorView.java and HeartRateReading.java
+    public int getHeartRateReading() {
+        if (currentHeartRateReading != null && currentHeartRateReading.hasGoodSignal()) {
+            return currentHeartRateReading.getBpm();
+        }
+        return 0;
+    }
     public void startSession() {
         startTime = LocalDateTime.now();
         status = Status.ACTIVE;
+        restingHeartRate = getHeartRateReading();
+        // I want to get the heart rate readings saved every 5 seconds (starting at t = 0) in t
+    }
+    public void addHeartRateReading(){
+        int heartRate = getHeartRateReading();
+        if (heartRate > 0) {
+            heartRateDataList.add(heartRate);
+
+            // initialize max/min if they are null
+            if (maxHeartRate == null) {
+                maxHeartRate = new HeartRateInstance(heartRateDataList.size() - 1, heartRate);
+            }
+            if (minHeartRate == null) {
+                minHeartRate = new HeartRateInstance(heartRateDataList.size() - 1, heartRate);
+            }
+
+            // this updates min/max heart rates
+            if (heartRate > maxHeartRate.getHeartRate()) {
+                maxHeartRate.setHeartRate(heartRate);
+                maxHeartRate.setIndex(heartRateDataList.size() - 1);
+            }
+            if (heartRate < minHeartRate.getHeartRate()) {
+                minHeartRate.setHeartRate(heartRate);
+                minHeartRate.setIndex(heartRateDataList.size() - 1);
+            }
+        }
+    }
+
+
+    public void completeSession() {
+        completeSession(this.objectiveMet, this.productivityRating);
     }
 
     // Complete session logs all the session data
-    public void completeSession(int[] heartRateData, Boolean objectiveMet, int productivityRating) { // save the duration and end time
+    public void completeSession(Boolean objectiveMet, int productivityRating) { // save the duration and end time
         endTime = LocalDateTime.now();
         if (startTime != null) {
             // save the session data
             duration = (int) Duration.between(startTime, endTime).getSeconds();
-            this.heartRateData = heartRateData;
-            this.restingHeartRate = (heartRateData[0] + heartRateData[1])/2;    // take an average on early values
             this.objectiveMet = objectiveMet;
 
             // set productivity rating
@@ -94,30 +131,13 @@ public class StudySessionModel {
             }
 
             // calculate average heart rate
-            int sum = 0;
-            int max = 0;
-            int maxIndex = 0;
-            int min = 240;
-            int minIndex = 0;
-            for (int i = 0; i < heartRateData.length; i++) {
-                // calculate average
-                sum += heartRateData[i];
-
-                // verify peak and valley in the process
-                if (heartRateData[i] > max) {
-                    max = heartRateData[i];
-                    maxIndex = i;
+            if (!heartRateDataList.isEmpty()) {
+                int sum = 0;
+                for (int hr : heartRateDataList) {
+                    sum += hr;
                 }
-                if (heartRateData[i] < min) {
-                    min = heartRateData[i];
-                    minIndex = i;
-                }
+                averageHeartRate = sum / heartRateDataList.size();
             }
-            currentHeartRate = sum / heartRateData.length;
-
-            // log the max and min heart rates
-            this.maxHeartRate = new heartRateInstances(maxIndex, max);
-            this.minHeartRate = new heartRateInstances(minIndex, min);
         }
         status = Status.COMPLETE;
     }
@@ -131,16 +151,20 @@ public class StudySessionModel {
         return endTime;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public int getDuration() {
         return duration;
     }
 
     public Status getStatus() {
         return status;
-    }
-
-    public String getObjective() {
-        return objective;
     }
     public Boolean getObjectiveMet() {
         return objectiveMet;
@@ -150,26 +174,34 @@ public class StudySessionModel {
     }
 
     public int[] getHeartRateData() {
-        return heartRateData;
+        int[] data = new int[heartRateDataList.size()];
+        for (int i = 0; i < heartRateDataList.size(); i++) {
+            data[i] = heartRateDataList.get(i);
+        }
+        return data;
     }
 
     public int getRestingHeartRate() {
         return restingHeartRate;
     }
     public int getHeartRate() {
-        return currentHeartRate;
+        return averageHeartRate;
     }
     public int getMaxHeartRate() {
-        return maxHeartRate.getHeartRate();
+        return maxHeartRate != null ? maxHeartRate.getHeartRate() : 0;
     }
     public int getMinHeartRate() {
-        return minHeartRate.getHeartRate();
+        return minHeartRate != null ? minHeartRate.getHeartRate() : 0;
     }
     public int getMaxHeartRateIndex() {
-        return maxHeartRate.getIndex();
+        return maxHeartRate != null ? maxHeartRate.getIndex() : -1;
     }
     public int getMinHeartRateIndex() {
-        return minHeartRate.getIndex();
+        return minHeartRate != null ? minHeartRate.getIndex() : -1;
+    }
+
+    public void setCurrentHeartRateReading(HeartRateReading reading) {
+        this.currentHeartRateReading = reading;
     }
 
     // setters
@@ -188,24 +220,18 @@ public class StudySessionModel {
     public void setStatus(Status status) {
         this.status = status;
     }
-    public void setObjective(String objective) {
-        this.objective = objective;
-    }
     public void setObjectiveMet(Boolean objectiveMet) {
         this.objectiveMet = objectiveMet;
     }
     public void setProductivityRating(int productivityRating) {
         this.productivityRating = productivityRating;
     }
-    public void setHeartRateData(int[] heartRateData) {
-        this.heartRateData = heartRateData;
-    }
 
     public void setRestingHeartRate(int restingHeartRate) {
         this.restingHeartRate = restingHeartRate;
     }
-    public void setHeartRate(int currentHeartRate) {
-        this.currentHeartRate = currentHeartRate;
+    public void setHeartRate(int averageHeartRate) {
+        this.averageHeartRate = averageHeartRate;
     }
     public void setMaxHeartRate(int maxHeartRate) {
         this.maxHeartRate.setHeartRate(maxHeartRate);
@@ -218,6 +244,10 @@ public class StudySessionModel {
     }
     public void setMinHeartRateIndex(int minHeartRateIndex) {
         this.minHeartRate.setIndex(minHeartRateIndex);
+    }
+
+    public void addHistoricalHeartRate(int hr) {
+        this.heartRateDataList.add(hr);
     }
 
     public boolean isActive() { // when the session is running

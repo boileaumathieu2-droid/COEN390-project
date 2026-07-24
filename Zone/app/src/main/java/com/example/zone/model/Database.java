@@ -334,7 +334,6 @@ public class Database extends SQLiteOpenHelper {
         values.put("end_time", session.getEndTime() != null ? session.getEndTime().toString() : null);
         values.put("duration", session.getDuration());
         values.put("status", session.getStatus().name());
-        values.put("objective", session.getObjective());
         values.put("objective_met", session.getObjectiveMet() ? 1 : 0);
         values.put("productivity_rating", session.getProductivityRating());
         values.put("resting_heart_rate", session.getRestingHeartRate());
@@ -354,6 +353,90 @@ public class Database extends SQLiteOpenHelper {
         values.put("heart_rate_data", sb.toString());
 
         return db.insert("sessions", null, values);
+    }
+
+    public ArrayList<StudySessionModel> getAllSessions(int userID) {
+        ArrayList<StudySessionModel> sessions = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                "sessions",
+                null,
+                "user_id=?",
+                new String[]{String.valueOf(userID)},
+                null,
+                null,
+                "id DESC"
+        );
+
+        while (cursor.moveToNext()) {
+            StudySessionModel session = new StudySessionModel();
+            session.setId(cursor.getInt(cursor.getColumnIndexOrThrow("id")));
+            
+            String startTimeStr = cursor.getString(cursor.getColumnIndexOrThrow("start_time"));
+            String endTimeStr = cursor.getString(cursor.getColumnIndexOrThrow("end_time"));
+            
+            session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
+            if (endTimeStr != null) {
+                session.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
+            }
+            
+            session.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow("duration")));
+            session.setStatus(StudySessionModel.Status.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("status"))));
+            session.setObjectiveMet(cursor.getInt(cursor.getColumnIndexOrThrow("objective_met")) == 1);
+            session.setProductivityRating(cursor.getInt(cursor.getColumnIndexOrThrow("productivity_rating")));
+            session.setRestingHeartRate(cursor.getInt(cursor.getColumnIndexOrThrow("resting_heart_rate")));
+            session.setHeartRate(cursor.getInt(cursor.getColumnIndexOrThrow("avg_heart_rate")));
+            session.setMaxHeartRate(cursor.getInt(cursor.getColumnIndexOrThrow("max_heart_rate")));
+            session.setMinHeartRate(cursor.getInt(cursor.getColumnIndexOrThrow("min_heart_rate")));
+            
+            String csv = cursor.getString(cursor.getColumnIndexOrThrow("heart_rate_data"));
+            if (csv != null && !csv.isEmpty()) {
+                String[] parts = csv.split(",");
+                for (String part : parts) {
+                    try {
+                        int hr = Integer.parseInt(part);
+                        // We need a way to add to heartRateDataList in StudySessionModel
+                        // I'll add a helper method to StudySessionModel for this
+                        session.addHistoricalHeartRate(hr);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+            sessions.add(session);
+        }
+        cursor.close();
+        return sessions;
+    }
+
+    public int[] getLastSessionHeartRateData(int userID) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                "sessions",
+                new String[]{"heart_rate_data"},
+                "user_id=?",
+                new String[]{String.valueOf(userID)},
+                null,
+                null,
+                "id DESC",
+                "1"
+        );
+
+        int[] data = null;
+        if (cursor.moveToFirst()) {
+            String csv = cursor.getString(cursor.getColumnIndexOrThrow("heart_rate_data"));
+            if (csv != null && !csv.isEmpty()) {
+                String[] parts = csv.split(",");
+                data = new int[parts.length];
+                for (int i = 0; i < parts.length; i++) {
+                    try {
+                        data[i] = Integer.parseInt(parts[i]);
+                    } catch (NumberFormatException e) {
+                        data[i] = 0;
+                    }
+                }
+            }
+        }
+        cursor.close();
+        return data != null ? data : new int[0];
     }
 
     public long addObjective(int userID, String text, String date) {
@@ -474,6 +557,16 @@ public class Database extends SQLiteOpenHelper {
                 "objectives",
                 "id=?",
                 new String[]{String.valueOf(objectiveID)}
+        );
+        return deleted == 1;
+    }
+
+    public boolean deleteSession(int sessionID) {
+        SQLiteDatabase db = getWritableDatabase();
+        int deleted = db.delete(
+                "sessions",
+                "id=?",
+                new String[]{String.valueOf(sessionID)}
         );
         return deleted == 1;
     }
