@@ -50,32 +50,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Session Heart Rate History"
+        android:text="Heart Rate Graph"
         android:textColor="@color/black"
         android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/heartRateValue" />
 
-    <!-- Placeholder for Graph -->
-    <FrameLayout
-        android:id="@+id/heartRateGraphContainer"
+    <!-- Line Chart for Heart Rate History -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/heartRateChart"
         android:layout_width="0dp"
         android:layout_height="250dp"
         android:layout_marginTop="8dp"
-        android:background="@drawable/textview_border"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/graphLabel">
-
-        <TextView
-            android:id="@+id/graphPlaceholderText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Graph Placeholder\n(0 if no input)"
-            android:textAlignment="center"
-            android:textColor="@color/black" />
-    </FrameLayout>
+        app:layout_constraintTop_toBottomOf="@id/graphLabel" />
 
     <Button
         android:id="@+id/previousSessionsButton"

@@ -34,7 +34,6 @@
     </queries>
 
     <application
-        android:name=".ZoneApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -77,6 +76,7 @@
         <activity android:name=".view.TimerSettingsView" android:exported="true"/>
         <activity android:name=".view.GradesTrackerView" android:exported="true"/>
         <activity android:name=".view.AnalyticsView" android:exported="true"/>
+        <activity android:name=".view.SessionHistoryView" android:exported="false"/>
         <activity android:name=".view.SubjectView" android:exported="true"/>
         <activity android:name=".view.ObjectiveView" android:exported="true"/>
         <activity android:name=".view.ObjectivesPageView" android:exported="true"/>

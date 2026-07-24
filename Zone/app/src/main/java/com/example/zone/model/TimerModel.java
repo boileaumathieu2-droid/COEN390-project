@@ -10,6 +10,7 @@ public class TimerModel {
     private boolean breakEnabled; // keeps track of the break switch
     private int remainingTime;  // remaining time in seconds, used for the display
     private StudySessionModel session;  // use to get the live session
+    private int tickCount = 0;
 
 
 
@@ -58,6 +59,14 @@ public class TimerModel {
 
         if (remainingTime > 0) {
             remainingTime--;
+            tickCount++;
+
+            if (tickCount >= 15) {
+                if (session != null && !breakTime) {
+                    session.addHeartRateReading();
+                }
+                tickCount = 0;
+            }
         }
 
         if (remainingTime > 0) {

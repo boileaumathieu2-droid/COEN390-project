@@ -39,6 +39,7 @@ import androidx.core.content.ContextCompat;
 import com.example.zone.R;
 import com.example.zone.controller.HeartRatePacketParser;
 import com.example.zone.model.HeartRateReading;
+import com.example.zone.model.StudySessionModel;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -600,6 +601,9 @@ public class HeartRateMonitorView extends AppCompatActivity {
     }
 
     private void displayReading(HeartRateReading reading) {
+        // Update the study session model with the latest reading
+        StudySessionModel.getInstance().setCurrentHeartRateReading(reading);
+
         rawValueText.setText(getString(R.string.raw_value, reading.getRawValue()));
         signalRangeText.setText(getString(R.string.signal_range, reading.getSignalRange()));
         lastPacketText.setText(reading.toPacketString());

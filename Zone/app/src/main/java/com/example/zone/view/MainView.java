@@ -86,7 +86,7 @@ public class MainView extends AppCompatActivity {
     private void refresh(){
         dailyGoalsArray.clear();
 
-        dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(Session.getUserID(), today));
+        dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(com.example.zone.model.Session.getUserID(), today));
         adapter.notifyDataSetChanged();
         if (dailyGoalsArray.isEmpty()) {
             dailyGoals.setVisibility(View.GONE);
@@ -101,7 +101,7 @@ public class MainView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Session.init(getApplicationContext());
+        com.example.zone.model.Session.init(getApplicationContext());
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
@@ -167,10 +167,8 @@ public class MainView extends AppCompatActivity {
             if (model.isBreakTime()) {
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
-                StudySessionModel liveSession = model.getLiveSession();
-                if (liveSession != null) {
-                    StudySession = liveSession;
-                }
+                // Sync with TimerModel's session
+                StudySession = model.getLiveSession();
             }
             showStatus();
         });
@@ -206,6 +204,18 @@ public class MainView extends AppCompatActivity {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
+
+            // Save to database
+            // TODO: later, make it so the database is unique to the user so he has access to all of his previous data when logged in
+            Database db = new Database(this);
+            String username = getSharedPreferences("ZonePrefs", MODE_PRIVATE).getString("username", null);
+            if (username != null) {
+                int userID = db.getUserID(username);
+                if (userID != -1) {
+                    db.addSession(userID, StudySession);
+                }
+            }
+
             showStatus();
             manageDnD(false);
             // Show toast for manual completion
