@@ -94,7 +94,7 @@ public class MainView extends AppCompatActivity {
         }
         else{
             dailyGoals.setVisibility(View.VISIBLE);
-            objectivesPrompt.setText("New Study Goal");
+            objectivesPrompt.setVisibility(View.GONE);
         }
     }
 
