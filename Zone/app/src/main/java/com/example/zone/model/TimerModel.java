@@ -10,10 +10,6 @@ public class TimerModel {
     private boolean breakEnabled; // keeps track of the break switch
     private int remainingTime;  // remaining time in seconds, used for the display
     private StudySessionModel session;  // use to get the live session
-    private int tickCount = 0;
-
-
-
     // functions:
 
     private TimerModel() {
@@ -59,14 +55,6 @@ public class TimerModel {
 
         if (remainingTime > 0) {
             remainingTime--;
-            tickCount++;
-
-            if (tickCount >= 15) {
-                if (session != null && !breakTime) {
-                    session.addHeartRateReading();
-                }
-                tickCount = 0;
-            }
         }
 
         if (remainingTime > 0) {
@@ -135,7 +123,10 @@ public class TimerModel {
 
             // create StudySessionModel object if study session
             if(!breakTime){
-                session = new StudySessionModel();
+                // The BLE manager writes into this shared session instance.
+                // Creating a separate object here used to discard every sensor
+                // reading received from the connectivity page.
+                session = StudySessionModel.getInstance();
                 session.startSession(); // creates and starts the session
             }
         }

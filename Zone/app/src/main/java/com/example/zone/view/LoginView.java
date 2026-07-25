@@ -20,6 +20,16 @@ public class LoginView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         Session.init(this);
+
+        // If Android recreated the launcher Activity after the app was minimized,
+        // restore the existing authenticated session instead of showing login again.
+        if (Session.getUsername() != null && Session.getUserID() != -1) {
+            Intent intent = new Intent(this, MainView.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.login_page);
         EditText username = findViewById(R.id.usernameEditText);
         EditText password = findViewById(R.id.passwordEditText);

@@ -80,10 +80,20 @@ public class StudySessionModel {
         return 0;
     }
     public void startSession() {
+        // Start with clean analytics while retaining the most recent live sensor
+        // packet so the first sample can be recorded immediately.
+        endTime = null;
+        duration = 0;
+        objectiveMet = false;
+        productivityRating = 0;
+        heartRateDataList.clear();
+        averageHeartRate = 0;
+        maxHeartRate = null;
+        minHeartRate = null;
         startTime = LocalDateTime.now();
         status = Status.ACTIVE;
         restingHeartRate = getHeartRateReading();
-        // I want to get the heart rate readings saved every 5 seconds (starting at t = 0) in t
+        addHeartRateReading();
     }
     public void addHeartRateReading(){
         int heartRate = getHeartRateReading();
@@ -269,6 +279,20 @@ public class StudySessionModel {
 
         this.duration = duration;
         this.endTime = LocalDateTime.now();
+        calculateAverageHeartRate();
         this.status = Status.COMPLETE;
+    }
+
+    private void calculateAverageHeartRate() {
+        if (heartRateDataList.isEmpty()) {
+            averageHeartRate = 0;
+            return;
+        }
+
+        long total = 0;
+        for (int heartRate : heartRateDataList) {
+            total += heartRate;
+        }
+        averageHeartRate = (int) (total / heartRateDataList.size());
     }
 }

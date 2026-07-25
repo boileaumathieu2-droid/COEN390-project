@@ -4,13 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -37,11 +31,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.zone.R;
-import com.example.zone.controller.HeartRatePacketParser;
+import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.model.HeartRateReading;
-import com.example.zone.model.StudySessionModel;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,17 +47,10 @@ public class HeartRateMonitorView extends AppCompatActivity {
     // Official DFRobot Bluno BLE UART service and characteristics.
     private static final UUID BLUNO_SERVICE_UUID =
             UUID.fromString("0000dfb0-0000-1000-8000-00805f9b34fb");
-    private static final UUID BLUNO_SERIAL_UUID =
-            UUID.fromString("0000dfb1-0000-1000-8000-00805f9b34fb");
-    private static final UUID BLUNO_COMMAND_UUID =
-            UUID.fromString("0000dfb2-0000-1000-8000-00805f9b34fb");
-    private static final UUID CLIENT_CONFIGURATION_UUID =
-            UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final String TARGET_BLUNO_ADDRESS = "D0:39:72:DF:D5:0E";
     private static final long SCAN_DURATION_MS = 15_000L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final HeartRatePacketParser packetParser = new HeartRatePacketParser();
     private final List<BluetoothDevice> discoveredDevices = new ArrayList<>();
     private final List<String> deviceLabels = new ArrayList<>();
     private final Map<String, String> bestDeviceNames = new HashMap<>();
@@ -73,7 +58,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner bluetoothLeScanner;
-    private BluetoothGatt bluetoothGatt;
+    private HeartRateSensorManager sensorManager;
     private ArrayAdapter<String> deviceListAdapter;
     private boolean scanning;
     private boolean scanAfterPermission;
@@ -90,6 +75,24 @@ public class HeartRateMonitorView extends AppCompatActivity {
     private Button scanButton;
     private Button connectByIdButton;
     private Button disconnectButton;
+
+    private final HeartRateSensorManager.Listener sensorListener =
+            new HeartRateSensorManager.Listener() {
+                @Override
+                public void onConnectionStateChanged(
+                        String message,
+                        boolean connected
+                ) {
+                    showConnectionState(message, connected);
+                    disconnectButton.setEnabled(
+                            connected || sensorManager.isConnecting());
+                }
+
+                @Override
+                public void onHeartRateReading(HeartRateReading reading) {
+                    displayReading(reading);
+                }
+            };
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -151,120 +154,6 @@ public class HeartRateMonitorView extends AppCompatActivity {
         }
     };
 
-    // Every GATT operation below is reached only after connectToDevice verifies the
-    // version-appropriate runtime permissions. SuppressLint documents that invariant.
-    @SuppressLint("MissingPermission")
-    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (gatt != bluetoothGatt) {
-                return;
-            }
-
-            if (status == BluetoothGatt.GATT_SUCCESS
-                    && newState == BluetoothProfile.STATE_CONNECTED) {
-                runOnUiThread(() -> showConnectionState(
-                        getString(R.string.discovering_bluno_services), false));
-                if (!gatt.discoverServices()) {
-                    showGattError(getString(R.string.service_discovery_failed));
-                }
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                packetParser.reset();
-                runOnUiThread(() -> {
-                    showConnectionState(getString(R.string.disconnected), false);
-                    disconnectButton.setEnabled(false);
-                });
-                gatt.close();
-                if (gatt == bluetoothGatt) {
-                    bluetoothGatt = null;
-                }
-            } else if (status != BluetoothGatt.GATT_SUCCESS) {
-                showGattError(getString(R.string.connection_failed, status));
-            }
-        }
-
-        @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            if (gatt != bluetoothGatt) {
-                return;
-            }
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                showGattError(getString(R.string.service_discovery_error, status));
-                return;
-            }
-
-            BluetoothGattService service = gatt.getService(BLUNO_SERVICE_UUID);
-            BluetoothGattCharacteristic serialCharacteristic = service == null
-                    ? null : service.getCharacteristic(BLUNO_SERIAL_UUID);
-            if (serialCharacteristic == null) {
-                showGattError(getString(R.string.not_a_bluno_device));
-                return;
-            }
-
-            boolean notificationStarted = gatt.setCharacteristicNotification(
-                    serialCharacteristic, true);
-            if (!notificationStarted) {
-                showGattError(getString(R.string.notification_setup_failed));
-                return;
-            }
-
-            BluetoothGattDescriptor descriptor =
-                    serialCharacteristic.getDescriptor(CLIENT_CONFIGURATION_UUID);
-            if (descriptor == null) {
-                // Some Bluno firmware versions expose notification without a CCCD.
-                finishBlunoSetup(gatt, service);
-                return;
-            }
-
-            int writeResult;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                writeResult = gatt.writeDescriptor(
-                        descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            } else {
-                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                writeResult = gatt.writeDescriptor(descriptor)
-                        ? BluetoothGatt.GATT_SUCCESS : -1;
-            }
-            if (writeResult != BluetoothGatt.GATT_SUCCESS) {
-                showGattError(getString(R.string.notification_setup_failed));
-            }
-        }
-
-        @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            if (gatt != bluetoothGatt || !CLIENT_CONFIGURATION_UUID.equals(descriptor.getUuid())) {
-                return;
-            }
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                showGattError(getString(R.string.notification_setup_failed));
-                return;
-            }
-            finishBlunoSetup(gatt, descriptor.getCharacteristic().getService());
-        }
-
-        @Override
-        public void onCharacteristicChanged(
-                BluetoothGatt gatt,
-                BluetoothGattCharacteristic characteristic,
-                byte[] value) {
-            if (gatt == bluetoothGatt && BLUNO_SERIAL_UUID.equals(characteristic.getUuid())) {
-                handleIncomingData(value);
-            }
-        }
-
-        @Override
-        @SuppressWarnings("deprecation")
-        public void onCharacteristicChanged(
-                BluetoothGatt gatt,
-                BluetoothGattCharacteristic characteristic) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                    && gatt == bluetoothGatt
-                    && BLUNO_SERIAL_UUID.equals(characteristic.getUuid())) {
-                handleIncomingData(characteristic.getValue());
-            }
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -311,7 +200,10 @@ public class HeartRateMonitorView extends AppCompatActivity {
         scanButton.setOnClickListener(view -> scanForDevices());
         connectByIdButton.setOnClickListener(view -> connectUsingEnteredDeviceId());
         disconnectButton.setOnClickListener(view -> disconnectFromDevice());
-        disconnectButton.setEnabled(false);
+        sensorManager = HeartRateSensorManager.getInstance(getApplicationContext());
+        sensorManager.addListener(sensorListener);
+        disconnectButton.setEnabled(
+                sensorManager.isConnected() || sensorManager.isConnecting());
 
         BluetoothManager manager = getSystemService(BluetoothManager.class);
         bluetoothAdapter = manager == null ? null : manager.getAdapter();
@@ -458,7 +350,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
         if (discoveredDevices.isEmpty()) {
             emptyDeviceText.setText(R.string.no_ble_devices_found);
         }
-        if (bluetoothGatt == null) {
+        if (!sensorManager.isConnected() && !sensorManager.isConnecting()) {
             showConnectionState(getString(R.string.select_bluno_device), false);
         }
     }
@@ -556,8 +448,6 @@ public class HeartRateMonitorView extends AppCompatActivity {
             return;
         }
         stopScan();
-        closeGatt();
-        packetParser.reset();
 
         String name = device.getName();
         if (name == null || name.trim().isEmpty()) {
@@ -565,45 +455,10 @@ public class HeartRateMonitorView extends AppCompatActivity {
         }
         showConnectionState(getString(R.string.connecting_to, name), false);
         disconnectButton.setEnabled(true);
-        bluetoothGatt = device.connectGatt(this, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
-    }
-
-    @SuppressLint("MissingPermission")
-    private void finishBlunoSetup(BluetoothGatt gatt, BluetoothGattService service) {
-        // Match the Arduino sketch's Serial.begin(115200). This command is harmless
-        // on firmware where 115200 is already stored and improves first-time setup.
-        BluetoothGattCharacteristic commandCharacteristic =
-                service == null ? null : service.getCharacteristic(BLUNO_COMMAND_UUID);
-        if (commandCharacteristic != null) {
-            byte[] baudCommand = "AT+CURRUART=115200\r\n".getBytes(StandardCharsets.US_ASCII);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                gatt.writeCharacteristic(
-                        commandCharacteristic,
-                        baudCommand,
-                        BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-            } else {
-                commandCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-                commandCharacteristic.setValue(baudCommand);
-                gatt.writeCharacteristic(commandCharacteristic);
-            }
-        }
-
-        runOnUiThread(() -> {
-            showConnectionState(getString(R.string.connected_waiting_for_data), true);
-            disconnectButton.setEnabled(true);
-        });
-    }
-
-    private void handleIncomingData(byte[] bytes) {
-        for (HeartRateReading reading : packetParser.append(bytes)) {
-            runOnUiThread(() -> displayReading(reading));
-        }
+        sensorManager.connect(device);
     }
 
     private void displayReading(HeartRateReading reading) {
-        // Update the study session model with the latest reading
-        StudySessionModel.getInstance().setCurrentHeartRateReading(reading);
-
         rawValueText.setText(getString(R.string.raw_value, reading.getRawValue()));
         signalRangeText.setText(getString(R.string.signal_range, reading.getSignalRange()));
         lastPacketText.setText(reading.toPacketString());
@@ -630,39 +485,21 @@ public class HeartRateMonitorView extends AppCompatActivity {
         connectionStatusText.setTextColor(ContextCompat.getColor(this, color));
     }
 
-    private void showGattError(String message) {
-        runOnUiThread(() -> {
-            showConnectionState(message, false);
-            disconnectButton.setEnabled(false);
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-        });
-    }
-
-    @SuppressLint("MissingPermission")
     private void disconnectFromDevice() {
-        if (bluetoothGatt != null && hasRequiredPermissions()) {
-            bluetoothGatt.disconnect();
+        if (sensorManager != null && hasRequiredPermissions()) {
+            sensorManager.disconnect();
         } else {
             showConnectionState(getString(R.string.disconnected), false);
             disconnectButton.setEnabled(false);
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private void closeGatt() {
-        if (bluetoothGatt != null) {
-            if (hasRequiredPermissions()) {
-                bluetoothGatt.disconnect();
-            }
-            bluetoothGatt.close();
-            bluetoothGatt = null;
-        }
-    }
-
     @Override
     protected void onDestroy() {
         stopScan();
-        closeGatt();
+        if (sensorManager != null) {
+            sensorManager.removeListener(sensorListener);
+        }
         mainHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }

@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
 import com.example.zone.model.Database;
+import com.example.zone.model.Session;
 import com.example.zone.model.StudySessionModel;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -35,6 +36,7 @@ public class AnalyticsView extends AppCompatActivity {
         @Override
         public void run() {
             updateLiveHeartRate();
+            refreshChart();
             refreshHandler.postDelayed(this, 1000);
         }
     };
@@ -166,7 +168,8 @@ public class AnalyticsView extends AppCompatActivity {
 
         int[] heartRateData;
 
-        if (liveSession != null && liveSession.isActive()) {
+        if (liveSession != null
+                && liveSession.getHeartRateData().length > 0) {
             heartRateData =
                     liveSession.getHeartRateData();
         } else {
@@ -179,22 +182,28 @@ public class AnalyticsView extends AppCompatActivity {
     }
 
     private int[] loadLastSessionHeartRateData() {
-        String username = getSharedPreferences(
-                "ZonePrefs",
-                MODE_PRIVATE
-        ).getString("username", null);
-
-        if (username == null || username.trim().isEmpty()) {
+        Session.init(getApplicationContext());
+        int userID = Session.getUserID();
+        if (userID == -1) {
             return new int[0];
         }
 
         try (Database database = new Database(this)) {
-            int userID =
-                    database.getUserID(username);
-
             return database.getLastSessionHeartRateData(
                     userID
             );
+        }
+    }
+
+    private void refreshChart() {
+        LineChart chart = findViewById(R.id.heartRateChart);
+        if (chart == null) {
+            return;
+        }
+
+        int[] data = StudySessionModel.getInstance().getHeartRateData();
+        if (data.length > 0) {
+            displayGraph(chart, data);
         }
     }
 

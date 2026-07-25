@@ -207,10 +207,8 @@ public class MainView extends AppCompatActivity {
 
             // Save to database
             // TODO: later, make it so the database is unique to the user so he has access to all of his previous data when logged in
-            Database db = new Database(this);
-            String username = getSharedPreferences("ZonePrefs", MODE_PRIVATE).getString("username", null);
-            if (username != null) {
-                int userID = db.getUserID(username);
+            try (Database db = new Database(this)) {
+                int userID = Session.getUserID();
                 if (userID != -1) {
                     db.addSession(userID, StudySession);
                 }
