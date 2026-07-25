@@ -1,11 +1,16 @@
 package com.example.zone.view;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
@@ -21,16 +26,76 @@ import com.github.mikephil.charting.data.LineDataSet;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class AnalyticsView extends AppCompatActivity {
 
-    private Handler refreshHandler = new Handler(Looper.getMainLooper());
-    private Runnable refreshRunnable;
+    private final Handler refreshHandler =
+            new Handler(Looper.getMainLooper());
+
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateLiveHeartRate();
+            refreshHandler.postDelayed(this, 1000);
+        }
+    };
 
     @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.analytics_page);
+
+        configureActionBar();
+        configureButtons();
+        setupAnalytics();
+    }
+
+    private void configureActionBar() {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Analytics");
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void configureButtons() {
+        Button mainMenuButton = findViewById(R.id.mainMenuButton);
+
+        if (mainMenuButton != null) {
+            mainMenuButton.setOnClickListener(view -> finish());
+        }
+
+        Button previousSessionsButton =
+                findViewById(R.id.previousSessionsButton);
+
+        if (previousSessionsButton != null) {
+            previousSessionsButton.setOnClickListener(view -> {
+                Intent intent = new Intent(
+                        AnalyticsView.this,
+                        SessionHistoryView.class
+                );
+
+                startActivity(intent);
+            });
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        refreshHandler.removeCallbacks(refreshRunnable);
+        refreshHandler.post(refreshRunnable);
+    }
+
+    @Override
+    protected void onPause() {
+        refreshHandler.removeCallbacks(refreshRunnable);
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        refreshHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
     }
 
     @Override
@@ -40,125 +105,160 @@ public class AnalyticsView extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem option) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem option) {
         if (option.getItemId() == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsView.class));
+            Intent intent = new Intent(
+                    this,
+                    SettingsView.class
+            );
+
+            startActivity(intent);
             return true;
         }
+
         return super.onOptionsItemSelected(option);
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.analytics_page);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Analytics");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
-        Button mainMenuButton = findViewById(R.id.mainMenuButton);
-        mainMenuButton.setOnClickListener(v -> finish());
-
-        // Button for previous sessions
-        Button previousSessionsButton = findViewById(R.id.previousSessionsButton);
-        previousSessionsButton.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, SessionHistoryView.class);
-            startActivity(intent);
-        });
-
-        setupAnalytics();
-        
-        refreshRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateLiveHeartRate();
-                refreshHandler.postDelayed(this, 1000); // Update every second
-            }
-        };
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshHandler.post(refreshRunnable);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        refreshHandler.removeCallbacks(refreshRunnable);
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     private void updateLiveHeartRate() {
-        TextView heartRateValue = findViewById(R.id.heartRateValue);
-        StudySessionModel liveSession = StudySessionModel.getInstance();
-        
-        if (liveSession != null) {
-            int currentHR = liveSession.getHeartRateReading();
-            heartRateValue.setText(currentHR > 0 ? String.valueOf(currentHR) : "N/A");
+        TextView heartRateValue =
+                findViewById(R.id.heartRateValue);
+
+        if (heartRateValue == null) {
+            return;
+        }
+
+        StudySessionModel liveSession =
+                StudySessionModel.getInstance();
+
+        if (liveSession == null) {
+            heartRateValue.setText("N/A");
+            return;
+        }
+
+        int currentHeartRate =
+                liveSession.getHeartRateReading();
+
+        if (currentHeartRate > 0) {
+            heartRateValue.setText(
+                    String.valueOf(currentHeartRate)
+            );
+        } else {
+            heartRateValue.setText("N/A");
         }
     }
 
     private void setupAnalytics() {
-        LineChart chart = findViewById(R.id.heartRateChart);
+        LineChart chart =
+                findViewById(R.id.heartRateChart);
 
-        StudySessionModel liveSession = StudySessionModel.getInstance();
-        int[] data;
+        if (chart == null) {
+            return;
+        }
+
+        StudySessionModel liveSession =
+                StudySessionModel.getInstance();
+
+        int[] heartRateData;
 
         if (liveSession != null && liveSession.isActive()) {
-            data = liveSession.getHeartRateData();
+            heartRateData =
+                    liveSession.getHeartRateData();
         } else {
-            // Fetch from database
-            Database db = new Database(this);
-            String username = getSharedPreferences("ZonePrefs", MODE_PRIVATE).getString("username", null);
-            if (username != null) {
-                int userID = db.getUserID(username);
-                data = db.getLastSessionHeartRateData(userID);
-            } else {
-                data = new int[0];
-            }
+            heartRateData =
+                    loadLastSessionHeartRateData();
         }
-        
+
         updateLiveHeartRate();
-        displayGraph(chart, data);
+        displayGraph(chart, heartRateData);
     }
 
-    private void displayGraph(LineChart chart, int[] heartRateData) {
-        if (heartRateData == null || heartRateData.length == 0) {
-            chart.setNoDataText("No heart rate data available for this session.");
+    private int[] loadLastSessionHeartRateData() {
+        String username = getSharedPreferences(
+                "ZonePrefs",
+                MODE_PRIVATE
+        ).getString("username", null);
+
+        if (username == null || username.trim().isEmpty()) {
+            return new int[0];
+        }
+
+        try (Database database = new Database(this)) {
+            int userID =
+                    database.getUserID(username);
+
+            return database.getLastSessionHeartRateData(
+                    userID
+            );
+        }
+    }
+
+    private void displayGraph(
+            LineChart chart,
+            int[] heartRateData
+    ) {
+        if (heartRateData == null
+                || heartRateData.length == 0) {
+
+            chart.clear();
+            chart.setNoDataText(
+                    "No heart rate data available for this session."
+            );
+
             chart.invalidate();
             return;
         }
 
         List<Entry> entries = new ArrayList<>();
-        for (int i = 0; i < heartRateData.length; i++) {
-            entries.add(new Entry(i, heartRateData[i]));
+
+        for (int index = 0;
+             index < heartRateData.length;
+             index++) {
+
+            entries.add(
+                    new Entry(
+                            index,
+                            heartRateData[index]
+                    )
+            );
         }
 
-        LineDataSet dataSet = new LineDataSet(entries, "Heart Rate (BPM)");
+        LineDataSet dataSet = new LineDataSet(
+                entries,
+                "Heart Rate (BPM)"
+        );
+
         dataSet.setColor(Color.RED);
         dataSet.setLineWidth(2.5f);
         dataSet.setCircleRadius(4f);
         dataSet.setCircleColor(Color.RED);
         dataSet.setDrawValues(false);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setMode(
+                LineDataSet.Mode.CUBIC_BEZIER
+        );
         dataSet.setDrawFilled(true);
         dataSet.setFillColor(Color.RED);
         dataSet.setFillAlpha(50);
 
-        LineData lineData = new LineData(dataSet);
+        LineData lineData =
+                new LineData(dataSet);
+
         chart.setData(lineData);
 
-        // Chart styling
         chart.getDescription().setEnabled(false);
         chart.getLegend().setEnabled(true);
         chart.setTouchEnabled(true);
         chart.setPinchZoom(true);
 
         XAxis xAxis = chart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setPosition(
+                XAxis.XAxisPosition.BOTTOM
+        );
         xAxis.setDrawGridLines(false);
         xAxis.setGranularity(1f);
 
@@ -168,6 +268,7 @@ public class AnalyticsView extends AppCompatActivity {
         leftAxis.setDrawGridLines(true);
 
         chart.getAxisRight().setEnabled(false);
+
         chart.animateX(1000);
         chart.invalidate();
     }
