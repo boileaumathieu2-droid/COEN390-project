@@ -2,6 +2,7 @@ package com.example.zone.controller;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
@@ -18,6 +19,8 @@ public class NotificationController {
     private static final int NOTIFICATION_ID = 100;
 
     private final Context context;
+
+    private SharedPreferences prefs;
 
 
     public NotificationController(Context context) {
@@ -43,6 +46,12 @@ public class NotificationController {
         }
     }
     public boolean hasNotificationPermission() {
+        prefs = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
+        boolean Notifications = prefs.getBoolean("Notifications", false);
+        if(!Notifications) {
+            return false;
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return ContextCompat.checkSelfPermission(
                     context,
