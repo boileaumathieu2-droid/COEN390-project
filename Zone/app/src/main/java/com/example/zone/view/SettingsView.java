@@ -26,6 +26,7 @@ public class SettingsView extends AppCompatActivity {
         TextView logout = findViewById(R.id.logoutButton);
         TextView connectDevice = findViewById(R.id.connectDeviceButton);
         TextView appRestrict = findViewById(R.id.appRestrictButton);
+        TextView Notifications = findViewById(R.id.notificationsButton);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Settings");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -44,6 +45,10 @@ public class SettingsView extends AppCompatActivity {
 
         appRestrict.setOnClickListener(v -> {
             Intent intent = new Intent(this, BlockedAppsView.class);
+            startActivity(intent);
+        });
+          Notifications.setOnClickListener(v -> {
+            Intent intent = new Intent(this, NotificationSetting.class);
             startActivity(intent);
         });
         }
