@@ -1,8 +1,8 @@
 package com.example.zone.view;
-
 import android.Manifest;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,16 +38,16 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 import com.example.zone.model.StudySessionModel;
-import com.example.zone.view.SettingsView;
-import com.example.zone.view.TimerSettingsView;
 
 
 public class MainView extends AppCompatActivity {
+    private SharedPreferences prefs;
 
     private MainController mainController;
     private ObjectiveController objectiveController;
     private MainViewObjectiveAdapter adapter;
     private String today;
+
 
     private TextView timerDisplay;
     private ListView dailyGoals;
@@ -176,7 +176,9 @@ public class MainView extends AppCompatActivity {
        pauseButton.setOnClickListener(v -> {
             // Checks if timer is counting down
             if (TimerModel.getInstance().isRunning()) {
-                manageDnD(false);
+                if (hasDndAccess()) {
+                    manageDnD(false);
+                }
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
                 // pause timer if it was running
                 TimerModel.getInstance().pauseTimer();
@@ -184,7 +186,9 @@ public class MainView extends AppCompatActivity {
             } else {
                 resumeCountdown();
                 StudySession.setStatus(StudySessionModel.Status.ACTIVE);
-                manageDnD(true);
+                if (hasDndAccess()) {
+                    manageDnD(true);
+                }
             }
             if (TimerModel.getInstance().isBreakTime()) {
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
@@ -197,25 +201,30 @@ public class MainView extends AppCompatActivity {
             updateTimerUI();
             StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             showStatus();
-            manageDnD(false);
+             if (hasDndAccess()) {
+                 manageDnD(false);
+             }
         });
 
         completeButton.setOnClickListener(v -> {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
+            System.out.println("BEFORE DATABASE: ");
 
-            // Save to database
             // TODO: later, make it so the database is unique to the user so he has access to all of his previous data when logged in
             try (Database db = new Database(this)) {
                 int userID = Session.getUserID();
+                System.out.println("THIS IS THE USERID: " + userID);
                 if (userID != -1) {
                     db.addSession(userID, StudySession);
                 }
             }
 
             showStatus();
-            manageDnD(false);
+            if (hasDndAccess()) {
+                manageDnD(false);
+            }
             // Show toast for manual completion
             String message;
             if(model.isBreakEnabled()) {
@@ -326,7 +335,9 @@ public class MainView extends AppCompatActivity {
         // state is true : false
         pauseButton.setText(model.isRunning() ? "Pause" : "Resume");
         if (minutes == 0 && seconds == 0) {
-            manageDnD(false);
+            if (hasDndAccess()) {
+                manageDnD(true);
+            }
             StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             NotificationController notificationHelper = new NotificationController(this);
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
@@ -343,6 +354,7 @@ public class MainView extends AppCompatActivity {
         startActivity(intent);
     }
     public void manageDnD(boolean enable) {
+
         NotificationManager notificationManager =
                 getSystemService(NotificationManager.class);
         if (notificationManager == null
@@ -363,10 +375,14 @@ public class MainView extends AppCompatActivity {
     }
 
     private boolean hasDndAccess() {
+        prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        boolean mute = prefs.getBoolean("Mute", false);
         NotificationManager notificationManager =
                 getSystemService(NotificationManager.class);
-        return notificationManager != null
+        boolean x =  notificationManager != null
                 && notificationManager.isNotificationPolicyAccessGranted();
+
+        return x && mute;
     }
     public void showStatus() {
         if (StudySession.getStatus() == StudySessionModel.Status.COMPLETE) {
@@ -377,6 +393,5 @@ public class MainView extends AppCompatActivity {
             Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
         }
     }
-
 
 }
