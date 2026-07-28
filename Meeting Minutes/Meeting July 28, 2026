@@ -1,0 +1,39 @@
+Final project meeting
+Date July 28, 2026
+Time: 5:30 PM - 6:24 PM
+Attendees: All team members
+Duration: 54 minutes
+
+Discussion on unifiying the app.
+Mark working on fixing bugs.
+Session history is prompting errors -> has to be adjusted.
+
+When you have the graph and you go to the analytics, the page graph is still there.
+Limit the amount of people that touch the database.
+
+Notification for the deadlines.
+If we do a virtual database, we will obtain a better mark.
+
+MAKE A 2 MINUTE VIDEO showing the final product.
+
+Name of the product: ZONE
+
+Keep the main branch clean and the other branches reviewed. Avoid copy pasting into Github.
+Pull request should not change more than 50 lines at a time unless it is an XML file.
+Describe in your commit what was done. "Add", "Edit", etc.
+
+Add more filtering.
+
+Use Mark's branch, since it was used for the demo of last sprint.
+
+For the analysis, we can have a database that calculates for a certain number of sessions, it averages out the heart rate, the number of completed tasks, etc.
+
+Every session is saved, all the data to make the analytics is there.
+
+Sam: "You are looking for an increase in heart rate during the study session".
+
+A bar graph is done and each bar represents the score you give yourself for a session.
+
+Write in the Discord chat the user stories that each has selected to work on.
+
+END OF MEETING.
