@@ -80,6 +80,13 @@
     <string name="task_details">Type: %1$s\nDue: %2$s\nEstimated time: %3$s\n\nObjectives:\n%4$s</string>
     <string name="minutes_value">%1$s minutes</string>
     <string name="not_set">Not set</string>
+    <string name="recommended_study_times_title">Time of Day Performance Chart</string>
+    <string name="recommended_study_times_desc">Average ratings from self-reflection</string>
+    <string name="back_to_analytics">Back to Analytics</string>
+    <string name="return_to_main_menu">Return to Main Menu</string>
+    <string name="recommended_study_times_btn">Recommended Study Times</string>
+    <string name="performance_label">Performance</string>
+    <string name="time_of_day_label">Time of Day</string>
     <string-array name="task_types">
         <item>Assignment</item>
         <item>Exam</item>

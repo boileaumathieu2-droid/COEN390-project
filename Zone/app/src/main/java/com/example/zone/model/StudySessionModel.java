@@ -244,16 +244,32 @@ public class StudySessionModel {
         this.averageHeartRate = averageHeartRate;
     }
     public void setMaxHeartRate(int maxHeartRate) {
-        this.maxHeartRate.setHeartRate(maxHeartRate);
+        if (this.maxHeartRate == null) {
+            this.maxHeartRate = new HeartRateInstance(-1, maxHeartRate);
+        } else {
+            this.maxHeartRate.setHeartRate(maxHeartRate);
+        }
     }
     public void setMinHeartRate(int minHeartRate) {
-        this.minHeartRate.setHeartRate(minHeartRate);
+        if (this.minHeartRate == null) {
+            this.minHeartRate = new HeartRateInstance(-1, minHeartRate);
+        } else {
+            this.minHeartRate.setHeartRate(minHeartRate);
+        }
     }
     public void setMaxHeartRateIndex(int maxHeartRateIndex) {
-        this.maxHeartRate.setIndex(maxHeartRateIndex);
+        if (this.maxHeartRate == null) {
+            this.maxHeartRate = new HeartRateInstance(maxHeartRateIndex, 0);
+        } else {
+            this.maxHeartRate.setIndex(maxHeartRateIndex);
+        }
     }
     public void setMinHeartRateIndex(int minHeartRateIndex) {
-        this.minHeartRate.setIndex(minHeartRateIndex);
+        if (this.minHeartRate == null) {
+            this.minHeartRate = new HeartRateInstance(minHeartRateIndex, 0);
+        } else {
+            this.minHeartRate.setIndex(minHeartRateIndex);
+        }
     }
 
     public void addHistoricalHeartRate(int hr) {
