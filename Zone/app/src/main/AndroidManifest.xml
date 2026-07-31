@@ -82,5 +82,6 @@
         <activity android:name=".view.ObjectivesPageView" android:exported="true"/>
         <activity android:name=".view.TaskCreationView" android:exported="false"/>
         <activity android:name=".view.NotificationSetting" android:exported = "false"/>
+        <activity android:name = ".view.reflectionView" android:exported = "false"/>
     </application>    
 </manifest>
