@@ -90,13 +90,28 @@ public class Recommended_Study_Times_View extends AppCompatActivity {
     private void displayData() {
         float[] averages = controller.getHourlyAverages();
         List<BarEntry> entries = new ArrayList<>();
+        List<Integer> colors = new ArrayList<>();
 
         for (int i = 0; i < 24; i++) {
-            entries.add(new BarEntry(i, averages[i]));
+            float val = averages[i];
+            entries.add(new BarEntry(i, val));
+            
+            // Color coding based on value
+            if (val <= 1.0f) {
+                colors.add(Color.RED);
+            } else if (val <= 2.0f) {
+                colors.add(Color.rgb(255, 165, 0)); // Orange
+            } else if (val <= 3.0f) {
+                colors.add(Color.YELLOW);
+            } else if (val <= 4.0f) {
+                colors.add(Color.rgb(173, 255, 47)); // Yellow-Green (GreenYellow)
+            } else {
+                colors.add(Color.GREEN); // Bright Green
+            }
         }
 
         BarDataSet dataSet = new BarDataSet(entries, "Average Productivity Rating");
-        dataSet.setColor(Color.BLUE);
+        dataSet.setColors(colors);
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(10f);
 
