@@ -1,5 +1,8 @@
 package com.example.zone.view;
 
+import static com.example.zone.model.BlockedAppsStore.clearBlockedPackages;
+import static com.example.zone.model.BlockedAppsStore.getPermission;
+
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -34,6 +37,8 @@ public class BlockedAppsView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_blocked_apps);
+        getPermission(this);
+
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.manage_blocked_apps);
@@ -46,6 +51,7 @@ public class BlockedAppsView extends AppCompatActivity {
         appList.setAdapter(adapter);
         appList.setEmptyView(emptyText);
         loadLaunchableApps();
+
     }
 
     @Override
