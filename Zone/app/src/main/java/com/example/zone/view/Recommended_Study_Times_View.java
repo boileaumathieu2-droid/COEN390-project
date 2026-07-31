@@ -80,8 +80,8 @@ public class Recommended_Study_Times_View extends AppCompatActivity {
 
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.setAxisMinimum(0f);
-        leftAxis.setAxisMaximum(5f); // Assuming rating is 1-5
-        leftAxis.setLabelCount(6, true);
+        leftAxis.setAxisMaximum(10f); // Rating scale 0-10
+        leftAxis.setLabelCount(11, true);
         leftAxis.setDrawGridLines(true);
 
         barChart.getAxisRight().setEnabled(false);
@@ -96,15 +96,15 @@ public class Recommended_Study_Times_View extends AppCompatActivity {
             float val = averages[i];
             entries.add(new BarEntry(i, val));
             
-            // Color coding based on value
-            if (val <= 1.0f) {
+            // Color coding based on value (Scale 0-10)
+            if (val <= 2.0f) {
                 colors.add(Color.RED);
-            } else if (val <= 2.0f) {
-                colors.add(Color.rgb(255, 165, 0)); // Orange
-            } else if (val <= 3.0f) {
-                colors.add(Color.YELLOW);
             } else if (val <= 4.0f) {
-                colors.add(Color.rgb(173, 255, 47)); // Yellow-Green (GreenYellow)
+                colors.add(Color.rgb(255, 165, 0)); // Orange
+            } else if (val <= 6.0f) {
+                colors.add(Color.YELLOW);
+            } else if (val <= 8.0f) {
+                colors.add(Color.rgb(173, 255, 47)); // Yellow-Green
             } else {
                 colors.add(Color.GREEN); // Bright Green
             }
