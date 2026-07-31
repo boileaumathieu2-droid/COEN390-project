@@ -6,7 +6,7 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
-import com.example.zone.controller.Recommended_Study_Times_Controller;
+import com.example.zone.controller.RecommendedStudyTimesController;
 import com.example.zone.model.Session;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -19,9 +19,9 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Recommended_Study_Times_View extends AppCompatActivity {
+public class RecommendedStudyTimesView extends AppCompatActivity {
 
-    private Recommended_Study_Times_Controller controller;
+    private RecommendedStudyTimesController controller;
     private BarChart barChart;
 
     @Override
@@ -43,7 +43,7 @@ public class Recommended_Study_Times_View extends AppCompatActivity {
         Session.init(getApplicationContext());
         int userID = Session.getUserID();
 
-        controller = new Recommended_Study_Times_Controller(this, userID);
+        controller = new RecommendedStudyTimesController(this, userID);
         setupChart();
         displayData();
     }

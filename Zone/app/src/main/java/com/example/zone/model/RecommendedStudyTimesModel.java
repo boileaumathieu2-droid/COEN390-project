@@ -2,11 +2,11 @@ package com.example.zone.model;
 
 import android.content.Context;
 
-public class Recommended_Study_Times_Model {
+public class RecommendedStudyTimesModel {
     private final Database db;
     private final int userID;
 
-    public Recommended_Study_Times_Model(Context context, int userID) {
+    public RecommendedStudyTimesModel(Context context, int userID) {
         this.db = new Database(context);
         this.userID = userID;
     }
