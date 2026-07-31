@@ -169,6 +169,7 @@ public class MainView extends AppCompatActivity {
             } else {
                 // Sync with TimerModel's session
                 StudySession = model.getLiveSession();
+
             }
             showStatus();
         });
@@ -210,22 +211,12 @@ public class MainView extends AppCompatActivity {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
-            System.out.println("BEFORE DATABASE: ");
-
-            // TODO: later, make it so the database is unique to the user so he has access to all of his previous data when logged in
-            try (Database db = new Database(this)) {
-                int userID = Session.getUserID();
-                System.out.println("THIS IS THE USERID: " + userID);
-                if (userID != -1) {
-                    db.addSession(userID, StudySession);
-                }
-            }
-
+            Intent intent = new Intent(this, reflectionView.class);
+            startActivity(intent);
             showStatus();
             if (hasDndAccess()) {
                 manageDnD(false);
             }
-            // Show toast for manual completion
             String message;
             if(model.isBreakEnabled()) {
                 message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
@@ -234,21 +225,28 @@ public class MainView extends AppCompatActivity {
                 message = "Study Finished!";
             }
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
-
             Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
-
             updateTimerUI();
         });
-
         gradesButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, GradesTrackerView.class);
             startActivity(intent);
         });
-
         analyticsButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, AnalyticsView.class);
             startActivity(intent);
         });
+        if (getIntent().getBooleanExtra("Countdown", false)) {
+            System.out.println("This event is getting triggered");
+            startButton.performClick();
+        }
+        if(getIntent().getBooleanExtra("complete", false)) {
+            int rating =getIntent().getIntExtra("rating", -1);
+            boolean objective = getIntent().getBooleanExtra("objective", false);
+            StudySession.setObjectiveMet(objective);
+            StudySession.setProductivityRating(rating);
+            InsertData();
+        }
 
         timerRunnable = new Runnable() {
             @Override
@@ -275,7 +273,7 @@ public class MainView extends AppCompatActivity {
         updateTimerUI();
     }
 
-    private void startCountdown() {
+    protected void startCountdown() {
         TimerModel model = TimerModel.getInstance();
         if (!model.isRunning()) {
             // function inside of Timer Model
@@ -391,6 +389,16 @@ public class MainView extends AppCompatActivity {
             Toast.makeText(MainView.this, "INACTIVE", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void InsertData() {
+        try (Database db = new Database(this)) {
+            int userID = Session.getUserID();
+            System.out.println("THIS IS THE USERID: " + userID);
+            if (userID != -1) {
+                db.addSession(userID, StudySession);
+            }
         }
     }
 
