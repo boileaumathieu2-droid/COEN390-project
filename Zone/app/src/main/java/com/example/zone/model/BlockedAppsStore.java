@@ -54,7 +54,7 @@ public final class BlockedAppsStore {
         System.out.println("BLOCKED APPS: " + blockedPackages);
         boolean x = isAccessibilityEnabled(context);
         System.out.println("ACCESSIBILITY" + x);
-        if (blockedPackages.isEmpty() && !isAccessibilityEnabled(context)) {
+        if (!blockedPackages.isEmpty() && !isAccessibilityEnabled(context)) {
 
             getAppBlocking(context);
         }
