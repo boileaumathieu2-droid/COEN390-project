@@ -42,6 +42,12 @@ public class AnalyticsView extends AppCompatActivity {
             startActivity(intent);
         });
 
+        Button recommendedStudyTimesButton = findViewById(R.id.recommendedStudyTimesButton);
+        recommendedStudyTimesButton.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, RecommendedStudyTimesView.class);
+            startActivity(intent);
+        });
+
         setupAnalytics();
         
         refreshRunnable = new Runnable() {

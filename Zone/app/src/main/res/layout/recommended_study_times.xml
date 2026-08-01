@@ -8,82 +8,61 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/analyticsTitle"
+        android:id="@+id/studyTimesTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="108dp"
-        android:text="Analytics"
+        android:layout_marginTop="48dp"
+        android:text="@string/recommended_study_times_title"
         android:textColor="@color/black"
-        android:textSize="60sp"
+        android:textSize="28sp"
         android:textStyle="bold"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/heartRateLabel"
+        android:id="@+id/chartDescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Current Heart Rate"
+        android:text="@string/recommended_study_times_desc"
         android:textColor="@color/black"
-        android:textSize="18sp"
+        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/analyticsTitle" />
+        app:layout_constraintTop_toBottomOf="@id/studyTimesTitle" />
 
-    <TextView
-        android:id="@+id/heartRateValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="N/A"
-        android:textColor="@color/black"
-        android:textSize="48sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/heartRateLabel" />
-
-    <TextView
-        android:id="@+id/graphLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Heart Rate Graph"
-        android:textColor="@color/black"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/heartRateValue" />
-
-    <!-- Line Chart for Heart Rate History -->
-    <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/heartRateChart"
+    <!-- Bar Chart for Performance History -->
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/performanceBarChart"
         android:layout_width="0dp"
-        android:layout_height="250dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="40dp"
+        app:layout_constraintBottom_toTopOf="@+id/backToAnalyticsButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/graphLabel" />
+        app:layout_constraintTop_toBottomOf="@id/chartDescription" />
+
+    <TextView
+        android:id="@+id/xAxisLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/time_of_day_label"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/performanceBarChart"
+        app:layout_constraintStart_toStartOf="@+id/performanceBarChart"
+        app:layout_constraintTop_toBottomOf="@+id/performanceBarChart" />
 
     <Button
-        android:id="@+id/recommendedStudyTimesButton"
+        android:id="@+id/backToAnalyticsButton"
         android:layout_width="0dp"
         android:layout_height="52dp"
         android:layout_marginBottom="16dp"
-        android:text="@string/recommended_study_times_btn"
-        app:layout_constraintBottom_toTopOf="@+id/previousSessionsButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.7" />
-
-    <Button
-        android:id="@+id/previousSessionsButton"
-        android:layout_width="0dp"
-        android:layout_height="52dp"
-        android:layout_marginBottom="16dp"
-        android:text="Session History"
-        android:layout_marginTop="0dp"
+        android:text="@string/back_to_analytics"
         app:layout_constraintBottom_toTopOf="@+id/mainMenuButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -94,7 +73,7 @@
         android:layout_width="0dp"
         android:layout_height="52dp"
         android:layout_marginBottom="24dp"
-        android:text="Return to Main Menu"
+        android:text="@string/return_to_main_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

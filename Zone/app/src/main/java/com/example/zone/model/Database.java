@@ -374,14 +374,23 @@ public class Database extends SQLiteOpenHelper {
             
             String startTimeStr = cursor.getString(cursor.getColumnIndexOrThrow("start_time"));
             String endTimeStr = cursor.getString(cursor.getColumnIndexOrThrow("end_time"));
-            
-            session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
+
+            if (startTimeStr != null) {
+                session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
+            }
             if (endTimeStr != null) {
                 session.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
             }
-            
+
             session.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow("duration")));
-            session.setStatus(StudySessionModel.Status.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("status"))));
+            String statusStr = cursor.getString(cursor.getColumnIndexOrThrow("status"));
+            if (statusStr != null) {
+                try {
+                    session.setStatus(StudySessionModel.Status.valueOf(statusStr));
+                } catch (IllegalArgumentException e) {
+                    session.setStatus(StudySessionModel.Status.COMPLETE);
+                }
+            }
             session.setObjectiveMet(cursor.getInt(cursor.getColumnIndexOrThrow("objective_met")) == 1);
             session.setProductivityRating(cursor.getInt(cursor.getColumnIndexOrThrow("productivity_rating")));
             session.setRestingHeartRate(cursor.getInt(cursor.getColumnIndexOrThrow("resting_heart_rate")));

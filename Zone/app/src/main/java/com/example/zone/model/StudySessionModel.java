@@ -1,7 +1,5 @@
 package com.example.zone.model;
 
-import static java.sql.Types.NULL;
-
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -48,7 +46,7 @@ public class StudySessionModel {
     private Status status;
     private int restingHeartRate;   // take heart rate value at time 0
     private Boolean objectiveMet = false;   // default, rating at session end
-    private int productivityRating; // rated on session completion
+    private int productivityRating; // rated on session completion, -1 = not rated
     private List<Integer> heartRateDataList = new ArrayList<>();    // save the heart rate values every 15 seconds
     private int averageHeartRate;
     private HeartRateReading currentHeartRateReading;
@@ -63,6 +61,7 @@ public class StudySessionModel {
     public StudySessionModel() {    // constructed at start of session
         duration = 0;
         status = Status.INACTIVE;
+        productivityRating = -1; // -1 represents "not rated"
     }
     public static StudySessionModel getInstance() {
 
@@ -85,7 +84,7 @@ public class StudySessionModel {
         endTime = null;
         duration = 0;
         objectiveMet = false;
-        productivityRating = 0;
+        productivityRating = -1;
         heartRateDataList.clear();
         averageHeartRate = 0;
         maxHeartRate = null;
@@ -137,7 +136,7 @@ public class StudySessionModel {
             if(0 <= productivityRating && productivityRating <= 10) {
                 this.productivityRating = productivityRating;   // user rating
             } else {
-                this.productivityRating = NULL; // make sure to avoid using the empty value in averages
+                this.productivityRating = -1; // -1 represents "not rated"
             }
 
             // calculate average heart rate
@@ -244,16 +243,32 @@ public class StudySessionModel {
         this.averageHeartRate = averageHeartRate;
     }
     public void setMaxHeartRate(int maxHeartRate) {
-        this.maxHeartRate.setHeartRate(maxHeartRate);
+        if (this.maxHeartRate == null) {
+            this.maxHeartRate = new HeartRateInstance(-1, maxHeartRate);
+        } else {
+            this.maxHeartRate.setHeartRate(maxHeartRate);
+        }
     }
     public void setMinHeartRate(int minHeartRate) {
-        this.minHeartRate.setHeartRate(minHeartRate);
+        if (this.minHeartRate == null) {
+            this.minHeartRate = new HeartRateInstance(-1, minHeartRate);
+        } else {
+            this.minHeartRate.setHeartRate(minHeartRate);
+        }
     }
     public void setMaxHeartRateIndex(int maxHeartRateIndex) {
-        this.maxHeartRate.setIndex(maxHeartRateIndex);
+        if (this.maxHeartRate == null) {
+            this.maxHeartRate = new HeartRateInstance(maxHeartRateIndex, 0);
+        } else {
+            this.maxHeartRate.setIndex(maxHeartRateIndex);
+        }
     }
     public void setMinHeartRateIndex(int minHeartRateIndex) {
-        this.minHeartRate.setIndex(minHeartRateIndex);
+        if (this.minHeartRate == null) {
+            this.minHeartRate = new HeartRateInstance(minHeartRateIndex, 0);
+        } else {
+            this.minHeartRate.setIndex(minHeartRateIndex);
+        }
     }
 
     public void addHistoricalHeartRate(int hr) {
