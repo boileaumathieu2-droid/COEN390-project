@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class reflectionView extends AppCompatActivity {
 
    private EditText ratingInput;
@@ -79,7 +81,24 @@ public class reflectionView extends AppCompatActivity {
               .setPositiveButton("Dimiss", (dialog, which) -> {
                  dialog.dismiss();
 
-      })
-      .show();
+              })
+              .show();
+   }
+
+   boolean allowDestroy = false;
+
+   @Override
+   public void onBackPressed() {
+
+      new AlertDialog.Builder(this)
+              .setTitle("Warning")
+              .setMessage("Going back without filling out the table means your session will not be logged. Are you sure?")
+              .setPositiveButton("Yes", (dialog, which) -> {
+                 super.onBackPressed();
+              })
+              .setNegativeButton("No", (dialog, which) -> {
+                 dialog.dismiss();
+              })
+              .show();
    }
 }
