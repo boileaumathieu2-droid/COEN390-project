@@ -23,8 +23,8 @@ public class RecommendedStudyTimesModel {
         java.util.List<StudySessionModel> sessions = db.getAllSessions(userID);
         
         for (StudySessionModel session : sessions) {
-            // Getting the Averages on all sessions (if the time was logged correctly)
-            if (session.getStartTime() != null && session.getProductivityRating() > 0) {
+            // Include ratings in the range 0-10. -1 indicates no rating.
+            if (session.getStartTime() != null && session.getProductivityRating() >= 0) {
                 int hour = session.getStartTime().getHour();
                 totals[hour] += session.getProductivityRating();
                 counts[hour]++;
@@ -35,7 +35,7 @@ public class RecommendedStudyTimesModel {
             if (counts[i] > 0) {
                 averages[i] = totals[i] / counts[i];
             } else {
-                averages[i] = 0f;
+                averages[i] = -1f; // -1 indicates no data for this hour
             }
         }
 

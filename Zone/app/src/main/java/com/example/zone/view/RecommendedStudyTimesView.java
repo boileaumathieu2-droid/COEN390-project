@@ -94,20 +94,31 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
 
         for (int i = 0; i < 24; i++) {
             float val = averages[i];
-            entries.add(new BarEntry(i, val));
             
-            // Color coding based on value (Scale 0-10)
-            if (val <= 2.0f) {
-                colors.add(Color.RED);
-            } else if (val <= 4.0f) {
-                colors.add(Color.rgb(255, 165, 0)); // Orange
-            } else if (val <= 6.0f) {
-                colors.add(Color.YELLOW);
-            } else if (val <= 8.0f) {
-                colors.add(Color.rgb(173, 255, 47)); // Yellow-Green
-            } else {
-                colors.add(Color.GREEN); // Bright Green
+            // Only add entries where we have data (val >= 0)
+            if (val >= 0) {
+                entries.add(new BarEntry(i, val));
+                
+                // Color coding based on value (Scale 0-10)
+                if (val <= 2.0f) {
+                    colors.add(Color.RED);
+                } else if (val <= 4.0f) {
+                    colors.add(Color.rgb(255, 165, 0)); // Orange
+                } else if (val <= 6.0f) {
+                    colors.add(Color.YELLOW);
+                } else if (val <= 8.0f) {
+                    colors.add(Color.rgb(173, 255, 47)); // Yellow-Green
+                } else {
+                    colors.add(Color.GREEN); // Bright Green
+                }
             }
+        }
+
+        if (entries.isEmpty()) {
+            barChart.clear();
+            barChart.setNoDataText("No productivity data available yet.");
+            barChart.invalidate();
+            return;
         }
 
         BarDataSet dataSet = new BarDataSet(entries, "Average Productivity Rating");
