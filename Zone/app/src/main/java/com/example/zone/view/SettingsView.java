@@ -9,9 +9,10 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
-import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 public class SettingsView extends AppCompatActivity {
+    private VirtualDatabase db = new VirtualDatabase();
     @Override
     public boolean onSupportNavigateUp() {
         finish();
@@ -32,7 +33,7 @@ public class SettingsView extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         logout.setOnClickListener(v -> {
-            Session.logout();
+            db.signOut();
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);
             Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
@@ -47,9 +48,9 @@ public class SettingsView extends AppCompatActivity {
             Intent intent = new Intent(this, BlockedAppsView.class);
             startActivity(intent);
         });
-          Notifications.setOnClickListener(v -> {
+        Notifications.setOnClickListener(v -> {
             Intent intent = new Intent(this, NotificationSetting.class);
             startActivity(intent);
         });
-        }
     }
+}

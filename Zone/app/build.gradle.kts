@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
+
+
 }
 
 android {
@@ -40,6 +43,11 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.12.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    implementation(platform("com.google.firebase:firebase-bom:34.17.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-auth")
+
 }
 
 android {
@@ -49,7 +57,6 @@ android {
         }
     }
     lint {
-        // Legacy BLE scanning uses fine location only through Android 11.
         disable += "CoarseFineLocation"
     }
 }

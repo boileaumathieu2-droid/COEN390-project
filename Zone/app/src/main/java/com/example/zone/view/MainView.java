@@ -48,7 +48,7 @@ public class MainView extends AppCompatActivity {
     private MainViewObjectiveAdapter adapter;
     private String today;
 
-
+    private TimerModel Timer = TimerModel.getInstance();
     private TextView timerDisplay;
     private ListView dailyGoals;
     private TextView objectivesPrompt;
@@ -61,6 +61,8 @@ public class MainView extends AppCompatActivity {
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
     private StudySessionModel StudySession = StudySessionModel.getInstance();
+    int minutes = Timer.getMinutes();
+    int seconds = Timer.getSeconds();
 
     @Override
     public boolean onSupportNavigateUp() {
@@ -105,6 +107,7 @@ public class MainView extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+
         today = new SimpleDateFormat(
                 "yyyy-MM-dd",
                 Locale.getDefault()
@@ -126,6 +129,8 @@ public class MainView extends AppCompatActivity {
         Button objectivesButton = findViewById(R.id.objectivesButton);
         timerDisplay = findViewById(R.id.timerDisplay);
         objectivesPrompt = findViewById(R.id.goalPrompt);
+        timerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)); // format the text
+
 
         dailyGoals = findViewById(R.id.dailyGoalsListView);
         dailyGoalsArray = new ArrayList<>();
@@ -141,8 +146,8 @@ public class MainView extends AppCompatActivity {
             return insets;
         });
 
-        objectivesPrompt.setOnClickListener(v->{
-            Intent intent = new Intent(this,ObjectiveView.class);
+        objectivesPrompt.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ObjectiveView.class);
             startActivity(intent);
         });
 
@@ -151,14 +156,14 @@ public class MainView extends AppCompatActivity {
             startActivity(intent);
         });
 
-        gradesButton.setOnClickListener(v->{
+        gradesButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, GradesTrackerView.class);
             startActivity(intent);
         });
 
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
 
-         startButton.setOnClickListener(v ->  {
+        startButton.setOnClickListener(v -> {
             startCountdown();
             TimerModel model = TimerModel.getInstance();
             if (hasDndAccess()) {
@@ -174,7 +179,7 @@ public class MainView extends AppCompatActivity {
             showStatus();
         });
 
-       pauseButton.setOnClickListener(v -> {
+        pauseButton.setOnClickListener(v -> {
             // Checks if timer is counting down
             if (TimerModel.getInstance().isRunning()) {
                 if (hasDndAccess()) {
@@ -197,28 +202,27 @@ public class MainView extends AppCompatActivity {
             updateTimerUI();
         });
 
-         resetButton.setOnClickListener(v -> {
+        resetButton.setOnClickListener(v -> {
             TimerModel.getInstance().stopAndReset();
             updateTimerUI();
             StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             showStatus();
-             if (hasDndAccess()) {
-                 manageDnD(false);
-             }
+            if (hasDndAccess()) {
+                manageDnD(false);
+            }
         });
 
         completeButton.setOnClickListener(v -> {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
-            Intent intent = new Intent(this, reflectionView.class);
-            startActivity(intent);
+
             showStatus();
             if (hasDndAccess()) {
                 manageDnD(false);
             }
             String message;
-            if(model.isBreakEnabled()) {
+            if (model.isBreakEnabled()) {
                 message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
@@ -227,6 +231,8 @@ public class MainView extends AppCompatActivity {
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
             Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
             updateTimerUI();
+            Intent intent = new Intent(this, reflectionView.class);
+            startActivity(intent);
         });
         gradesButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, GradesTrackerView.class);
@@ -240,8 +246,8 @@ public class MainView extends AppCompatActivity {
             System.out.println("This event is getting triggered");
             startButton.performClick();
         }
-        if(getIntent().getBooleanExtra("complete", false)) {
-            int rating =getIntent().getIntExtra("rating", -1);
+        if (getIntent().getBooleanExtra("complete", false)) {
+            int rating = getIntent().getIntExtra("rating", -1);
             boolean objective = getIntent().getBooleanExtra("objective", false);
             StudySession.setObjectiveMet(objective);
             StudySession.setProductivityRating(rating);
@@ -253,24 +259,28 @@ public class MainView extends AppCompatActivity {
             public void run() {
                 TimerModel model = TimerModel.getInstance();
                 if (model.isRunning()) {
+                    boolean wasBreakTime = model.isBreakTime();
                     boolean stillRunning = model.tick();
                     updateTimerUI();
                     if (stillRunning) {
                         timerHandler.postDelayed(this, 1000);
                     } else {
-                        String message;
-                        if(model.isBreakEnabled()) {
-                            message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
+                        if (!wasBreakTime) {
+                            // Study timer finished
+                            Intent intent = new Intent(MainView.this, reflectionView.class);
+                            startActivity(intent);
                         } else {
-                            message = "Study Finished!";
+                            // Break timer finished
+                            Toast.makeText(
+                                    MainView.this,
+                                    "Break Finished! Time to Study.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
                         }
-                        Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
         };
-
-        updateTimerUI();
     }
 
     protected void startCountdown() {
