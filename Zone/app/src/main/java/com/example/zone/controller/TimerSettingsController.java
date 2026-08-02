@@ -1,5 +1,6 @@
 package com.example.zone.controller;
 
+import android.content.Context;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Toast;
@@ -12,9 +13,9 @@ public class TimerSettingsController {
     private TimerSettingsView timerSettingsView;
     private TimerModel timerModel;
 
-    public TimerSettingsController(TimerSettingsView activity) {
+    public TimerSettingsController(TimerSettingsView activity, Context context) {
         this.timerSettingsView = activity;
-        this.timerModel = TimerModel.getInstance();
+        this.timerModel = TimerModel.getInstance(context);
 
         // Link the switch to the toggle logic
         CompoundButton breakTimerSwitch = activity.findViewById(R.id.switch_break_timer);

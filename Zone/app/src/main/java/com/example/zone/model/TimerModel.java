@@ -1,6 +1,13 @@
 package com.example.zone.model;
 
+import android.content.SharedPreferences;
+import android.content.Context;
+
+
 public class TimerModel {
+
+    private SharedPreferences prefs;
+
 
     private static TimerModel instance; // create a single instance
     private int studyDuration;   // total duration in seconds defined by user
@@ -9,45 +16,53 @@ public class TimerModel {
     private boolean breakTime;    // true if there is a break after the study session
     private boolean breakEnabled; // keeps track of the break switch
     private int remainingTime;  // remaining time in seconds, used for the display
-    private StudySessionModel session;  // use to get the live session
-    // functions:
+    private StudySessionModel session;
 
-    private TimerModel() {
-        // Default values: 25 minutes (1500 seconds), 5 minute break (300 seconds)
-        this.studyDuration = 1500;
-        this.remainingTime = 1500;
-        this.breakDuration = 300;
-        this.breakEnabled = false;
+
+    private TimerModel(Context context) {
+        prefs = context.getSharedPreferences(
+                "timer_settings",
+                Context.MODE_PRIVATE
+        );
+        this.studyDuration = prefs.getInt("studyDuration", 1500);
+        this.breakDuration = prefs.getInt("breakDuration", 300);
+        this.breakEnabled = prefs.getBoolean("breakEnabled", false);
         this.breakTime = false;
+        this.remainingTime = this.studyDuration;
     }
 
-    public static TimerModel getInstance() {
+    public static TimerModel getInstance(Context context) {
         if (instance == null) {
-            instance = new TimerModel(); // created once, the very first time
+            instance = new TimerModel(context); // created once, the very first time
         }
         return instance; // every other time, returns the SAME object
     }
-
     // setters and getters
     public void setStudyDuration(int duration) {
         studyDuration = Math.max(1, duration);
+
         if (!isRunning) {
             remainingTime = studyDuration;
         }
+        prefs.edit()
+                .putInt("studyDuration", studyDuration)
+                .apply();
     }
-
     public void setBreakDuration(int duration) {
         breakDuration = Math.max(1, duration);
+        prefs.edit()
+                .putInt("breakDuration", breakDuration)
+                .apply();
     }
-
     public void setBreakEnabled(boolean enabled) {
         breakEnabled = enabled;
+        prefs.edit()
+                .putBoolean("breakEnabled", breakEnabled)
+                .apply();
     }
-
     public boolean isBreakEnabled() {
         return breakEnabled;
     }
-
     public boolean tick() {
         if (!isRunning) {
             return false;
