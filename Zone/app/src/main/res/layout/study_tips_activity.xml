@@ -44,7 +44,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="16dp"
-                        android:visibility="gone">
+                        android:visibility="visible">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -74,7 +74,7 @@
 
                             <ImageView
                                 android:layout_width="160dp"
-                                android:layout_height="160dp"
+                                android:layout_height="140dp"
                                 android:layout_gravity="center"
                                 android:scaleType="fitCenter"
                                 android:src="@drawable/drinking_water" />
@@ -94,15 +94,16 @@
 
                             <ImageView
                                 android:layout_width="160dp"
-                                android:layout_height="160dp"
+                                android:layout_height="140dp"
                                 android:layout_gravity="center"
-                                android:scaleType="centerCrop"
+                                android:scaleType="fitCenter"
+                                android:scaleX="1.1"
+                                android:scaleY="1.1"
                                 android:src="@drawable/sleep" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
                                 android:text="• Get 7-9 hours of sleep. Aim to be in bed by 10-11pm so that you can make the most of the next day. Sleep is vital for brain functions and your immune system." />
                         </LinearLayout>
 
