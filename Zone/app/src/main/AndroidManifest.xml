@@ -76,11 +76,11 @@
         <activity android:name=".view.TimerSettingsView" android:exported="true"/>
         <activity android:name=".view.GradesTrackerView" android:exported="true"/>
         <activity android:name=".view.AnalyticsView" android:exported="true"/>
-        <activity android:name=".view.RecommendedStudyTimesView" android:exported="false"/>
         <activity android:name=".view.SessionHistoryView" android:exported="false"/>
         <activity android:name=".view.SubjectView" android:exported="true"/>
         <activity android:name=".view.ObjectiveView" android:exported="true"/>
         <activity android:name=".view.ObjectivesPageView" android:exported="true"/>
+        <activity android:name=".view.StudyTipsView" android:exported="true"/>
         <activity android:name=".view.TaskCreationView" android:exported="false"/>
         <activity android:name=".view.NotificationSetting" android:exported = "false"/>
     </application>    
