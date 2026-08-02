@@ -28,6 +28,7 @@ public class VirtualDatabase {
     public void createAccount(String email, String password, Context context, AuthCallback callback) {
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
+                    assert auth.getCurrentUser() != null;
                     String uid = auth.getCurrentUser().getUid();
                     Map<String, Object> user = new HashMap<>();
                     user.put("email", email);
@@ -38,9 +39,7 @@ public class VirtualDatabase {
                             .addOnSuccessListener(unused -> {
                                 callback.onResult(true);
                             })
-                            .addOnFailureListener(e -> {
-                                callback.onResult(false);
-                            });
+                            .addOnFailureListener(e -> callback.onResult(false));
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(context,
@@ -80,12 +79,8 @@ public class VirtualDatabase {
         db.collection("users")
                 .document("testUser")
                 .set(user)
-                .addOnSuccessListener(unused -> {
-                    System.out.println("Data saved!!");
-                })
-                .addOnFailureListener(e -> {
-                    System.out.println("FAILED!!!!");
-                });
+                .addOnSuccessListener(unused -> System.out.println("Data saved!!"))
+                .addOnFailureListener(e -> System.out.println("FAILED!!!!"));
     }
 
     public void insertStudySession(StudySessionModel session) {
@@ -119,18 +114,18 @@ public class VirtualDatabase {
                     callback.onComplete(sessions);
                 });
     }
+    public void saveStudySession() {
+
+        String userId = getCurrentUserId();
+        StudySessionModel session = StudySessionModel.getInstance();
+        db.collection("users")
+                .document(userId)
+                .collection("studySessions")
+                .add(session.toMap());
+    }
+
 
     public interface StudySessionCallback {
         void onComplete(ArrayList<StudySessionModel> sessions);
     }
 }
-//how to call, database is asynchronous, have to use callbacks
-//once the getStudySession is called, array sessions contain all sessions
-//getStudySessions(sessions -> {
-//
-//    for (StudySessionModel session : sessions) {
-//perform analysis here
-//    }
-//
-//});
-

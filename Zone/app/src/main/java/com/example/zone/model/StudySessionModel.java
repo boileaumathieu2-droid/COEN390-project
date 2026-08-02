@@ -1,9 +1,14 @@
 package com.example.zone.model;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
+
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StudySessionModel {
 
@@ -15,7 +20,7 @@ public class StudySessionModel {
      private static StudySessionModel instance;
 
 
-    public static class HeartRateInstance {
+        public static class HeartRateInstance {
         private int index;
         private int heartRate;
 
@@ -62,13 +67,13 @@ public class StudySessionModel {
         duration = 0;
         status = Status.INACTIVE;
         productivityRating = -1; // -1 represents "not rated"
+
     }
     public static StudySessionModel getInstance() {
 
         if(instance == null) {
             instance = new StudySessionModel();
         }
-
         return instance;
     }
     // function that gets the current heart rate value from HeartRateMonitorView.java and HeartRateReading.java
@@ -189,6 +194,9 @@ public class StudySessionModel {
         }
         return data;
     }
+    public List<Integer> getHeartRateDataList() {
+        return heartRateDataList;
+    }
 
     public int getRestingHeartRate() {
         return restingHeartRate;
@@ -270,7 +278,6 @@ public class StudySessionModel {
             this.minHeartRate.setIndex(minHeartRateIndex);
         }
     }
-
     public void addHistoricalHeartRate(int hr) {
         this.heartRateDataList.add(hr);
     }
@@ -279,14 +286,6 @@ public class StudySessionModel {
         return status == Status.ACTIVE;
     }
 
-    // functions in case we want to take into account the paused time, for not don't use...
-
-//    public boolean isPaused() {
-//        return status == Status.INACTIVE;
-//    }
-//    public boolean isResumed() {
-//        return status == Status.ACTIVE;
-//    }
     public void endSession(int duration) {  // at the end of the session, this triggers
         if (status != Status.ACTIVE || duration < 0) {
             return;
@@ -303,11 +302,34 @@ public class StudySessionModel {
             averageHeartRate = 0;
             return;
         }
-
         long total = 0;
         for (int heartRate : heartRateDataList) {
             total += heartRate;
         }
         averageHeartRate = (int) (total / heartRateDataList.size());
+    }
+    public Map<String, Object> toMap() {
+
+        Map<String, Object> session = new HashMap<>();
+
+        session.put("startTime", startTime != null ? startTime.toString() : null);
+        session.put("endTime", endTime != null ? endTime.toString() : null);
+        session.put("duration", duration);
+        session.put("status", status.toString());
+
+        session.put("restingHeartRate", restingHeartRate);
+        session.put("objectiveMet", objectiveMet);
+        session.put("productivityRating", productivityRating);
+
+        session.put("heartRateData", heartRateDataList);
+        session.put("averageHeartRate", averageHeartRate);
+
+        session.put("maxHeartRate", maxHeartRate != null ?
+                maxHeartRate.getHeartRate() : 0);
+
+        session.put("minHeartRate", minHeartRate != null ?
+                minHeartRate.getHeartRate() : 0);
+
+        return session;
     }
 }

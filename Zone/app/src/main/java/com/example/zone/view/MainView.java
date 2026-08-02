@@ -1,9 +1,11 @@
 package com.example.zone.view;
 import android.Manifest;
 import android.app.NotificationManager;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -33,11 +35,15 @@ import android.widget.TextView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.VirtualDatabase;
 
 
 public class MainView extends AppCompatActivity {
@@ -47,6 +53,8 @@ public class MainView extends AppCompatActivity {
     private ObjectiveController objectiveController;
     private MainViewObjectiveAdapter adapter;
     private String today;
+    VirtualDatabase db = new VirtualDatabase();
+
 
     private TimerModel Timer = TimerModel.getInstance();
     private TextView timerDisplay;
@@ -69,10 +77,13 @@ public class MainView extends AppCompatActivity {
         finish();
         return true;
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.action_menu, menu);
-        return true;}
+        return true;
+    }
+
     public boolean onOptionsItemSelected(MenuItem option) {
         int id = option.getItemId();
 
@@ -85,7 +96,7 @@ public class MainView extends AppCompatActivity {
         return super.onOptionsItemSelected(option);
     }
 
-    private void refresh(){
+    private void refresh() {
         dailyGoalsArray.clear();
 
         dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(com.example.zone.model.Session.getUserID(), today));
@@ -93,8 +104,7 @@ public class MainView extends AppCompatActivity {
         if (dailyGoalsArray.isEmpty()) {
             dailyGoals.setVisibility(View.GONE);
             objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
-        }
-        else{
+        } else {
             dailyGoals.setVisibility(View.VISIBLE);
             objectivesPrompt.setVisibility(View.GONE);
         }
@@ -164,6 +174,7 @@ public class MainView extends AppCompatActivity {
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
 
         startButton.setOnClickListener(v -> {
+            StudySession.startSession();
             startCountdown();
             TimerModel model = TimerModel.getInstance();
             if (hasDndAccess()) {
@@ -251,7 +262,7 @@ public class MainView extends AppCompatActivity {
             boolean objective = getIntent().getBooleanExtra("objective", false);
             StudySession.setObjectiveMet(objective);
             StudySession.setProductivityRating(rating);
-            InsertData();
+            db.saveStudySession();
         }
 
         timerRunnable = new Runnable() {
@@ -356,7 +367,6 @@ public class MainView extends AppCompatActivity {
         // Hide start button if timer is running or paused mid-session
         startButton.setVisibility(isTimerActive ? android.view.View.GONE : android.view.View.VISIBLE);
     }
-
     public void openTimerSettings() {
         Intent intent = new Intent(this, TimerSettingsView.class);
         startActivity(intent);
@@ -387,7 +397,7 @@ public class MainView extends AppCompatActivity {
         boolean mute = prefs.getBoolean("Mute", false);
         NotificationManager notificationManager =
                 getSystemService(NotificationManager.class);
-        boolean x =  notificationManager != null
+        boolean x = notificationManager != null
                 && notificationManager.isNotificationPolicyAccessGranted();
 
         return x && mute;
@@ -401,7 +411,6 @@ public class MainView extends AppCompatActivity {
             Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
         }
     }
-
     public void InsertData() {
         try (Database db = new Database(this)) {
             int userID = Session.getUserID();
@@ -411,5 +420,4 @@ public class MainView extends AppCompatActivity {
             }
         }
     }
-
 }
