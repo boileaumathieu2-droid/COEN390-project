@@ -1,4 +1,5 @@
 package com.example.zone.view;
+
 import android.Manifest;
 import android.app.NotificationManager;
 import android.content.ContentValues;
@@ -27,6 +28,7 @@ import com.example.zone.model.Database;
 import com.example.zone.model.MainViewObjectiveAdapter;
 import com.example.zone.model.Objective;
 import com.example.zone.model.Session;
+import com.example.zone.model.StudyTipsModel;
 import com.example.zone.model.TimerModel;
 
 import android.widget.ListView;
@@ -48,7 +50,7 @@ import com.example.zone.model.VirtualDatabase;
 
 public class MainView extends AppCompatActivity {
     private SharedPreferences prefs;
-
+    private StudyTipsModel tipModel;
     private MainController mainController;
     private ObjectiveController objectiveController;
     private MainViewObjectiveAdapter adapter;
@@ -58,6 +60,10 @@ public class MainView extends AppCompatActivity {
 
     private TimerModel Timer = TimerModel.getInstance();
     private TextView timerDisplay;
+    private TextView tipText;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable runnable;
+    private final int delay = 45000;
     private ListView dailyGoals;
     private TextView objectivesPrompt;
     private ArrayList<Objective> dailyGoalsArray;
@@ -139,14 +145,19 @@ public class MainView extends AppCompatActivity {
         Button objectivesButton = findViewById(R.id.objectivesButton);
         timerDisplay = findViewById(R.id.timerDisplay);
         objectivesPrompt = findViewById(R.id.goalPrompt);
-        timerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)); // format the text
-
+        tipText = findViewById(R.id.studyTipTextView);
 
         dailyGoals = findViewById(R.id.dailyGoalsListView);
         dailyGoalsArray = new ArrayList<>();
         adapter = new MainViewObjectiveAdapter(this, dailyGoalsArray);
 
         dailyGoals.setAdapter(adapter);
+
+        tipModel = new StudyTipsModel();
+
+
+        tipText.setText(tipModel.randomTip());
+        handler.postDelayed(tipUpdater, delay);
 
         refresh();
 
@@ -158,6 +169,11 @@ public class MainView extends AppCompatActivity {
 
         objectivesPrompt.setOnClickListener(v -> {
             Intent intent = new Intent(this, ObjectiveView.class);
+            startActivity(intent);
+        });
+
+        tipText.setOnClickListener(v-> {
+            Intent intent = new Intent(this, StudyTipsView.class);
             startActivity(intent);
         });
 
@@ -411,13 +427,29 @@ public class MainView extends AppCompatActivity {
             Toast.makeText(MainView.this, "ACTIVE", Toast.LENGTH_SHORT).show();
         }
     }
-    public void InsertData() {
-        try (Database db = new Database(this)) {
-            int userID = Session.getUserID();
-            System.out.println("THIS IS THE USERID: " + userID);
-            if (userID != -1) {
-                db.addSession(userID, StudySession);
-            }
+
+    private Runnable tipUpdater = new Runnable() {
+        @Override
+        public void run() {
+            tipText.animate()
+                    .alpha(0f)
+                    .setDuration(500)
+                    .withEndAction(() -> {
+                        tipText.setText(tipModel.randomTip());
+
+                        tipText.animate()
+                                .alpha(1f)
+                                .setDuration(500);
+                    });
+
+            handler.postDelayed(this, delay);
         }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(tipUpdater);
     }
+
 }
