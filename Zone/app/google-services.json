@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "966909125903",
+    "project_id": "zone-9e313",
+    "storage_bucket": "zone-9e313.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966909125903:android:6eca74131305950060ca7a",
+        "android_client_info": {
+          "package_name": "com.example.zone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7slwD-DSYGyVLjzzG4xoQeZmONh6sTzg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

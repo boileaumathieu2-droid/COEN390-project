@@ -11,6 +11,7 @@ import com.example.zone.R;
 import com.example.zone.controller.Login;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 
 public class LoginView extends AppCompatActivity {
@@ -20,14 +21,19 @@ public class LoginView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         Session.init(this);
+        VirtualDatabase db = new VirtualDatabase();
 
         // If Android recreated the launcher Activity after the app was minimized,
         // restore the existing authenticated session instead of showing login again.
-        if (Session.getUsername() != null && Session.getUserID() != -1) {
+//        if (Session.getUsername() != null && Session.getUserID() != -1) {
+//            Intent intent = new Intent(this, MainView.class);
+//            startActivity(intent);
+//            finish();
+//            return;
+//        }
+        if(db.getCurrentUserId() != null) {
             Intent intent = new Intent(this, MainView.class);
             startActivity(intent);
-            finish();
-            return;
         }
 
         setContentView(R.layout.login_page);
@@ -38,32 +44,24 @@ public class LoginView extends AppCompatActivity {
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
-            boolean success = controller.login(
-                    username.getText().toString(),
-                    password.getText().toString()
-            );
-            if (success) {
-                Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-                Session.setUsername(username.getText().toString());
-                Session.setUserID(controller.getUserID(Session.getUsername()));
-                Intent intent = new Intent(this, MainView.class);
-                startActivity(intent);
-                finish();
-            } else {
-                Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_SHORT).show();
-            }
+            db.signIn(username.getText().toString(), password.getText().toString(), success-> {
+                if (success) {
+                    Toast.makeText(this, "Sign it successful", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(this, MainView.class);
+                    startActivity(intent);
+                }
+                else {
+                    Toast.makeText(this, "Incorect information, Try Again!", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
         forgot_password.setOnClickListener(v -> {
             //Intent intent = new Intent(this, MainView.class);
             //startActivity(intent);
-
-
-            
         });
         Register_now.setOnClickListener(v -> {
             Intent intent = new Intent(this, RegistrationView.class);
             startActivity(intent);
-
         });
     }
 }

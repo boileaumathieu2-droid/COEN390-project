@@ -2,9 +2,11 @@ package com.example.zone.view;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -35,12 +37,15 @@ import android.widget.TextView;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.VirtualDatabase;
 
 
 public class MainView extends AppCompatActivity {
@@ -50,8 +55,10 @@ public class MainView extends AppCompatActivity {
     private ObjectiveController objectiveController;
     private MainViewObjectiveAdapter adapter;
     private String today;
+    VirtualDatabase db = new VirtualDatabase();
 
 
+    private TimerModel Timer = TimerModel.getInstance();
     private TextView timerDisplay;
     private TextView tipText;
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -68,16 +75,21 @@ public class MainView extends AppCompatActivity {
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
     private StudySessionModel StudySession = StudySessionModel.getInstance();
+    int minutes = Timer.getMinutes();
+    int seconds = Timer.getSeconds();
 
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.action_menu, menu);
-        return true;}
+        return true;
+    }
+
     public boolean onOptionsItemSelected(MenuItem option) {
         int id = option.getItemId();
 
@@ -90,7 +102,7 @@ public class MainView extends AppCompatActivity {
         return super.onOptionsItemSelected(option);
     }
 
-    private void refresh(){
+    private void refresh() {
         dailyGoalsArray.clear();
 
         dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(com.example.zone.model.Session.getUserID(), today));
@@ -98,8 +110,7 @@ public class MainView extends AppCompatActivity {
         if (dailyGoalsArray.isEmpty()) {
             dailyGoals.setVisibility(View.GONE);
             objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
-        }
-        else{
+        } else {
             dailyGoals.setVisibility(View.VISIBLE);
             objectivesPrompt.setVisibility(View.GONE);
         }
@@ -111,6 +122,7 @@ public class MainView extends AppCompatActivity {
         com.example.zone.model.Session.init(getApplicationContext());
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
 
         today = new SimpleDateFormat(
                 "yyyy-MM-dd",
@@ -155,8 +167,8 @@ public class MainView extends AppCompatActivity {
             return insets;
         });
 
-        objectivesPrompt.setOnClickListener(v->{
-            Intent intent = new Intent(this,ObjectiveView.class);
+        objectivesPrompt.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ObjectiveView.class);
             startActivity(intent);
         });
 
@@ -170,14 +182,15 @@ public class MainView extends AppCompatActivity {
             startActivity(intent);
         });
 
-        gradesButton.setOnClickListener(v->{
+        gradesButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, GradesTrackerView.class);
             startActivity(intent);
         });
 
         timerSettingsButton.setOnClickListener(v -> openTimerSettings()); // access to the openTimerSettings function
 
-         startButton.setOnClickListener(v ->  {
+        startButton.setOnClickListener(v -> {
+            StudySession.startSession();
             startCountdown();
             TimerModel model = TimerModel.getInstance();
             if (hasDndAccess()) {
@@ -188,11 +201,12 @@ public class MainView extends AppCompatActivity {
             } else {
                 // Sync with TimerModel's session
                 StudySession = model.getLiveSession();
+
             }
             showStatus();
         });
 
-       pauseButton.setOnClickListener(v -> {
+        pauseButton.setOnClickListener(v -> {
             // Checks if timer is counting down
             if (TimerModel.getInstance().isRunning()) {
                 if (hasDndAccess()) {
@@ -215,86 +229,88 @@ public class MainView extends AppCompatActivity {
             updateTimerUI();
         });
 
-         resetButton.setOnClickListener(v -> {
+        resetButton.setOnClickListener(v -> {
             TimerModel.getInstance().stopAndReset();
             updateTimerUI();
             StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             showStatus();
-             if (hasDndAccess()) {
-                 manageDnD(false);
-             }
+            if (hasDndAccess()) {
+                manageDnD(false);
+            }
         });
 
         completeButton.setOnClickListener(v -> {
             TimerModel model = TimerModel.getInstance();
             model.completeSession();
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
-            System.out.println("BEFORE DATABASE: ");
-
-            // TODO: later, make it so the database is unique to the user so he has access to all of his previous data when logged in
-            try (Database db = new Database(this)) {
-                int userID = Session.getUserID();
-                System.out.println("THIS IS THE USERID: " + userID);
-                if (userID != -1) {
-                    db.addSession(userID, StudySession);
-                }
-            }
 
             showStatus();
             if (hasDndAccess()) {
                 manageDnD(false);
             }
-            // Show toast for manual completion
             String message;
-            if(model.isBreakEnabled()) {
+            if (model.isBreakEnabled()) {
                 message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
                 message = "Study Finished!";
             }
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
-
             Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
-
             updateTimerUI();
+            Intent intent = new Intent(this, reflectionView.class);
+            startActivity(intent);
         });
-
         gradesButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, GradesTrackerView.class);
             startActivity(intent);
         });
-
         analyticsButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, AnalyticsView.class);
             startActivity(intent);
         });
+        if (getIntent().getBooleanExtra("Countdown", false)) {
+            System.out.println("This event is getting triggered");
+            startButton.performClick();
+        }
+        if (getIntent().getBooleanExtra("complete", false)) {
+            int rating = getIntent().getIntExtra("rating", -1);
+            boolean objective = getIntent().getBooleanExtra("objective", false);
+            StudySession.setObjectiveMet(objective);
+            StudySession.setProductivityRating(rating);
+            db.saveStudySession();
+        }
 
         timerRunnable = new Runnable() {
             @Override
             public void run() {
                 TimerModel model = TimerModel.getInstance();
                 if (model.isRunning()) {
+                    boolean wasBreakTime = model.isBreakTime();
                     boolean stillRunning = model.tick();
                     updateTimerUI();
                     if (stillRunning) {
                         timerHandler.postDelayed(this, 1000);
                     } else {
-                        String message;
-                        if(model.isBreakEnabled()) {
-                            message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
+                        if (!wasBreakTime) {
+                            // Study timer finished
+                            Intent intent = new Intent(MainView.this, reflectionView.class);
+                            startActivity(intent);
                         } else {
-                            message = "Study Finished!";
+                            // Break timer finished
+                            Toast.makeText(
+                                    MainView.this,
+                                    "Break Finished! Time to Study.",
+                                    Toast.LENGTH_SHORT
+                            ).show();
                         }
-                        Toast.makeText(MainView.this, message, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
         };
-
-        updateTimerUI();
     }
 
-    private void startCountdown() {
+    protected void startCountdown() {
         TimerModel model = TimerModel.getInstance();
         if (!model.isRunning()) {
             // function inside of Timer Model
@@ -367,7 +383,6 @@ public class MainView extends AppCompatActivity {
         // Hide start button if timer is running or paused mid-session
         startButton.setVisibility(isTimerActive ? android.view.View.GONE : android.view.View.VISIBLE);
     }
-
     public void openTimerSettings() {
         Intent intent = new Intent(this, TimerSettingsView.class);
         startActivity(intent);
@@ -398,7 +413,7 @@ public class MainView extends AppCompatActivity {
         boolean mute = prefs.getBoolean("Mute", false);
         NotificationManager notificationManager =
                 getSystemService(NotificationManager.class);
-        boolean x =  notificationManager != null
+        boolean x = notificationManager != null
                 && notificationManager.isNotificationPolicyAccessGranted();
 
         return x && mute;
