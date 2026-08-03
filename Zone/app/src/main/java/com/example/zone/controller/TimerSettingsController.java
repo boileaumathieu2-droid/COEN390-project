@@ -82,31 +82,32 @@ public class TimerSettingsController {
      * Controller function: Gathers data from View, validates/parses it, and updates the Model.
      */
     public void saveSettings() {
-        int studyMins = parseOrDefault(timerSettingsView.getStudyMinsText(), "smin");
-        int studySecs = parseOrDefault(timerSettingsView.getStudySecsText(), "ssec");
-        int breakMins = parseOrDefault(timerSettingsView.getBreakMinsText(), "bmin");
-        int breakSecs = parseOrDefault(timerSettingsView.getBreakSecsText(), "bsec");
+        int studyMins = parseInput(timerSettingsView.getStudyMinsText());
+        int studySecs = parseInput(timerSettingsView.getStudySecsText());
+        int breakMins = parseInput(timerSettingsView.getBreakMinsText());
+        int breakSecs = parseInput(timerSettingsView.getBreakSecsText());
 
-        if (studyMins < 0 || studySecs < 0 || studySecs > 59
-                || studyMins * 60 + studySecs <= 0) {
+        int studyTotal = (studyMins * 60) + studySecs;
+        int breakTotal = (breakMins * 60) + breakSecs;
+
+        if (studyTotal <= 0) {
             Toast.makeText(timerSettingsView,
-                    "Enter a study time greater than 0 (seconds must be 0–59).",
+                    "Enter a study time greater than 0.",
                     Toast.LENGTH_LONG).show();
             return;
         }
 
         boolean breakEnabled = timerSettingsView.isBreakTimerEnabled();
-        if (breakEnabled && (breakMins < 0 || breakSecs < 0 || breakSecs > 59
-                || breakMins * 60 + breakSecs <= 0)) {
+        if (breakEnabled && breakTotal <= 0) {
             Toast.makeText(timerSettingsView,
-                    "Enter a break time greater than 0 (seconds must be 0–59).",
+                    "Enter a break time greater than 0.",
                     Toast.LENGTH_LONG).show();
             return;
         }
 
         timerModel.stopAndReset();
-        timerModel.setStudyDuration(studyMins * 60 + studySecs);
-        timerModel.setBreakDuration(breakMins * 60 + breakSecs);
+        timerModel.setStudyDuration(studyTotal);
+        timerModel.setBreakDuration(breakTotal);
         timerModel.setBreakEnabled(breakEnabled);
         timerSettingsView.finish();
     }
@@ -116,20 +117,15 @@ public class TimerSettingsController {
     }
 
     /**
-     * Controller helper: Logic for parsing inputs with default values.
+     * Controller helper: Logic for parsing inputs, treating empty as 0.
      */
-    private int parseOrDefault(String text, String type) {
+    private int parseInput(String text) {
         if (text == null || text.trim().isEmpty()) {
-            switch (type) {
-                case "smin": return 25;
-                case "ssec": return 0;
-                case "bmin": return 5;
-                case "bsec": return 0;
-                default: return 0;
-            }
+            return 0;
         }
         try {
-            return Integer.parseInt(text.trim());
+            int val = Integer.parseInt(text.trim());
+            return Math.max(0, val);
         } catch (NumberFormatException e) {
             return 0;
         }
