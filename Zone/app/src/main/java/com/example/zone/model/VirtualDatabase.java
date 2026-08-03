@@ -98,21 +98,77 @@ public class VirtualDatabase {
     }
 
     public void getStudySessions(StudySessionCallback callback) {
+        String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onComplete(new ArrayList<>());
+            return;
+        }
 
-        db.collection("studySessions")
-                .whereEqualTo("userId", getCurrentUserId())
+        db.collection("users")
+                .document(userId)
+                .collection("studySessions")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-
                     ArrayList<StudySessionModel> sessions = new ArrayList<>();
-
                     for (DocumentSnapshot document : querySnapshot) {
-                        StudySessionModel session =
-                                document.toObject(StudySessionModel.class);
-                        sessions.add(session);
+                        StudySessionModel session = parseSession(document);
+                        if (session != null) {
+                            sessions.add(session);
+                        }
                     }
                     callback.onComplete(sessions);
+                })
+                .addOnFailureListener(e -> {
+                    System.err.println("Error fetching sessions: " + e.getMessage());
+                    callback.onComplete(new ArrayList<>());
                 });
+    }
+
+    private StudySessionModel parseSession(DocumentSnapshot doc) {
+        try {
+            StudySessionModel session = new StudySessionModel();
+            session.setDocumentId(doc.getId());
+            
+            String startTime = doc.getString("startTime");
+            if (startTime != null) session.setStartTime(java.time.LocalDateTime.parse(startTime));
+            
+            String endTime = doc.getString("endTime");
+            if (endTime != null) session.setEndTime(java.time.LocalDateTime.parse(endTime));
+            
+            Long duration = doc.getLong("duration");
+            if (duration != null) session.setDuration(duration.intValue());
+            
+            String status = doc.getString("status");
+            if (status != null) session.setStatus(StudySessionModel.Status.valueOf(status));
+            
+            Boolean objectiveMet = doc.getBoolean("objectiveMet");
+            if (objectiveMet != null) session.setObjectiveMet(objectiveMet);
+            
+            Long rating = doc.getLong("productivityRating");
+            if (rating != null) session.setProductivityRating(rating.intValue());
+            
+            Long avgHR = doc.getLong("averageHeartRate");
+            if (avgHR != null) session.setHeartRate(avgHR.intValue());
+            
+            Long restingHR = doc.getLong("restingHeartRate");
+            if (restingHR != null) session.setRestingHeartRate(restingHR.intValue());
+
+            // Handle heart rate data list
+            Object hrDataObj = doc.get("heartRateData");
+            if (hrDataObj instanceof java.util.List) {
+                java.util.List<?> list = (java.util.List<?>) hrDataObj;
+                for (Object item : list) {
+                    if (item instanceof Long) {
+                        session.addHistoricalHeartRate(((Long) item).intValue());
+                    }
+                }
+            }
+
+            return session;
+        } catch (Exception e) {
+            System.err.println("Error parsing session: " + e.getMessage());
+            return null;
+        }
     }
     public void saveStudySession() {
 
@@ -122,6 +178,23 @@ public class VirtualDatabase {
                 .document(userId)
                 .collection("studySessions")
                 .add(session.toMap());
+    }
+
+
+    public void deleteStudySession(String documentId, AuthCallback callback) {
+        String userId = getCurrentUserId();
+        if (userId == null || documentId == null) {
+            callback.onResult(false);
+            return;
+        }
+
+        db.collection("users")
+                .document(userId)
+                .collection("studySessions")
+                .document(documentId)
+                .delete()
+                .addOnSuccessListener(unused -> callback.onResult(true))
+                .addOnFailureListener(e -> callback.onResult(false));
     }
 
 

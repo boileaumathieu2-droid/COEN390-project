@@ -13,9 +13,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zone.R;
-import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.VirtualDatabase;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -33,14 +33,14 @@ public class SessionHistoryView extends AppCompatActivity {
     private RecyclerView recyclerView;
     private SessionHistoryAdapter adapter;
     private List<StudySessionModel> sessionList;
-    private Database db;
+    private VirtualDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.session_history);
 
-        db = new Database(this);
+        db = new VirtualDatabase();
         recyclerView = findViewById(R.id.sessionRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -51,13 +51,16 @@ public class SessionHistoryView extends AppCompatActivity {
     }
 
     private void loadSessions() {
-        Session.init(getApplicationContext());
-        int userID = Session.getUserID();
-        if (userID != -1) {
-            sessionList = db.getAllSessions(userID);
+        db.getStudySessions(sessions -> {
+            sessionList = sessions;
+            // Sort by start time descending (newest first)
+            sessionList.sort((s1, s2) -> {
+                if (s1.getStartTime() == null || s2.getStartTime() == null) return 0;
+                return s2.getStartTime().compareTo(s1.getStartTime());
+            });
             adapter = new SessionHistoryAdapter(sessionList, this::showSessionDetail);
             recyclerView.setAdapter(adapter);
-        }
+        });
     }
 
     private void showSessionDetail(StudySessionModel session) {
@@ -108,10 +111,12 @@ public class SessionHistoryView extends AppCompatActivity {
                     .setTitle("Delete Session")
                     .setMessage("Are you sure you want to delete this study session?")
                     .setPositiveButton("Delete", (dI, which) -> {
-                        if (db.deleteSession(session.getId())) {
-                            dialog.dismiss();
-                            loadSessions(); // Refresh the list
-                        }
+                        db.deleteStudySession(session.getDocumentId(), success -> {
+                            if (success) {
+                                dialog.dismiss();
+                                loadSessions(); // Refresh the list
+                            }
+                        });
                     })
                     .setNegativeButton("Cancel", null)
                     .show();

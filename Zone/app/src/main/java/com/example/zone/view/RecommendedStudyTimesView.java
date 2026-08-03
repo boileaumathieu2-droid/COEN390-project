@@ -39,11 +39,10 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
             finish(); 
         });
 
-        // Initialize session and get user ID
+        // Initialize session
         Session.init(getApplicationContext());
-        int userID = Session.getUserID();
 
-        controller = new RecommendedStudyTimesController(this, userID);
+        controller = new RecommendedStudyTimesController(this);
         setupChart();
         displayData();
     }
@@ -88,46 +87,47 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
     }
 
     private void displayData() {
-        float[] averages = controller.getHourlyAverages();
-        List<BarEntry> entries = new ArrayList<>();
-        List<Integer> colors = new ArrayList<>();
+        controller.getHourlyAverages(averages -> {
+            List<BarEntry> entries = new ArrayList<>();
+            List<Integer> colors = new ArrayList<>();
 
-        for (int i = 0; i < 24; i++) {
-            float val = averages[i];
-            
-            // Only add entries where we have data (val >= 0)
-            if (val >= 0) {
-                entries.add(new BarEntry(i, val));
-                
-                // Color coding based on value (Scale 0-10)
-                if (val <= 2.0f) {
-                    colors.add(Color.RED);
-                } else if (val <= 4.0f) {
-                    colors.add(Color.rgb(255, 165, 0)); // Orange
-                } else if (val <= 6.0f) {
-                    colors.add(Color.YELLOW);
-                } else if (val <= 8.0f) {
-                    colors.add(Color.rgb(173, 255, 47)); // Yellow-Green
-                } else {
-                    colors.add(Color.GREEN); // Bright Green
+            for (int i = 0; i < 24; i++) {
+                float val = averages[i];
+
+                // Only add entries where we have data (val >= 0)
+                if (val >= 0) {
+                    entries.add(new BarEntry(i, val));
+
+                    // Color coding based on value (Scale 0-10)
+                    if (val <= 2.0f) {
+                        colors.add(Color.RED);
+                    } else if (val <= 4.0f) {
+                        colors.add(Color.rgb(255, 165, 0)); // Orange
+                    } else if (val <= 6.0f) {
+                        colors.add(Color.YELLOW);
+                    } else if (val <= 8.0f) {
+                        colors.add(Color.rgb(173, 255, 47)); // Yellow-Green
+                    } else {
+                        colors.add(Color.GREEN); // Bright Green
+                    }
                 }
             }
-        }
 
-        if (entries.isEmpty()) {
-            barChart.clear();
-            barChart.setNoDataText("No productivity data available yet.");
+            if (entries.isEmpty()) {
+                barChart.clear();
+                barChart.setNoDataText("No productivity data available yet.");
+                barChart.invalidate();
+                return;
+            }
+
+            BarDataSet dataSet = new BarDataSet(entries, "Average Productivity Rating");
+            dataSet.setColors(colors);
+            dataSet.setValueTextColor(Color.BLACK);
+            dataSet.setValueTextSize(10f);
+
+            BarData barData = new BarData(dataSet);
+            barChart.setData(barData);
             barChart.invalidate();
-            return;
-        }
-
-        BarDataSet dataSet = new BarDataSet(entries, "Average Productivity Rating");
-        dataSet.setColors(colors);
-        dataSet.setValueTextColor(Color.BLACK);
-        dataSet.setValueTextSize(10f);
-
-        BarData barData = new BarData(dataSet);
-        barChart.setData(barData);
-        barChart.invalidate();
+        });
     }
 }
