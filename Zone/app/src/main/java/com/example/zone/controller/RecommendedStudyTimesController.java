@@ -6,11 +6,11 @@ import com.example.zone.model.RecommendedStudyTimesModel;
 public class RecommendedStudyTimesController {
     private final RecommendedStudyTimesModel model;
 
-    public RecommendedStudyTimesController(Context context, int userID) {
-        this.model = new RecommendedStudyTimesModel(context, userID);
+    public RecommendedStudyTimesController(Context context) {
+        this.model = new RecommendedStudyTimesModel(context);
     }
 
-    public float[] getHourlyAverages() {
-        return model.getAverageRatingsByHour();
+    public void getHourlyAverages(RecommendedStudyTimesModel.HourlyAveragesCallback callback) {
+        model.getAverageRatingsByHour(callback);
     }
 }

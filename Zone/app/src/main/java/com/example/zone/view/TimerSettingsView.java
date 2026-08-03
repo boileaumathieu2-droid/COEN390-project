@@ -32,7 +32,6 @@ public class TimerSettingsView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        EdgeToEdge.enable(this);
         setContentView(R.layout.timer_settings);
 
         if (getSupportActionBar() != null) {
@@ -41,7 +40,6 @@ public class TimerSettingsView extends AppCompatActivity {
         }
 
         initializeViews();
-        applyWindowInsets();
 
         timerSettingsController = new TimerSettingsController(this, this);
         timerSettingsController.initializeView();
@@ -52,30 +50,6 @@ public class TimerSettingsView extends AppCompatActivity {
         breakMinutes = findViewById(R.id.edit_break_minutes);
         breakSeconds = findViewById(R.id.edit_break_seconds);
         breakTimerSwitch = findViewById(R.id.switch_break_timer);
-    }
-
-    private void applyWindowInsets() {
-        View rootView = findViewById(R.id.timer);
-
-        if (rootView != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(
-                    rootView,
-                    (view, windowInsets) -> {
-                        Insets systemBars = windowInsets.getInsets(
-                                WindowInsetsCompat.Type.systemBars()
-                        );
-
-                        view.setPadding(
-                                systemBars.left,
-                                systemBars.top,
-                                systemBars.right,
-                                systemBars.bottom
-                        );
-
-                        return windowInsets;
-                    }
-            );
-        }
     }
 
     @Override

@@ -378,10 +378,18 @@ public class Database extends SQLiteOpenHelper {
             String endTimeStr = cursor.getString(cursor.getColumnIndexOrThrow("end_time"));
 
             if (startTimeStr != null) {
-                session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
+                try {
+                    session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
+                } catch (Exception e) {
+                    Log.e("DATABASE", "Error parsing start_time: " + startTimeStr, e);
+                }
             }
             if (endTimeStr != null) {
-                session.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
+                try {
+                    session.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
+                } catch (Exception e) {
+                    Log.e("DATABASE", "Error parsing end_time: " + endTimeStr, e);
+                }
             }
 
             session.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow("duration")));

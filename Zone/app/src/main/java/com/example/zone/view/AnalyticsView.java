@@ -9,8 +9,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
-import com.example.zone.model.Database;
 import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.VirtualDatabase;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -83,26 +83,27 @@ public class AnalyticsView extends AppCompatActivity {
 
     private void setupAnalytics() {
         LineChart chart = findViewById(R.id.heartRateChart);
-
         StudySessionModel liveSession = StudySessionModel.getInstance();
-        int[] data;
 
         if (liveSession != null && liveSession.isActive()) {
-            data = liveSession.getHeartRateData();
+            displayGraph(chart, liveSession.getHeartRateData());
         } else {
-            // Fetch from database
-            Database db = new Database(this);
-            String username = getSharedPreferences("ZonePrefs", MODE_PRIVATE).getString("username", null);
-            if (username != null) {
-                int userID = db.getUserID(username);
-                data = db.getLastSessionHeartRateData(userID);
-            } else {
-                data = new int[0];
-            }
+            VirtualDatabase vdb = new VirtualDatabase();
+            vdb.getStudySessions(sessions -> {
+                if (!sessions.isEmpty()) {
+                    // Sort to find the last session
+                    sessions.sort((s1, s2) -> {
+                        if (s1.getStartTime() == null || s2.getStartTime() == null) return 0;
+                        return s2.getStartTime().compareTo(s1.getStartTime());
+                    });
+                    StudySessionModel lastSession = sessions.get(0);
+                    displayGraph(chart, lastSession.getHeartRateData());
+                } else {
+                    displayGraph(chart, new int[0]);
+                }
+            });
         }
-        
         updateLiveHeartRate();
-        displayGraph(chart, data);
     }
 
     private void displayGraph(LineChart chart, int[] heartRateData) {

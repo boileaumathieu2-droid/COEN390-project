@@ -45,13 +45,6 @@ public class NotificationSetting extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Notification Settings");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
-
-        EdgeToEdge.enable(this);
         SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
         setContentView(R.layout.activity_notification_setting);
         sendNotifications = findViewById(R.id.switchStudyReminders);

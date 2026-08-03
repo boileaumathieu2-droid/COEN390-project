@@ -41,44 +41,28 @@ public class RegistrationView extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (!passwordText.equals(confirmText)) {
-                Toast.makeText(this,
-                        "Passwords do not match",
-                        Toast.LENGTH_SHORT).show();
-                return;
-            }
-            VirtualDatabase firebaseDb = new VirtualDatabase();
-            firebaseDb.createAccount(
-                    usernameText,
-                    passwordText,
-                    this,
-                    success -> {
-                        if (!success) {
-                            Toast.makeText(this,
-                                    "Account not created. Invalid registration information.",
-                                    Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        Database localDb = new Database(this);
-                        localDb.addUser(
-                                firebaseDb.getCurrentUserId(),
-                                usernameText,
-                                localSuccess -> {
-                                    if (!localSuccess) {
-                                        Toast.makeText(this,
-                                                "Account created, but local save failed.",
-                                                Toast.LENGTH_SHORT).show();
-                                        return;
-                                    }
-                                    Toast.makeText(this,
-                                            "Account Created!",
-                                            Toast.LENGTH_SHORT).show();
-                                    Intent intent =
-                                            new Intent(this, MainView.class);
-                                    startActivity(intent);
-                                    finish();
-                                });
-                    });
+            System.out.println("this button is being clicked");
+            db.createAccount(Username, Password, this, success -> {
+                if (success) {
+                    Toast.makeText(this, "Account Created!", Toast.LENGTH_SHORT).show();
+                    
+                    // Initialize local session
+                    int localID = controller.getUserID(Username);
+                    if (localID == -1) {
+                        Database sqliteDb = new Database(this);
+                        sqliteDb.addUser(Username, "FIREBASE_AUTHED");
+                        localID = sqliteDb.getUserID(Username);
+                    }
+                    Session.setUserID(localID);
+                    Session.setUsername(Username);
+
+                    Intent intent = new Intent(this, MainView.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "Account not created, Invalid registration information", Toast.LENGTH_SHORT).show();
+                }
+
+            });
         });
 
 

@@ -58,7 +58,6 @@ public class GradesTrackerView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.grades_tracker);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Grades Tracker");

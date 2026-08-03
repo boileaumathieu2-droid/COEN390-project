@@ -47,6 +47,7 @@ public class StudySessionModel {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private int id;
+    private String documentId;
     private int duration;
     private Status status;
     private int restingHeartRate;   // take heart rate value at time 0
@@ -171,6 +172,14 @@ public class StudySessionModel {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(String documentId) {
+        this.documentId = documentId;
     }
 
     public int getDuration() {

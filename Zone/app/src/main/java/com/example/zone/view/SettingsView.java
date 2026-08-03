@@ -22,7 +22,6 @@ public class SettingsView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.settings_menu);
         TextView logout = findViewById(R.id.logoutButton);
         TextView connectDevice = findViewById(R.id.connectDeviceButton);

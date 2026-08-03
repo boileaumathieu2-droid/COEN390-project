@@ -10,14 +10,14 @@
         android:id="@+id/username_textview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:text="Username" />
+        android:layout_marginTop="76dp"
+        android:text="Email" />
 
     <EditText
         android:id="@+id/usernameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Username"
+        android:hint="Email"
         android:inputType="text" />
 
     <TextView

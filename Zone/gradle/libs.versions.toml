@@ -10,6 +10,7 @@ constraintlayout = "2.2.1"
 mockito = "5.11.0"
 robolectric = "4.12.2"
 desugar_jdk_libs = "2.1.5"
+firebaseCommon = "22.2.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -22,6 +23,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+firebase-common = { group = "com.google.firebase", name = "firebase-common", version.ref = "firebaseCommon" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

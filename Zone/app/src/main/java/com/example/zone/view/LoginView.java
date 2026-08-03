@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.zone.R;
 import com.example.zone.controller.Login;
@@ -21,7 +20,6 @@ public class LoginView extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         Session.init(this);
         VirtualDatabase db = new VirtualDatabase();
         Database SQLdb = new Database(this);
@@ -47,6 +45,23 @@ public class LoginView extends AppCompatActivity {
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
+            String userStr = username.getText().toString();
+            db.signIn(userStr, password.getText().toString(), success-> {
+                if (success) {
+                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
+                    
+                    // Initialize local session
+                    int localID = controller.getUserID(userStr);
+                    if (localID == -1) {
+                        // If user doesn't exist locally, create them so we have an ID
+                        Database sqliteDb = new Database(this);
+                        // We use a dummy hash because the real auth is in Firebase
+                        sqliteDb.addUser(userStr, "FIREBASE_AUTHED");
+                        localID = sqliteDb.getUserID(userStr);
+                    }
+                    Session.setUserID(localID);
+                    Session.setUsername(userStr);
+
             String usernameText = username.getText().toString();
             String passwordText = password.getText().toString();
             db.signIn(usernameText, passwordText, success -> {
