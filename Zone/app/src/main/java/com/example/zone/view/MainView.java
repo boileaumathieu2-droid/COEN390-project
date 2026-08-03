@@ -58,7 +58,7 @@ public class MainView extends AppCompatActivity {
     private MainViewObjectiveAdapter adapter;
     private String today;
     VirtualDatabase db = new VirtualDatabase();
-
+    Database SQLdb = new Database(this);
     private TextView timerDisplay;
     private TextView tipText;
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -276,6 +276,7 @@ public class MainView extends AppCompatActivity {
             StudySession.setObjectiveMet(objective);
             StudySession.setProductivityRating(rating);
             db.saveStudySession();
+            SQLdb.addSession(Session.getUserID(), StudySession);
         }
 
         timerRunnable = new Runnable() {

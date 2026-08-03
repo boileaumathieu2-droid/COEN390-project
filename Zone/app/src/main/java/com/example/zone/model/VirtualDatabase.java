@@ -4,6 +4,7 @@ import android.content.Context;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -150,21 +151,23 @@ public class VirtualDatabase {
                 .collection("Grades")
                 .add(data);
     }
-
     public void saveObjective(String objective, String date, String name, String time, String type) {
-        String UserId = getCurrentUserId();
+        String userId = getCurrentUserId();
+
+        DocumentReference docRef = db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .document();
+        String id = docRef.getId();
         Map<String, Object> data = new HashMap<>();
+        data.put("id", id);
         data.put("objective_text", objective);
         data.put("objective date", date);
         data.put("event name", name);
         data.put("completion time", time);
         data.put("task type", type);
-        db.collection("users")
-                .document(UserId)
-                .collection("objectives")
-                .add(data);
+        docRef.set(data);
     }
-
 
     public void deleteSubject(String subject) {
         String userId = getCurrentUserId();
@@ -228,13 +231,14 @@ public class VirtualDatabase {
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        int objectiveID = document.getLong("id").intValue();
                         String objectiveText = document.getString("objective_text");
                         String objectiveDate = document.getString("objective date");
                         String eventName = document.getString("event name");
                         String completionTime = document.getString("completion time");
                         String taskType = document.getString("task type");
                         Objective objective = new Objective(
-                                0, // Firestore doesn't store your local SQLite ID
+                                objectiveID,
                                 eventName,
                                 objectiveDate,
                                 completionTime,
