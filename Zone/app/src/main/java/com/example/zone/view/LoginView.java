@@ -1,5 +1,7 @@
 package com.example.zone.view;
 
+import static com.example.zone.model.VirtualDatabase.isInternetAvailable;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
@@ -20,6 +22,7 @@ public class LoginView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Session.init(this);
         VirtualDatabase db = new VirtualDatabase();
+        Database SQLdb = new Database(this);
 
         // If Android recreated the launcher Activity after the app was minimized,
         // restore the existing authenticated session instead of showing login again.
@@ -59,13 +62,24 @@ public class LoginView extends AppCompatActivity {
                     Session.setUserID(localID);
                     Session.setUsername(userStr);
 
+            String usernameText = username.getText().toString();
+            String passwordText = password.getText().toString();
+            db.signIn(usernameText, passwordText, success -> {
+                if (success) {
+                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
                 }
                 else {
-                    Toast.makeText(this, "Incorect information, Try Again!", Toast.LENGTH_SHORT).show();
+                    if (!isInternetAvailable(this)) {
+                        Toast.makeText(this, "Internet connection Required!", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        Toast.makeText(this, "Incorrect information, Try Again!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
+
         });
         forgot_password.setOnClickListener(v -> {
             //Intent intent = new Intent(this, MainView.class);

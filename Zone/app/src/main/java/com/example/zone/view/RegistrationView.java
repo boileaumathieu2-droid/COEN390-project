@@ -1,4 +1,6 @@
 package com.example.zone.view;
+import static com.example.zone.model.VirtualDatabase.isInternetAvailable;
+
 import com.example.zone.controller.Registration;
 import android.content.Intent;
 import android.os.Bundle;
@@ -30,12 +32,13 @@ public class RegistrationView extends AppCompatActivity {
         TextView login = findViewById(R.id.alreadyHaveAccountButton);
         controller = new Registration(new Database(this));
         register.setOnClickListener(v -> {
-            VirtualDatabase db = new VirtualDatabase();
-            String Username = username.getText().toString().trim();
-            String Password = password.getText().toString().trim();
-            String Confirm = confirm.getText().toString().trim();
-            if (!Password.equals(Confirm)) {
-                Toast.makeText(this, "Password does not match, please try again", Toast.LENGTH_SHORT).show();
+            String usernameText = username.getText().toString().trim();
+            String passwordText = password.getText().toString().trim();
+            String confirmText = confirm.getText().toString().trim();
+            if (!isInternetAvailable(this)) {
+                Toast.makeText(this,
+                        "Internet connection required!",
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
             System.out.println("this button is being clicked");
@@ -63,26 +66,7 @@ public class RegistrationView extends AppCompatActivity {
         });
 
 
-//        register.setOnClickListener(v -> {
-//            String enteredUsername = username.getText().toString().trim();
-//            boolean success = controller.confirmRegistration(
-//                    enteredUsername,
-//                    password.getText().toString(),
-//                    confirm.getText().toString()
-//            );
-//            if (success) {
-//                Toast.makeText(this, "User created!", Toast.LENGTH_SHORT).show();
-//                Session.setUsername(enteredUsername);
-//                Session.setUserID(controller.getUserID(enteredUsername));
-//                Intent intent = new Intent(this, MainView.class);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-//                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//                startActivity(intent);
-//                finish();
-//            } else {
-//                Toast.makeText(this, "User not created!", Toast.LENGTH_SHORT).show();
-//            }
-//        });
+
         login.setOnClickListener(v -> {
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);

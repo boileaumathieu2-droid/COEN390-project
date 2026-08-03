@@ -50,15 +50,15 @@ import com.example.zone.model.VirtualDatabase;
 
 public class MainView extends AppCompatActivity {
     private SharedPreferences prefs;
+
+    private TimerModel Timer;
     private StudyTipsModel tipModel;
     private MainController mainController;
     private ObjectiveController objectiveController;
     private MainViewObjectiveAdapter adapter;
     private String today;
     VirtualDatabase db = new VirtualDatabase();
-
-
-    private TimerModel Timer = TimerModel.getInstance();
+    Database SQLdb = new Database(this);
     private TextView timerDisplay;
     private TextView tipText;
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -75,8 +75,6 @@ public class MainView extends AppCompatActivity {
     private Handler timerHandler = new Handler(Looper.getMainLooper());
     private Runnable timerRunnable;
     private StudySessionModel StudySession = StudySessionModel.getInstance();
-    int minutes = Timer.getMinutes();
-    int seconds = Timer.getSeconds();
 
     @Override
     public boolean onSupportNavigateUp() {
@@ -103,35 +101,39 @@ public class MainView extends AppCompatActivity {
     }
 
     private void refresh() {
-        dailyGoalsArray.clear();
-
-        dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(com.example.zone.model.Session.getUserID(), today));
-        adapter.notifyDataSetChanged();
-        if (dailyGoalsArray.isEmpty()) {
-            dailyGoals.setVisibility(View.GONE);
-            objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
-        } else {
-            dailyGoals.setVisibility(View.VISIBLE);
-            objectivesPrompt.setVisibility(View.GONE);
-        }
+            db.GetDailyObjectives(new VirtualDatabase.ObjectiveCallback() {
+            @Override
+            public void onComplete(ArrayList<Objective> objectives) {
+                dailyGoalsArray.clear();
+                dailyGoalsArray.addAll(objectives);
+                adapter.notifyDataSetChanged();
+                for (Objective obj : objectives) {
+                    System.out.println("OBJECTIVESSSS: " + obj.getEventName());
+                }
+                if (dailyGoalsArray.isEmpty()) {
+                    dailyGoals.setVisibility(View.GONE);
+                    objectivesPrompt.setVisibility(View.VISIBLE);
+                    objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
+                } else {
+                    dailyGoals.setVisibility(View.VISIBLE);
+                    objectivesPrompt.setVisibility(View.GONE);
+                }
+            }
+        }, today);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Timer = TimerModel.getInstance(this);
         super.onCreate(savedInstanceState);
         com.example.zone.model.Session.init(getApplicationContext());
         setContentView(R.layout.activity_main);
-
-
         today = new SimpleDateFormat(
                 "yyyy-MM-dd",
                 Locale.getDefault()
         ).format(new Date());
-
         objectiveController = new ObjectiveController(new Database(this));
         mainController = new MainController(this);
-
-
         // define buttons
         Button timerSettingsButton = findViewById(R.id.timerSettings);
         startButton = findViewById(R.id.startStudySeshButton);
@@ -145,13 +147,10 @@ public class MainView extends AppCompatActivity {
         timerDisplay = findViewById(R.id.timerDisplay);
         objectivesPrompt = findViewById(R.id.goalPrompt);
         tipText = findViewById(R.id.studyTipTextView);
-
         dailyGoals = findViewById(R.id.dailyGoalsListView);
         dailyGoalsArray = new ArrayList<>();
         adapter = new MainViewObjectiveAdapter(this, dailyGoalsArray);
-
         dailyGoals.setAdapter(adapter);
-
         tipModel = new StudyTipsModel();
 
 
@@ -185,15 +184,14 @@ public class MainView extends AppCompatActivity {
         startButton.setOnClickListener(v -> {
             StudySession.startSession();
             startCountdown();
-            TimerModel model = TimerModel.getInstance();
             if (hasDndAccess()) {
                 manageDnD(true);
             }
-            if (model.isBreakTime()) {
+            if (Timer.isBreakTime()) {
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
                 // Sync with TimerModel's session
-                StudySession = model.getLiveSession();
+                StudySession = Timer.getLiveSession();
 
             }
             showStatus();
@@ -201,13 +199,13 @@ public class MainView extends AppCompatActivity {
 
         pauseButton.setOnClickListener(v -> {
             // Checks if timer is counting down
-            if (TimerModel.getInstance().isRunning()) {
+            if (Timer.isRunning()) {
                 if (hasDndAccess()) {
                     manageDnD(false);
                 }
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
                 // pause timer if it was running
-                TimerModel.getInstance().pauseTimer();
+                TimerModel.getInstance(this).pauseTimer();
 
             } else {
                 resumeCountdown();
@@ -216,14 +214,14 @@ public class MainView extends AppCompatActivity {
                     manageDnD(true);
                 }
             }
-            if (TimerModel.getInstance().isBreakTime()) {
+            if (Timer.isBreakTime()) {
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             }
             updateTimerUI();
         });
 
         resetButton.setOnClickListener(v -> {
-            TimerModel.getInstance().stopAndReset();
+            Timer.stopAndReset();
             updateTimerUI();
             StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             showStatus();
@@ -233,8 +231,7 @@ public class MainView extends AppCompatActivity {
         });
 
         completeButton.setOnClickListener(v -> {
-            TimerModel model = TimerModel.getInstance();
-            model.completeSession();
+            Timer.completeSession();
             StudySession.setStatus(StudySessionModel.Status.COMPLETE);
 
             showStatus();
@@ -242,8 +239,8 @@ public class MainView extends AppCompatActivity {
                 manageDnD(false);
             }
             String message;
-            if (model.isBreakEnabled()) {
-                message = model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
+            if (Timer.isBreakEnabled()) {
+                message = Timer.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.";
                 StudySession.setStatus(StudySessionModel.Status.INACTIVE);
             } else {
                 message = "Study Finished!";
@@ -272,15 +269,15 @@ public class MainView extends AppCompatActivity {
             StudySession.setObjectiveMet(objective);
             StudySession.setProductivityRating(rating);
             db.saveStudySession();
+            SQLdb.addSession(db.getCurrentUserId(), StudySession);
         }
 
         timerRunnable = new Runnable() {
             @Override
             public void run() {
-                TimerModel model = TimerModel.getInstance();
-                if (model.isRunning()) {
-                    boolean wasBreakTime = model.isBreakTime();
-                    boolean stillRunning = model.tick();
+                if (Timer.isRunning()) {
+                    boolean wasBreakTime = Timer.isBreakTime();
+                    boolean stillRunning = Timer.tick();
                     updateTimerUI();
                     if (stillRunning) {
                         timerHandler.postDelayed(this, 1000);
@@ -304,7 +301,7 @@ public class MainView extends AppCompatActivity {
     }
 
     protected void startCountdown() {
-        TimerModel model = TimerModel.getInstance();
+        TimerModel model = TimerModel.getInstance(this);
         if (!model.isRunning()) {
             // function inside of Timer Model
             model.startTimer(); // get the live session instance to upload data in
@@ -314,7 +311,7 @@ public class MainView extends AppCompatActivity {
     }
 
     private void resumeCountdown() {
-        TimerModel model = TimerModel.getInstance();
+        TimerModel model = TimerModel.getInstance(this);
         if (!model.isRunning()) {
             // resume countdown by keeping time instead
             model.resumeTimer();
@@ -329,7 +326,7 @@ public class MainView extends AppCompatActivity {
         refresh();
         updateTimerUI();
         // If the timer is already running (e.g. returning from settings), resume the UI updates
-        if (TimerModel.getInstance().isRunning()) {
+        if (TimerModel.getInstance(this).isRunning()) {
             timerHandler.removeCallbacks(timerRunnable);
             timerHandler.post(timerRunnable);
         }
@@ -342,7 +339,7 @@ public class MainView extends AppCompatActivity {
     }
 
     private void updateTimerUI() {
-        TimerModel model = TimerModel.getInstance();
+        TimerModel model = TimerModel.getInstance(this);
         int minutes = model.getMinutes();
         int seconds = model.getSeconds();
         timerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)); // format the text

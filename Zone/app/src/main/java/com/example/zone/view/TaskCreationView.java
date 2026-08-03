@@ -16,6 +16,7 @@ import com.example.zone.R;
 import com.example.zone.controller.ObjectiveController;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,17 +42,18 @@ public class TaskCreationView extends AppCompatActivity {
     private EditText objectivesInput;
     private Spinner taskTypeSpinner;
     private Button dueDateButton;
-    private int taskId = -1;
+    private String taskId = null;
+     VirtualDatabase db=  new VirtualDatabase();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        VirtualDatabase db =  new VirtualDatabase();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_creation);
-
-        taskId = getIntent().getIntExtra(EXTRA_TASK_ID, -1);
+        taskId = getIntent().getStringExtra(EXTRA_TASK_ID);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(
-                    taskId >= 0 ? R.string.edit_task_title : R.string.create_task);
+                    taskId != null ? R.string.edit_task_title : R.string.create_task);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
@@ -81,7 +83,7 @@ public class TaskCreationView extends AppCompatActivity {
         }
         updateDueDateButton();
 
-        if (taskId >= 0) {
+        if (taskId != null) {
             eventNameInput.setText(getIntent().getStringExtra(EXTRA_EVENT_NAME));
             completionTimeInput.setText(getIntent().getStringExtra(EXTRA_COMPLETION_TIME));
             objectivesInput.setText(getIntent().getStringExtra(EXTRA_OBJECTIVES));
@@ -143,13 +145,14 @@ public class TaskCreationView extends AppCompatActivity {
             return;
         }
 
-        if (taskId >= 0) {
+        if (taskId != null) {
             controller.updateTask(
                     taskId, eventName, dueDate, completionTime, taskType, objectives);
         } else {
-            controller.addTask(
-                    Session.getUserID(), eventName, dueDate, completionTime, taskType, objectives);
-        }
+            controller.addTask(db.getCurrentUserId()
+                    , eventName, dueDate, completionTime, taskType, objectives);
+            db.saveObjective(objectives, dueDate, eventName, completionTime, taskType);
+            }
         Toast.makeText(this, R.string.task_saved, Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);
         finish();

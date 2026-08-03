@@ -1,9 +1,14 @@
 package com.example.zone.model;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -73,14 +78,8 @@ public class VirtualDatabase {
         auth.signOut();
     }
 
-    public void verifyConnection() {
-        Map<String, Object> user = new HashMap<>();
-        user.put("key1", "it works");
-        db.collection("users")
-                .document("testUser")
-                .set(user)
-                .addOnSuccessListener(unused -> System.out.println("Data saved!!"))
-                .addOnFailureListener(e -> System.out.println("FAILED!!!!"));
+    public interface StudySessionCallback {
+        void onComplete(ArrayList<StudySessionModel> sessions);
     }
 
     public void insertStudySession(StudySessionModel session) {
@@ -169,6 +168,13 @@ public class VirtualDatabase {
             System.err.println("Error parsing session: " + e.getMessage());
             return null;
         }
+    public void DeleteStudySession(String Session) {
+        String UserId = getCurrentUserId();
+        db.collection("users")
+                .document(UserId)
+                .collection("studySessions")
+                .document(Session)
+                .delete();
     }
     public void saveStudySession() {
 
@@ -180,6 +186,16 @@ public class VirtualDatabase {
                 .add(session.toMap());
     }
 
+    public void saveSubject(String subjectName) {
+        String userId = getCurrentUserId();
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", subjectName);
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(subjectName)
+                .set(data);
+    }
 
     public void deleteStudySession(String documentId, AuthCallback callback) {
         String userId = getCurrentUserId();
@@ -200,5 +216,200 @@ public class VirtualDatabase {
 
     public interface StudySessionCallback {
         void onComplete(ArrayList<StudySessionModel> sessions);
+    public void saveGrade(String subjectId, String assignment, double grade) {
+        String userId = getCurrentUserId();
+        Map<String, Object> data = new HashMap<>();
+        data.put("assignment", assignment);
+        data.put("grade", grade);
+
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(subjectId)
+                .collection("Grades")
+                .add(data);
+    }
+    public void saveObjective(String objective, String date, String name, String time, String type) {
+        String userId = getCurrentUserId();
+
+        DocumentReference docRef = db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .document();
+        String id = docRef.getId();
+        Map<String, Object> data = new HashMap<>();
+        data.put("objectiveID", id);
+        data.put("objectiveText", objective);
+        data.put("objectiveDate", date);
+        data.put("eventName", name);
+        data.put("completionTime", time);
+        data.put("taskType", type);
+        docRef.set(data);
+    }
+
+    public void deleteSubject(String subject) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("subjects")
+                .document(subject)
+                .delete();
+    }
+
+    public void deleteGrade(String subjectId, String gradeId) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("subjects")
+                .document(subjectId)
+                .collection("grades")
+                .document(gradeId)
+                .delete();
+    }
+
+    public void deleteObjective(String objective) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .document(objective)
+                .delete();
+    }
+
+    public void getSubjects() {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot) {
+
+                        String subjectId = doc.getId();
+                        String subjectName = doc.getString("name");
+
+                        System.out.println(subjectName + " -> " + subjectId);
+                    }
+                });
+
+    }
+
+    public interface ObjectiveCallback {
+        void onComplete(ArrayList<Objective> objectives);
+    }
+//
+    public void getObjectives(ObjectiveCallback callback) {
+
+        String userId = getCurrentUserId();
+
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        String objectiveID = document.getString("objectiveID");
+                        String objectiveText = document.getString("objectiveText");
+                        String objectiveDate = document.getString("objectiveDate");
+                        String eventName = document.getString("eventName");
+                        String completionTime = document.getString("completionTime");
+                        String taskType = document.getString("taskType");
+                        Objective objective = new Objective(
+                                objectiveID,
+                                eventName,
+                                objectiveDate,
+                                completionTime,
+                                taskType,
+                                objectiveText
+                        );
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+
+    public interface GradesCallback {
+        void onComplete(ArrayList<String> Grades);
+    }
+
+    public void getGrades(GradesCallback callback, String subjectId) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(subjectId)
+                .collection("Grades")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<String> Grades = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        String grade = document.getString("grade");
+                        Grades.add(grade);
+                    }
+                    callback.onComplete(Grades);
+                });
+//        String objectiveID = document.getString("objectiveID");
+//        String objectiveText = document.getString("objectiveText");
+//        String objectiveDate = document.getString("objectiveDate");
+//        String eventName = document.getString("eventName");
+//        String completionTime = document.getString("completionTime");
+//        String taskType = document.getString("taskType");
+//        Objective objective = new Objective(
+//
+//
+  }
+    public void GetDailyObjectives(ObjectiveCallback callback, String date) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .whereEqualTo("objectiveDate", date)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Objective objective = document.toObject(Objective.class);
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+    public void GetFutureObjectives(ObjectiveCallback callback, String date) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .whereNotEqualTo("objectiveDate", date)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Objective objective = document.toObject(Objective.class);
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isInternetAvailable(Context context) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        return networkInfo != null && networkInfo.isConnected();
     }
 }
+

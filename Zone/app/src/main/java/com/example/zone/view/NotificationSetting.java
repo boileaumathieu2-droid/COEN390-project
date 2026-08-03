@@ -36,6 +36,11 @@ public class NotificationSetting extends AppCompatActivity {
     private SwitchCompat muteDuringStudy;
     private SharedPreferences prefs;
 
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
