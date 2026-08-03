@@ -30,7 +30,7 @@
         android:id="@+id/usernameEditText"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:hint="username"
+        android:hint="Email"
         android:inputType="text" />
 
     <TextView
