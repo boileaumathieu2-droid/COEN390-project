@@ -73,14 +73,8 @@ public class VirtualDatabase {
         auth.signOut();
     }
 
-    public void verifyConnection() {
-        Map<String, Object> user = new HashMap<>();
-        user.put("key1", "it works");
-        db.collection("users")
-                .document("testUser")
-                .set(user)
-                .addOnSuccessListener(unused -> System.out.println("Data saved!!"))
-                .addOnFailureListener(e -> System.out.println("FAILED!!!!"));
+    public interface StudySessionCallback {
+        void onComplete(ArrayList<StudySessionModel> sessions);
     }
 
     public void insertStudySession(StudySessionModel session) {
@@ -171,9 +165,6 @@ public class VirtualDatabase {
                 .add(data);
     }
 
-    public interface StudySessionCallback {
-        void onComplete(ArrayList<StudySessionModel> sessions);
-    }
 
     public void deleteSubject(String subject) {
         String userId = getCurrentUserId();
@@ -275,6 +266,38 @@ public class VirtualDatabase {
                         Grades.add(grade);
                     }
                     callback.onComplete(Grades);
+                });
+    }
+    public void GetDailyObjectives(ObjectiveCallback callback, String date) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .whereEqualTo("objective date", date)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Objective objective = document.toObject(Objective.class);
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+    public void GetFutureObjectives(ObjectiveCallback callback, String date) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .whereNotEqualTo("objective date", date)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Objective objective = document.toObject(Objective.class);
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
                 });
     }
 }
