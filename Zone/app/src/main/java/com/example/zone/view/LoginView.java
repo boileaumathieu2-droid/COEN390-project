@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.zone.R;
 import com.example.zone.controller.Login;
@@ -19,7 +18,6 @@ public class LoginView extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         Session.init(this);
         VirtualDatabase db = new VirtualDatabase();
 
