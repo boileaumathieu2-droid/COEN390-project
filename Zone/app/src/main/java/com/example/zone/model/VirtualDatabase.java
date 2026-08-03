@@ -1,6 +1,10 @@
 package com.example.zone.model;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -160,12 +164,12 @@ public class VirtualDatabase {
                 .document();
         String id = docRef.getId();
         Map<String, Object> data = new HashMap<>();
-        data.put("id", id);
-        data.put("objective_text", objective);
-        data.put("objective date", date);
-        data.put("event name", name);
-        data.put("completion time", time);
-        data.put("task type", type);
+        data.put("objectiveID", id);
+        data.put("objectiveText", objective);
+        data.put("objectiveDate", date);
+        data.put("eventName", name);
+        data.put("completionTime", time);
+        data.put("taskType", type);
         docRef.set(data);
     }
 
@@ -219,7 +223,7 @@ public class VirtualDatabase {
     public interface ObjectiveCallback {
         void onComplete(ArrayList<Objective> objectives);
     }
-
+//
     public void getObjectives(ObjectiveCallback callback) {
 
         String userId = getCurrentUserId();
@@ -231,12 +235,12 @@ public class VirtualDatabase {
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        int objectiveID = document.getLong("id").intValue();
-                        String objectiveText = document.getString("objective_text");
-                        String objectiveDate = document.getString("objective date");
-                        String eventName = document.getString("event name");
-                        String completionTime = document.getString("completion time");
-                        String taskType = document.getString("task type");
+                        String objectiveID = document.getString("objectiveID");
+                        String objectiveText = document.getString("objectiveText");
+                        String objectiveDate = document.getString("objectiveDate");
+                        String eventName = document.getString("eventName");
+                        String completionTime = document.getString("completionTime");
+                        String taskType = document.getString("taskType");
                         Objective objective = new Objective(
                                 objectiveID,
                                 eventName,
@@ -271,13 +275,22 @@ public class VirtualDatabase {
                     }
                     callback.onComplete(Grades);
                 });
-    }
+//        String objectiveID = document.getString("objectiveID");
+//        String objectiveText = document.getString("objectiveText");
+//        String objectiveDate = document.getString("objectiveDate");
+//        String eventName = document.getString("eventName");
+//        String completionTime = document.getString("completionTime");
+//        String taskType = document.getString("taskType");
+//        Objective objective = new Objective(
+//
+//
+  }
     public void GetDailyObjectives(ObjectiveCallback callback, String date) {
         String userId = getCurrentUserId();
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
-                .whereEqualTo("objective date", date)
+                .whereEqualTo("objectiveDate", date)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
@@ -293,7 +306,7 @@ public class VirtualDatabase {
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
-                .whereNotEqualTo("objective date", date)
+                .whereNotEqualTo("objectiveDate", date)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
@@ -303,6 +316,26 @@ public class VirtualDatabase {
                     }
                     callback.onComplete(objectives);
                 });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    public static boolean isInternetAvailable(Context context) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        return networkInfo != null && networkInfo.isConnected();
     }
 }
 

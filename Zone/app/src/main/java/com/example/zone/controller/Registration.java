@@ -17,21 +17,6 @@ public class Registration {
         this.database = database;
     }
 
-    public boolean confirmRegistration(String username, String password, String confirmPassword) {
-
-        if (username == null || password == null || confirmPassword == null
-                || !username.matches("^[a-zA-Z0-9]+$")) {
-            return false;
-        }
-
-        if (!password.equals(confirmPassword) || password.length() < 6 || username.length() < 6) {
-            return false;
-        }
-
-        String hashedPassword = hashPassword(password);
-
-        return hashedPassword != null && database.addUser(username, hashedPassword);
-    }
 
     public int getUserID(String username) {
         return database.getUserID(username);

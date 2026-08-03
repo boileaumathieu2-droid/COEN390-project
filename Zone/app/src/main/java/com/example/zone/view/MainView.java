@@ -101,17 +101,25 @@ public class MainView extends AppCompatActivity {
     }
 
     private void refresh() {
-        dailyGoalsArray.clear();
-
-        dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(com.example.zone.model.Session.getUserID(), today));
-        adapter.notifyDataSetChanged();
-        if (dailyGoalsArray.isEmpty()) {
-            dailyGoals.setVisibility(View.GONE);
-            objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
-        } else {
-            dailyGoals.setVisibility(View.VISIBLE);
-            objectivesPrompt.setVisibility(View.GONE);
-        }
+            db.GetDailyObjectives(new VirtualDatabase.ObjectiveCallback() {
+            @Override
+            public void onComplete(ArrayList<Objective> objectives) {
+                dailyGoalsArray.clear();
+                dailyGoalsArray.addAll(objectives);
+                adapter.notifyDataSetChanged();
+                for (Objective obj : objectives) {
+                    System.out.println("OBJECTIVESSSS: " + obj.getEventName());
+                }
+                if (dailyGoalsArray.isEmpty()) {
+                    dailyGoals.setVisibility(View.GONE);
+                    objectivesPrompt.setVisibility(View.VISIBLE);
+                    objectivesPrompt.setText("You have not set any goals for today. Set your study session goal here.");
+                } else {
+                    dailyGoals.setVisibility(View.VISIBLE);
+                    objectivesPrompt.setVisibility(View.GONE);
+                }
+            }
+        }, today);
     }
 
     @Override
@@ -121,17 +129,12 @@ public class MainView extends AppCompatActivity {
         com.example.zone.model.Session.init(getApplicationContext());
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-
-
         today = new SimpleDateFormat(
                 "yyyy-MM-dd",
                 Locale.getDefault()
         ).format(new Date());
-
         objectiveController = new ObjectiveController(new Database(this));
         mainController = new MainController(this);
-
-
         // define buttons
         Button timerSettingsButton = findViewById(R.id.timerSettings);
         startButton = findViewById(R.id.startStudySeshButton);
@@ -145,13 +148,10 @@ public class MainView extends AppCompatActivity {
         timerDisplay = findViewById(R.id.timerDisplay);
         objectivesPrompt = findViewById(R.id.goalPrompt);
         tipText = findViewById(R.id.studyTipTextView);
-
         dailyGoals = findViewById(R.id.dailyGoalsListView);
         dailyGoalsArray = new ArrayList<>();
         adapter = new MainViewObjectiveAdapter(this, dailyGoalsArray);
-
         dailyGoals.setAdapter(adapter);
-
         tipModel = new StudyTipsModel();
 
 
@@ -276,7 +276,7 @@ public class MainView extends AppCompatActivity {
             StudySession.setObjectiveMet(objective);
             StudySession.setProductivityRating(rating);
             db.saveStudySession();
-            SQLdb.addSession(Session.getUserID(), StudySession);
+            SQLdb.addSession(db.getCurrentUserId(), StudySession);
         }
 
         timerRunnable = new Runnable() {

@@ -3,17 +3,17 @@ package com.example.zone.model;
 public class Objective {
     private String objectiveText;
     private String objectiveDate;
-    private int objectiveID;
+    private String objectiveID;
     private String eventName;
     private String completionTime;
     private String taskType;
 
-    public Objective(int objectiveID, String objectiveText, String objectiveDate) {
+    public Objective(String objectiveID, String objectiveText, String objectiveDate) {
         this(objectiveID, objectiveText, objectiveDate, "", "Other", objectiveText);
     }
 
     public Objective(
-            int objectiveID,
+            String objectiveID,
             String eventName,
             String objectiveDate,
             String completionTime,
@@ -41,8 +41,10 @@ public class Objective {
     public String getObjectiveDate(){
         return objectiveDate;
     }
-    public int getObjectiveID(){
+    public String getObjectiveID(){
         return objectiveID;
+    }
+    public Objective() {
     }
 
     public String getEventName() {

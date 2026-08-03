@@ -7,12 +7,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.google.android.gms.common.internal.ViewUtils;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 
 public class Database extends SQLiteOpenHelper {
-
+    FirebaseFirestore Vdb = FirebaseFirestore.getInstance();
     private static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 9;
 
     public Database(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -21,16 +24,12 @@ public class Database extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-
         Log.d("DATABASE", "CREATING tables");
-
-
-
         String userQuery =
                 "CREATE TABLE users (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "username TEXT UNIQUE," +
-                        "password TEXT" +
+                        "UserID TEXT UNIQUE," +
+                        "Email TEXT" +
                         ")";
 
         String subjectQuery =
@@ -52,7 +51,7 @@ public class Database extends SQLiteOpenHelper {
         String sessionQuery =
                 "CREATE TABLE sessions (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "user_id INTEGER," +
+                        "user_id TEXT," +
                         "start_time TEXT," +
                         "end_time TEXT," +
                         "duration INTEGER," +
@@ -67,11 +66,10 @@ public class Database extends SQLiteOpenHelper {
                         "heart_rate_data TEXT," +
                         "FOREIGN KEY(user_id) REFERENCES users(id)" +
                         ")";
-
         String objectiveQuery =
                 "CREATE TABLE objectives (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "user_id INTEGER," +
+                        "user_id TEXT," +
                         "objective_text TEXT," +
                         "objective_date TEXT," +
                         "event_name TEXT," +
@@ -89,7 +87,7 @@ public class Database extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 2) {
+        if (oldVersion < 7) {
             db.execSQL("DROP TABLE IF EXISTS users");
             db.execSQL("DROP TABLE IF EXISTS subjects");
             db.execSQL("DROP TABLE IF EXISTS grades");
@@ -98,31 +96,37 @@ public class Database extends SQLiteOpenHelper {
             onCreate(db);
             return;
         }
-        if (oldVersion < 3) {
+        if (oldVersion < 7) {
             db.execSQL("ALTER TABLE objectives ADD COLUMN event_name TEXT NOT NULL DEFAULT ''");
             db.execSQL("ALTER TABLE objectives ADD COLUMN completion_time TEXT NOT NULL DEFAULT ''");
             db.execSQL("ALTER TABLE objectives ADD COLUMN task_type TEXT NOT NULL DEFAULT 'Other'");
             db.execSQL("UPDATE objectives SET event_name=objective_text WHERE event_name='' ");
         }
     }
-
-    public boolean addUser(String username, String passwordHash) {
-        if (username == null || passwordHash == null
-                || username.length() < 6 || passwordHash.length() < 6
-                || !verifyUsername(username)) {
-            return false;
-        }
-        SQLiteDatabase db = getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("username", username);
-        values.put("password", passwordHash);
-        long result = db.insert("users", null, values);
-
-        return result != -1L;
+    public interface UserAddedCallback {
+        void onComplete(boolean success);
     }
 
+    public void addUser(String username,
+                        String passwordHash,
+                        UserAddedCallback callback) {
 
-
+        Vdb.collection("users")
+                .document(username)
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (!document.exists()) {
+                        callback.onComplete(false);
+                        return;
+                    }
+                    SQLiteDatabase db = getWritableDatabase();
+                    ContentValues values = new ContentValues();
+                    values.put("UserID", username);
+                    values.put("Email", passwordHash);
+                    long result = db.insert("users", null, values);
+                    callback.onComplete(result != -1);
+                });
+    }
     public boolean verifyUser(String username) {
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.query(
@@ -326,7 +330,7 @@ public class Database extends SQLiteOpenHelper {
         return db.insert("grades", null, values) != -1;
     }
 
-    public long addSession(int userID, StudySessionModel session) {
+    public long addSession(String userID, StudySessionModel session) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("user_id", userID);
@@ -340,8 +344,6 @@ public class Database extends SQLiteOpenHelper {
         values.put("avg_heart_rate", session.getHeartRate());
         values.put("max_heart_rate", session.getMaxHeartRate());
         values.put("min_heart_rate", session.getMinHeartRate());
-
-        // Serialize int[] to CSV
         StringBuilder sb = new StringBuilder();
         int[] data = session.getHeartRateData();
         if (data != null) {
@@ -448,7 +450,7 @@ public class Database extends SQLiteOpenHelper {
         return data != null ? data : new int[0];
     }
 
-    public long addObjective(int userID, String text, String date) {
+    public long addObjective(String userID, String text, String date) {
 
         SQLiteDatabase db = getWritableDatabase();
 
@@ -464,7 +466,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public long addTask(
-            int userID,
+            String userID,
             String eventName,
             String dueDate,
             String completionTime,
@@ -560,7 +562,7 @@ public class Database extends SQLiteOpenHelper {
         return objectives;
     }
 
-    public boolean deleteObjective(int objectiveID){
+    public boolean deleteObjective(String objectiveID){
         SQLiteDatabase db = getWritableDatabase();
         int deleted = db.delete(
                 "objectives",
@@ -580,7 +582,7 @@ public class Database extends SQLiteOpenHelper {
         return deleted == 1;
     }
 
-    public boolean updateObjective(int objectiveID, String text, String date) {
+    public boolean updateObjective(String objectiveID, String text, String date) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("objective_text", text);
@@ -595,7 +597,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public boolean updateTask(
-            int objectiveID,
+            String objectiveID,
             String eventName,
             String dueDate,
             String completionTime,
@@ -623,7 +625,7 @@ public class Database extends SQLiteOpenHelper {
         String eventName = cursor.getString(
                 cursor.getColumnIndexOrThrow("event_name"));
         return new Objective(
-                cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                cursor.getString(cursor.getColumnIndexOrThrow("id")),
                 eventName,
                 cursor.getString(cursor.getColumnIndexOrThrow("objective_date")),
                 cursor.getString(cursor.getColumnIndexOrThrow("completion_time")),
