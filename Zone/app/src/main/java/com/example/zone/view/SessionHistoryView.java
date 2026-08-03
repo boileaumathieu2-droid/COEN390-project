@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.zone.R;
 import com.example.zone.model.Database;
+import com.example.zone.model.Session;
 import com.example.zone.model.StudySessionModel;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -50,9 +51,9 @@ public class SessionHistoryView extends AppCompatActivity {
     }
 
     private void loadSessions() {
-        String username = getSharedPreferences("ZonePrefs", MODE_PRIVATE).getString("username", null);
-        if (username != null) {
-            int userID = db.getUserID(username);
+        Session.init(getApplicationContext());
+        int userID = Session.getUserID();
+        if (userID != -1) {
             sessionList = db.getAllSessions(userID);
             adapter = new SessionHistoryAdapter(sessionList, this::showSessionDetail);
             recyclerView.setAdapter(adapter);
@@ -60,6 +61,10 @@ public class SessionHistoryView extends AppCompatActivity {
     }
 
     private void showSessionDetail(StudySessionModel session) {
+        if (session == null || session.getStartTime() == null) {
+            return;
+        }
+
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_session_detail, null);
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -165,8 +170,12 @@ public class SessionHistoryView extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             StudySessionModel session = sessions.get(position);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
-            holder.dateTimeText.setText(session.getStartTime().format(formatter));
+            if (session.getStartTime() != null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
+                holder.dateTimeText.setText(session.getStartTime().format(formatter));
+            } else {
+                holder.dateTimeText.setText("N/A");
+            }
             
             int d = session.getDuration();
             String summary = String.format(Locale.getDefault(), "Duration: %02d:%02d | Avg HR: %d", (d % 3600) / 60, d % 60, session.getHeartRate());

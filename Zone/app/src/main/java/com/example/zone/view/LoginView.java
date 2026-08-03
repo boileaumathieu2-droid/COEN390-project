@@ -42,9 +42,23 @@ public class LoginView extends AppCompatActivity {
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
-            db.signIn(username.getText().toString(), password.getText().toString(), success-> {
+            String userStr = username.getText().toString();
+            db.signIn(userStr, password.getText().toString(), success-> {
                 if (success) {
-                    Toast.makeText(this, "Sign it successful", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
+                    
+                    // Initialize local session
+                    int localID = controller.getUserID(userStr);
+                    if (localID == -1) {
+                        // If user doesn't exist locally, create them so we have an ID
+                        Database sqliteDb = new Database(this);
+                        // We use a dummy hash because the real auth is in Firebase
+                        sqliteDb.addUser(userStr, "FIREBASE_AUTHED");
+                        localID = sqliteDb.getUserID(userStr);
+                    }
+                    Session.setUserID(localID);
+                    Session.setUsername(userStr);
+
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
                 }

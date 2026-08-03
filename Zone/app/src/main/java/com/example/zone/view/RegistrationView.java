@@ -42,6 +42,17 @@ public class RegistrationView extends AppCompatActivity {
             db.createAccount(Username, Password, this, success -> {
                 if (success) {
                     Toast.makeText(this, "Account Created!", Toast.LENGTH_SHORT).show();
+                    
+                    // Initialize local session
+                    int localID = controller.getUserID(Username);
+                    if (localID == -1) {
+                        Database sqliteDb = new Database(this);
+                        sqliteDb.addUser(Username, "FIREBASE_AUTHED");
+                        localID = sqliteDb.getUserID(Username);
+                    }
+                    Session.setUserID(localID);
+                    Session.setUsername(Username);
+
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
                 } else {

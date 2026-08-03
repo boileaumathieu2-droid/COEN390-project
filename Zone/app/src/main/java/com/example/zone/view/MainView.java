@@ -56,6 +56,7 @@ public class MainView extends AppCompatActivity {
     private MainViewObjectiveAdapter adapter;
     private String today;
     VirtualDatabase db = new VirtualDatabase();
+    private Database localDb;
 
 
     private TimerModel Timer = TimerModel.getInstance();
@@ -131,6 +132,7 @@ public class MainView extends AppCompatActivity {
 
         objectiveController = new ObjectiveController(new Database(this));
         mainController = new MainController(this);
+        localDb = new Database(this);
 
 
         // define buttons
@@ -279,6 +281,7 @@ public class MainView extends AppCompatActivity {
             StudySession.setObjectiveMet(objective);
             StudySession.setProductivityRating(rating);
             db.saveStudySession();
+            localDb.addSession(com.example.zone.model.Session.getUserID(), StudySession);
         }
 
         timerRunnable = new Runnable() {
