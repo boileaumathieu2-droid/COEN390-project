@@ -120,7 +120,6 @@ public class MainView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         com.example.zone.model.Session.init(getApplicationContext());
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
 
@@ -160,12 +159,6 @@ public class MainView extends AppCompatActivity {
         handler.postDelayed(tipUpdater, delay);
 
         refresh();
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         objectivesPrompt.setOnClickListener(v -> {
             Intent intent = new Intent(this, ObjectiveView.class);
