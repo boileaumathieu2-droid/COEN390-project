@@ -8,10 +8,12 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.zone.R;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainContainerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,11 +21,14 @@ public class MainContainerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main_container);
 
         viewPager = findViewById(R.id.mainViewPager);
+        bottomNavigationView = findViewById(R.id.bottomNavigation);
+
         MainPagerAdapter adapter = new MainPagerAdapter(this);
         viewPager.setAdapter(adapter);
 
         // Set MainView (index 1) as the default page
         viewPager.setCurrentItem(1, false);
+        bottomNavigationView.setSelectedItemId(R.id.nav_timer);
         updateTitle(1);
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
@@ -31,8 +36,36 @@ public class MainContainerActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 updateTitle(position);
+                syncBottomNav(position);
             }
         });
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_calendar) {
+                viewPager.setCurrentItem(0, true);
+                return true;
+            } else if (id == R.id.nav_timer) {
+                viewPager.setCurrentItem(1, true);
+                return true;
+            } else if (id == R.id.nav_analytics) {
+                viewPager.setCurrentItem(2, true);
+                return true;
+            } else if (id == R.id.nav_settings) {
+                viewPager.setCurrentItem(3, true);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void syncBottomNav(int position) {
+        switch (position) {
+            case 0: bottomNavigationView.setSelectedItemId(R.id.nav_calendar); break;
+            case 1: bottomNavigationView.setSelectedItemId(R.id.nav_timer); break;
+            case 2: bottomNavigationView.setSelectedItemId(R.id.nav_analytics); break;
+            case 3: bottomNavigationView.setSelectedItemId(R.id.nav_settings); break;
+        }
     }
 
     @Override
