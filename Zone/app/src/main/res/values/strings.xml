@@ -97,6 +97,7 @@
     <string name="study_tips_btn">Study Tips</string>
     <string name="performance_label">Performance</string>
     <string name="time_of_day_label">Time of Day</string>
+    <string name="performance_detail_title">Performance: %1$s</string>
     <string-array name="task_types">
         <item>Assignment</item>
         <item>Exam</item>
