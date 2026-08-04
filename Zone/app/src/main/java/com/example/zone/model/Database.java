@@ -107,25 +107,12 @@ public class Database extends SQLiteOpenHelper {
         void onComplete(boolean success);
     }
 
-    public void addUser(String username,
-                        String passwordHash,
-                        UserAddedCallback callback) {
-
-        Vdb.collection("users")
-                .document(username)
-                .get()
-                .addOnSuccessListener(document -> {
-                    if (!document.exists()) {
-                        callback.onComplete(false);
-                        return;
-                    }
-                    SQLiteDatabase db = getWritableDatabase();
-                    ContentValues values = new ContentValues();
-                    values.put("UserID", username);
-                    values.put("Email", passwordHash);
-                    long result = db.insert("users", null, values);
-                    callback.onComplete(result != -1);
-                });
+    public void addUser(String userID, String email) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("UserID", userID);
+        values.put("Email", email);
+        long result = db.insert("users", null, values);
     }
     public boolean verifyUser(String username) {
         SQLiteDatabase db = getReadableDatabase();
@@ -179,13 +166,11 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public int getUserID(String username) {
-
         SQLiteDatabase db = getReadableDatabase();
-
         Cursor cursor = db.query(
                 "users",
                 new String[]{"id"},
-                "username=?",
+                "UserID=?",
                 new String[]{username},
                 null,
                 null,

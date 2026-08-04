@@ -24,6 +24,7 @@ public class RegistrationView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Session.init(getApplicationContext());
+        VirtualDatabase db = new VirtualDatabase();
         setContentView(R.layout.create_account);
         EditText username = findViewById(R.id.usernameEditText);
         EditText password = findViewById(R.id.passwordInput);
@@ -41,21 +42,20 @@ public class RegistrationView extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
                 return;
             }
+            if(!passwordText.equals(confirmText)) {
+                Toast.makeText(this, "password does not match", Toast.LENGTH_SHORT).show();
+                return;
+            }
             System.out.println("this button is being clicked");
-            db.createAccount(Username, Password, this, success -> {
+            db.createAccount(usernameText, passwordText, this, success -> {
                 if (success) {
+                    String user = db.getCurrentUserId();
                     Toast.makeText(this, "Account Created!", Toast.LENGTH_SHORT).show();
-                    
-                    // Initialize local session
-                    int localID = controller.getUserID(Username);
-                    if (localID == -1) {
-                        Database sqliteDb = new Database(this);
-                        sqliteDb.addUser(Username, "FIREBASE_AUTHED");
-                        localID = sqliteDb.getUserID(Username);
-                    }
+                    Database SQLdb = new Database(this);
+                    SQLdb.addUser(user, usernameText);
+                    int localID = SQLdb.getUserID(user);
                     Session.setUserID(localID);
-                    Session.setUsername(Username);
-
+                    Session.setUsername(usernameText);
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
                 } else {

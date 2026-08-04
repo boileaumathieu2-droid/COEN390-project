@@ -4,6 +4,7 @@ import static com.example.zone.model.VirtualDatabase.isInternetAvailable;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,11 +14,8 @@ import com.example.zone.controller.Login;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.VirtualDatabase;
-
-
 public class LoginView extends AppCompatActivity {
     private Login controller;
-
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Session.init(this);
@@ -33,10 +31,16 @@ public class LoginView extends AppCompatActivity {
 //            return;
 //        }
         if(db.getCurrentUserId() != null) {
+            String user = db.getCurrentUserId();
+            System.out.println("USERNAME!!!: " + user);
+            Session.setUsername(user);
+            int SQLID  = SQLdb.getUserID(user);
+            Session.setUserID(SQLID);
+            Log.d("userID= ", "USERID!!!: " + SQLdb.getUserID(user));
+            System.out.println("USERID!! = " +(SQLdb.getUserID(user)));
             Intent intent = new Intent(this, MainView.class);
             startActivity(intent);
         }
-
         setContentView(R.layout.login_page);
         EditText username = findViewById(R.id.usernameEditText);
         EditText password = findViewById(R.id.passwordEditText);
@@ -45,42 +49,38 @@ public class LoginView extends AppCompatActivity {
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
-            String userStr = username.getText().toString();
-            db.signIn(userStr, password.getText().toString(), success-> {
+            String userStr = username.getText().toString().trim();
+            String passwordStr = password.getText().toString().trim();
+            db.signIn(userStr, passwordStr, success -> {
                 if (success) {
                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
-                    
-                    // Initialize local session
-                    int localID = controller.getUserID(userStr);
+                    int localID = controller.getUserID(db.getCurrentUserId());
                     if (localID == -1) {
-                        // If user doesn't exist locally, create them so we have an ID
                         Database sqliteDb = new Database(this);
-                        // We use a dummy hash because the real auth is in Firebase
-                        sqliteDb.addUser(userStr, "FIREBASE_AUTHED");
                         localID = sqliteDb.getUserID(userStr);
+
                     }
+
                     Session.setUserID(localID);
                     Session.setUsername(userStr);
+                    System.out.println("USERID!! = " +(SQLdb.getUserID(db.getCurrentUserId())));
 
-            String usernameText = username.getText().toString();
-            String passwordText = password.getText().toString();
-            db.signIn(usernameText, passwordText, success -> {
-                if (success) {
-                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
+
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
-                }
-                else {
+                    finish();
+
+                } else {
                     if (!isInternetAvailable(this)) {
-                        Toast.makeText(this, "Internet connection Required!", Toast.LENGTH_SHORT).show();
-                    }
-                    else {
-                        Toast.makeText(this, "Incorrect information, Try Again!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Internet connection required!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Incorrect information, try again!", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
-
         });
+
+
         forgot_password.setOnClickListener(v -> {
             //Intent intent = new Intent(this, MainView.class);
             //startActivity(intent);

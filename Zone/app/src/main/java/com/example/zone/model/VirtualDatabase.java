@@ -102,7 +102,6 @@ public class VirtualDatabase {
             callback.onComplete(new ArrayList<>());
             return;
         }
-
         db.collection("users")
                 .document(userId)
                 .collection("studySessions")
@@ -127,28 +126,28 @@ public class VirtualDatabase {
         try {
             StudySessionModel session = new StudySessionModel();
             session.setDocumentId(doc.getId());
-            
+
             String startTime = doc.getString("startTime");
             if (startTime != null) session.setStartTime(java.time.LocalDateTime.parse(startTime));
-            
+
             String endTime = doc.getString("endTime");
             if (endTime != null) session.setEndTime(java.time.LocalDateTime.parse(endTime));
-            
+
             Long duration = doc.getLong("duration");
             if (duration != null) session.setDuration(duration.intValue());
-            
+
             String status = doc.getString("status");
             if (status != null) session.setStatus(StudySessionModel.Status.valueOf(status));
-            
+
             Boolean objectiveMet = doc.getBoolean("objectiveMet");
             if (objectiveMet != null) session.setObjectiveMet(objectiveMet);
-            
+
             Long rating = doc.getLong("productivityRating");
             if (rating != null) session.setProductivityRating(rating.intValue());
-            
+
             Long avgHR = doc.getLong("averageHeartRate");
             if (avgHR != null) session.setHeartRate(avgHR.intValue());
-            
+
             Long restingHR = doc.getLong("restingHeartRate");
             if (restingHR != null) session.setRestingHeartRate(restingHR.intValue());
 
@@ -168,6 +167,8 @@ public class VirtualDatabase {
             System.err.println("Error parsing session: " + e.getMessage());
             return null;
         }
+    }
+
     public void DeleteStudySession(String Session) {
         String UserId = getCurrentUserId();
         db.collection("users")
@@ -176,6 +177,7 @@ public class VirtualDatabase {
                 .document(Session)
                 .delete();
     }
+
     public void saveStudySession() {
 
         String userId = getCurrentUserId();
@@ -214,14 +216,11 @@ public class VirtualDatabase {
     }
 
 
-    public interface StudySessionCallback {
-        void onComplete(ArrayList<StudySessionModel> sessions);
     public void saveGrade(String subjectId, String assignment, double grade) {
         String userId = getCurrentUserId();
         Map<String, Object> data = new HashMap<>();
         data.put("assignment", assignment);
         data.put("grade", grade);
-
         db.collection("users")
                 .document(userId)
                 .collection("Subjects")
@@ -349,15 +348,6 @@ public class VirtualDatabase {
                     }
                     callback.onComplete(Grades);
                 });
-//        String objectiveID = document.getString("objectiveID");
-//        String objectiveText = document.getString("objectiveText");
-//        String objectiveDate = document.getString("objectiveDate");
-//        String eventName = document.getString("eventName");
-//        String completionTime = document.getString("completionTime");
-//        String taskType = document.getString("taskType");
-//        Objective objective = new Objective(
-//
-//
   }
     public void GetDailyObjectives(ObjectiveCallback callback, String date) {
         String userId = getCurrentUserId();
