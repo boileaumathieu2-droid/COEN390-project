@@ -10,12 +10,12 @@ public class AnalyticsController {
         this.model = new AnalyticsModel();
     }
 
-    public void getHeartRateData(AnalyticsModel.HeartRateDataCallback callback) {
+    public void getSessionData(AnalyticsModel.HeartRateDataCallback callback) {
         StudySessionModel liveSession = StudySessionModel.getInstance();
         if (liveSession != null && liveSession.isActive()) {
-            callback.onComplete(liveSession.getHeartRateData());
+            callback.onComplete(liveSession);
         } else {
-            model.getLastSessionHeartRate(callback);
+            model.getLastSession(callback);
         }
     }
 

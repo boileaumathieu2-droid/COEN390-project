@@ -20,7 +20,6 @@ import com.example.zone.controller.AnalyticsController;
 import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.model.HeartRateReading;
 import com.example.zone.model.StudySessionModel;
-import com.example.zone.model.TimerModel;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -30,13 +29,11 @@ import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class AnalyticsView extends Fragment {
 
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private AnalyticsController controller;
-    private final TimerModel timer = TimerModel.getInstance();
 
     private TextView currentValue;
     private TextView restingValue;
@@ -71,16 +68,14 @@ public class AnalyticsView extends Fragment {
 
         Button previousSessionsButton = view.findViewById(R.id.previousSessionsButton);
         if (previousSessionsButton != null) {
-            previousSessionsButton.setOnClickListener(v -> {
-                startActivity(new Intent(requireContext(), SessionHistoryView.class));
-            });
+            previousSessionsButton.setOnClickListener(v -> 
+                startActivity(new Intent(requireContext(), SessionHistoryView.class)));
         }
 
         Button recommendedStudyTimesButton = view.findViewById(R.id.recommendedStudyTimesButton);
         if (recommendedStudyTimesButton != null) {
-            recommendedStudyTimesButton.setOnClickListener(v -> {
-                startActivity(new Intent(requireContext(), RecommendedStudyTimesView.class));
-            });
+            recommendedStudyTimesButton.setOnClickListener(v -> 
+                startActivity(new Intent(requireContext(), RecommendedStudyTimesView.class)));
         }
 
         configureChart();
@@ -107,41 +102,32 @@ public class AnalyticsView extends Fragment {
         HeartRateReading stableReading = HeartRateSensorManager
                 .getInstance(getContext().getApplicationContext())
                 .getLastStableReading();
-        int currentBpm = stableReading != null
-                && stableReading.hasGoodSignal()
-                ? stableReading.getBpm() : 0;
+        int currentBpm = (stableReading != null && stableReading.hasGoodSignal()) ? stableReading.getBpm() : 0;
         
         if (currentValue != null) currentValue.setText(valueOrDash(currentBpm));
 
-        StudySessionModel displayedSession = timer.getLiveSession();
-        
-        if (displayedSession == null) {
-            controller.getHeartRateData(data -> {
-               // This callback might return data from last session if nothing is active
-               // But we need resting/min/max too. 
-               // For now, if no live session, we rely on the controller logic.
-            });
-            // To properly match mark-updated-version logic, we need to load latest saved session in model/controller
-            // I'll stick to displaying live session data if available.
-        }
+        controller.getSessionData(session -> {
+            if (session == null) {
+                if (restingValue != null) restingValue.setText("--");
+                if (minValue != null) minValue.setText("--");
+                if (maxValue != null) maxValue.setText("--");
+                if (lastPlottedCount != 0) {
+                    lastPlottedCount = 0;
+                    chart.clear();
+                    chart.invalidate();
+                }
+                return;
+            }
 
-        if (displayedSession != null) {
-            if (restingValue != null) restingValue.setText(valueOrDash(displayedSession.getRestingHeartRate()));
-            if (minValue != null) minValue.setText(valueOrDash(displayedSession.getMinHeartRate()));
-            if (maxValue != null) maxValue.setText(valueOrDash(displayedSession.getMaxHeartRate()));
-            
-            int[] data = displayedSession.getHeartRateData();
+            if (restingValue != null) restingValue.setText(valueOrDash(session.getRestingHeartRate()));
+            if (minValue != null) minValue.setText(valueOrDash(session.getMinHeartRate()));
+            if (maxValue != null) maxValue.setText(valueOrDash(session.getMaxHeartRate()));
+
+            int[] data = session.getHeartRateData();
             if (data.length != lastPlottedCount) {
                 displayGraph(chart, data);
             }
-        } else {
-            // Load latest session via controller
-            controller.getHeartRateData(data -> {
-                if (data.length != lastPlottedCount) {
-                    displayGraph(chart, data);
-                }
-            });
-        }
+        });
     }
 
     private String valueOrDash(int value) {
@@ -176,8 +162,10 @@ public class AnalyticsView extends Fragment {
         int maximum = heartRateData[0];
         for (int i = 0; i < heartRateData.length; i++) {
             entries.add(new Entry(i, heartRateData[i]));
-            minimum = Math.min(minimum, heartRateData[i]);
-            maximum = Math.max(maximum, heartRateData[i]);
+            if (heartRateData[i] > 0) {
+                minimum = (minimum == 0) ? heartRateData[i] : Math.min(minimum, heartRateData[i]);
+                maximum = Math.max(maximum, heartRateData[i]);
+            }
         }
 
         LineDataSet dataSet = new LineDataSet(entries, "Heart Rate (BPM)");
@@ -194,7 +182,8 @@ public class AnalyticsView extends Fragment {
         chart.setData(new LineData(dataSet));
 
         YAxis leftAxis = chart.getAxisLeft();
-        leftAxis.setAxisMinimum(Math.max(30f, minimum - 10f));
+        float minVal = (minimum > 10) ? minimum - 10 : 0;
+        leftAxis.setAxisMinimum(Math.max(0f, minVal));
         leftAxis.setAxisMaximum(Math.min(230f, Math.max(maximum + 10f, minimum + 20f)));
         
         chart.notifyDataSetChanged();

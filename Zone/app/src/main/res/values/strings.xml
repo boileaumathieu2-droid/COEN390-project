@@ -94,6 +94,7 @@
     <string name="back_to_analytics">Back to Analytics</string>
     <string name="return_to_main_menu">Return to Main Menu</string>
     <string name="recommended_study_times_btn">Recommended Study Times</string>
+    <string name="study_tips_btn">Study Tips</string>
     <string name="performance_label">Performance</string>
     <string name="time_of_day_label">Time of Day</string>
     <string-array name="task_types">

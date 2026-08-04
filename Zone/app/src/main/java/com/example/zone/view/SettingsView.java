@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.zone.R;
 import com.example.zone.model.Session;
+import com.example.zone.model.StudySessionModel;
 import com.example.zone.model.TimerModel;
 import com.example.zone.model.VirtualDatabase;
 
@@ -41,6 +42,7 @@ public class SettingsView extends Fragment {
 
     private void logout() {
         TimerModel.getInstance().stopAndReset();
+        StudySessionModel.reset();
         db.signOut();
         Session.logout();
         Intent intent = new Intent(requireContext(), LoginView.class);

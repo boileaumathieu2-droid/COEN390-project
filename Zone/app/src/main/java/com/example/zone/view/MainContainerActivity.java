@@ -2,6 +2,8 @@ package com.example.zone.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -14,6 +16,8 @@ public class MainContainerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
     private BottomNavigationView bottomNavigationView;
+    private ImageView cloudFar;
+    private ImageView cloudNear;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +26,8 @@ public class MainContainerActivity extends AppCompatActivity {
 
         viewPager = findViewById(R.id.mainViewPager);
         bottomNavigationView = findViewById(R.id.bottomNavigation);
+        cloudFar = findViewById(R.id.cloudFar);
+        cloudNear = findViewById(R.id.cloudNear);
 
         MainPagerAdapter adapter = new MainPagerAdapter(this);
         viewPager.setAdapter(adapter);
@@ -32,6 +38,23 @@ public class MainContainerActivity extends AppCompatActivity {
         updateTitle(1);
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+                float scrollTotal = position + positionOffset;
+                
+                // Parallax logic: shift clouds based on scroll
+                // - scrollTotal 1.0 (Timer page) is the baseline
+                float offset = scrollTotal - 1.0f;
+                
+                if (cloudFar != null) {
+                    cloudFar.setTranslationX(-offset * 150f);
+                }
+                if (cloudNear != null) {
+                    cloudNear.setTranslationX(-offset * 400f);
+                }
+            }
+
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);

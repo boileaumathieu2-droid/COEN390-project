@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="600dp"
+    android:viewportWidth="400"
+    android:viewportHeight="600">
+    <!-- Multiple small far clouds -->
+    <path
+        android:fillAlpha="0.2"
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,80c-8,0-15-7-15-15c0-7,5-13,11-14c2-9,10-16,20-16c6,0,11,2,15,6 c3-2,7-4,11-4c10,0,18,7,19,17c1-0.1,1-0.1,2-0.1c10,0,18,8,18,18s-8,18-18,18H50z" />
+    <path
+        android:fillAlpha="0.3"
+        android:fillColor="#FFFFFF"
+        android:pathData="M250,150c-7,0-13-6-13-13c0-6,4-11,10-12c2-8,9-14,17-14c5,0,10,2,13,5 c2-2,6-3,10-3c9,0,15,6,16,15c1-0.1,1-0.1,2-0.1c9,0,16,7,16,16s-7,16-16,16H250z" />
+    <path
+        android:fillAlpha="0.2"
+        android:fillColor="#FFFFFF"
+        android:pathData="M120,280c-10,0-18-8-18-18c0-8,6-16,14-17c2-11,11-20,23-20c7,0,14,3,18,8 c4-3,9-5,14-5c12,0,21,10,22,21c1-0.1,1-0.1,2-0.1c12,0,21,10,21,21s-10,21-21,21H120z" />
+    <path
+        android:fillAlpha="0.25"
+        android:fillColor="#FFFFFF"
+        android:pathData="M300,420c-8,0-15-7-15-15s5-13,11-14c2-9,10-16,20-16c6,0,11,2,15,6 c3-2,7-4,11-4c10,0,18,7,19,17c1-0.1,1-0.1,2-0.1c10,0,18,8,18,18s-8,18-18,18H300z" />
+    <path
+        android:fillAlpha="0.15"
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,550c-11,0-20-9-20-20c0-9,6-17,15-19c2-12,13-22,26-22c8,0,15,3,20,9 c4-3,9-5,15-5c13,0,23,10,25,22c1-0.1,1-0.1,2-0.1c13,0,23,10,23,23s-10,23-23,23H40z" />
+</vector>

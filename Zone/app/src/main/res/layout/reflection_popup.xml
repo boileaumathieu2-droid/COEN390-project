@@ -42,26 +42,30 @@
             android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnYes"
                 android:layout_width="111dp"
                 android:layout_height="match_parent"
                 android:backgroundTint="#2A9E05"
                 android:text="Yes"
-                android:textColor="#FFFFFF" />
+                android:textColor="#FFFFFF"
+                app:strokeColor="@color/black"
+                app:strokeWidth="0dp" />
 
             <View
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnNo"
                 android:layout_width="111dp"
                 android:layout_height="match_parent"
                 android:backgroundTint="#FF0000"
                 android:text="No"
-                android:textColor="#FFFFFF" />
+                android:textColor="#FFFFFF"
+                app:strokeColor="@color/black"
+                app:strokeWidth="0dp" />
 
         </LinearLayout>
 

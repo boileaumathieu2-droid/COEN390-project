@@ -10,19 +10,20 @@ public class AnalyticsModel {
     }
 
     public interface HeartRateDataCallback {
-        void onComplete(int[] data);
+        void onComplete(StudySessionModel session);
     }
 
-    public void getLastSessionHeartRate(HeartRateDataCallback callback) {
+    public void getLastSession(HeartRateDataCallback callback) {
         db.getStudySessions(sessions -> {
             if (sessions != null && !sessions.isEmpty()) {
                 sessions.sort((s1, s2) -> {
-                    if (s1.getStartTime() == null || s2.getStartTime() == null) return 0;
+                    if (s1.getStartTime() == null) return 1;
+                    if (s2.getStartTime() == null) return -1;
                     return s2.getStartTime().compareTo(s1.getStartTime());
                 });
-                callback.onComplete(sessions.get(0).getHeartRateData());
+                callback.onComplete(sessions.get(0));
             } else {
-                callback.onComplete(new int[0]);
+                callback.onComplete(null);
             }
         });
     }

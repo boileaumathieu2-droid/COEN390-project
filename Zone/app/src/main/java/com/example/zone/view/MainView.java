@@ -89,7 +89,8 @@ public class MainView extends Fragment {
                         .alpha(0f)
                         .setDuration(500)
                         .withEndAction(() -> {
-                            tipText.setText(tipModel.randomTip());
+                            String tip = tipModel.randomTip();
+                            tipText.setText("Study Tip: " + tip);
                             tipText.animate().alpha(1f).setDuration(500);
                         });
             }
@@ -148,8 +149,11 @@ public class MainView extends Fragment {
 
     private void setupStudyTips() {
         tipModel = new StudyTipsModel();
-        tipText.setText(tipModel.randomTip());
-        tipText.setOnClickListener(v -> startActivity(new Intent(requireContext(), StudyTipsView.class)));
+        if (tipText != null) {
+            String tip = tipModel.randomTip();
+            tipText.setText("Study Tip: " + tip);
+            tipText.setOnClickListener(v -> startActivity(new Intent(requireContext(), StudyTipsView.class)));
+        }
     }
 
     private void setupButtons(View view) {

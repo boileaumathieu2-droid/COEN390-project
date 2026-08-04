@@ -4,6 +4,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:id="@+id/cloudFar"
+        android:layout_width="600dp"
+        android:layout_height="600dp"
+        android:layout_marginTop="100dp"
+        android:alpha="0.7"
+        android:src="@drawable/parallax_cloud_far"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/cloudNear"
+        android:layout_width="800dp"
+        android:layout_height="600dp"
+        android:layout_marginTop="200dp"
+        android:alpha="0.8"
+        android:src="@drawable/parallax_cloud_near"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/mainViewPager"
         android:layout_width="0dp"
