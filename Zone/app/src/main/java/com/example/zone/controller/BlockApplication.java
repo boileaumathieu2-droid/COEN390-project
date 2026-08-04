@@ -7,17 +7,15 @@ import android.view.accessibility.AccessibilityEvent;
 
 import com.example.zone.model.DetectBlockedApplication;
 import com.example.zone.model.BlockedAppsStore;
-import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.TimerModel;
 
 public class BlockApplication extends AccessibilityService {
-    private StudySessionModel Session = StudySessionModel.getInstance();
-
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
         if (event.getPackageName() == null)
             return;
-        if (Session.getStatus() == StudySessionModel.Status.ACTIVE) {
+        if (TimerModel.getInstance().isStudySessionActive()) {
             String packageName = event.getPackageName().toString();
             Log.d("APP_BLOCKER", "Opened app: " + packageName);
             if (BlockedAppsStore.isBlocked(this, packageName)) {

@@ -55,6 +55,7 @@ public class RegistrationView extends AppCompatActivity {
 
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
+                    finish();
                 } else {
                     Toast.makeText(this, "Account not created, Invalid registration information", Toast.LENGTH_SHORT).show();
                 }
@@ -86,6 +87,7 @@ public class RegistrationView extends AppCompatActivity {
         login.setOnClickListener(v -> {
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);
+            finish();
         });
     }
 }

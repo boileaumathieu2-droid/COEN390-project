@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.bluetooth.le.ScanSettings;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -44,7 +43,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class HeartRateMonitorView extends AppCompatActivity {
-    // Official DFRobot Bluno BLE UART service and characteristics.
+
     private static final UUID BLUNO_SERVICE_UUID =
             UUID.fromString("0000dfb0-0000-1000-8000-00805f9b34fb");
     private static final String TARGET_BLUNO_ADDRESS = "D0:39:72:DF:D5:0E";
@@ -54,6 +53,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
     private final List<BluetoothDevice> discoveredDevices = new ArrayList<>();
     private final List<String> deviceLabels = new ArrayList<>();
     private final Map<String, String> bestDeviceNames = new HashMap<>();
+    private final Map<String, Integer> deviceSignalStrengths = new HashMap<>();
     private final Set<String> blunoCandidateAddresses = new HashSet<>();
 
     private BluetoothAdapter bluetoothAdapter;
@@ -62,6 +62,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
     private ArrayAdapter<String> deviceListAdapter;
     private boolean scanning;
     private boolean scanAfterPermission;
+    private boolean automaticConnectionRequested;
     private String pendingDirectAddress;
 
     private TextView connectionStatusText;
@@ -81,54 +82,69 @@ public class HeartRateMonitorView extends AppCompatActivity {
                 @Override
                 public void onConnectionStateChanged(
                         String message,
-                        boolean connected
+                        boolean connected,
+                        boolean busy
                 ) {
                     showConnectionState(message, connected);
-                    disconnectButton.setEnabled(
-                            connected || sensorManager.isConnecting());
+                    disconnectButton.setEnabled(connected || busy);
                 }
 
                 @Override
-                public void onHeartRateReading(HeartRateReading reading) {
-                    displayReading(reading);
+                public void onHeartRateReading(
+                        HeartRateReading rawReading,
+                        HeartRateReading stableReading
+                ) {
+                    displayReading(rawReading, stableReading);
                 }
             };
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                boolean granted = true;
-                for (String permission : requiredPermissions()) {
-                    granted &= Boolean.TRUE.equals(result.get(permission));
-                }
+            registerForActivityResult(
+                    new ActivityResultContracts.RequestMultiplePermissions(),
+                    result -> {
+                        boolean granted = true;
+                        for (String permission : requiredPermissions()) {
+                            granted &= Boolean.TRUE.equals(result.get(permission));
+                        }
 
-                if (granted && pendingDirectAddress != null) {
-                    String address = pendingDirectAddress;
-                    pendingDirectAddress = null;
-                    connectUsingAddress(address);
-                } else if (granted && scanAfterPermission) {
-                    scanAfterPermission = false;
-                    beginScan();
-                } else if (!granted) {
-                    scanAfterPermission = false;
-                    pendingDirectAddress = null;
-                    showConnectionState(getString(R.string.bluetooth_permission_needed), false);
-                }
-            });
+                        if (granted && pendingDirectAddress != null) {
+                            String address = pendingDirectAddress;
+                            pendingDirectAddress = null;
+                            connectUsingAddress(address);
+                        } else if (granted && scanAfterPermission) {
+                            scanAfterPermission = false;
+                            beginScan();
+                        } else if (!granted) {
+                            scanAfterPermission = false;
+                            pendingDirectAddress = null;
+                            showConnectionState(
+                                    getString(R.string.bluetooth_permission_needed),
+                                    false
+                            );
+                        }
+                    }
+            );
 
     private final ActivityResultLauncher<Intent> enableBluetoothLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
-                    if (pendingDirectAddress != null) {
-                        String address = pendingDirectAddress;
-                        pendingDirectAddress = null;
-                        connectUsingAddress(address);
-                    } else {
-                        beginScan();
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
+                            if (pendingDirectAddress != null) {
+                                String address = pendingDirectAddress;
+                                pendingDirectAddress = null;
+                                connectUsingAddress(address);
+                            } else {
+                                beginScan();
+                            }
+                        } else {
+                            showConnectionState(
+                                    getString(R.string.bluetooth_disabled),
+                                    false
+                            );
+                        }
                     }
-                } else {
-                    showConnectionState(getString(R.string.bluetooth_disabled), false);
-                }
-            });
+            );
 
     private final Runnable scanTimeout = this::stopScan;
 
@@ -177,16 +193,19 @@ public class HeartRateMonitorView extends AppCompatActivity {
         disconnectButton = findViewById(R.id.disconnectButton);
         ListView deviceList = findViewById(R.id.deviceList);
 
+        sensorManager = HeartRateSensorManager.getInstance(getApplicationContext());
+
         deviceListAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_list_item_1, deviceLabels);
+                this,
+                android.R.layout.simple_list_item_1,
+                deviceLabels
+        );
         deviceList.setAdapter(deviceListAdapter);
         deviceList.setEmptyView(emptyDeviceText);
         deviceList.setNestedScrollingEnabled(true);
         deviceList.setOnTouchListener((list, event) -> {
             int action = event.getActionMasked();
             if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
-                // The list is inside the page ScrollView. Keep vertical gestures in
-                // the device list so every scan result remains reachable.
                 list.getParent().requestDisallowInterceptTouchEvent(true);
             } else if (action == MotionEvent.ACTION_UP
                     || action == MotionEvent.ACTION_CANCEL) {
@@ -200,19 +219,31 @@ public class HeartRateMonitorView extends AppCompatActivity {
         scanButton.setOnClickListener(view -> scanForDevices());
         connectByIdButton.setOnClickListener(view -> connectUsingEnteredDeviceId());
         disconnectButton.setOnClickListener(view -> disconnectFromDevice());
-        sensorManager = HeartRateSensorManager.getInstance(getApplicationContext());
-        sensorManager.addListener(sensorListener);
-        disconnectButton.setEnabled(
-                sensorManager.isConnected() || sensorManager.isConnecting());
+        disconnectButton.setEnabled(sensorManager.isConnected() || sensorManager.isBusy());
 
         BluetoothManager manager = getSystemService(BluetoothManager.class);
         bluetoothAdapter = manager == null ? null : manager.getAdapter();
         if (bluetoothAdapter == null
-                || !getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+                || !getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_BLUETOOTH_LE
+        )) {
             scanButton.setEnabled(false);
             connectByIdButton.setEnabled(false);
             showConnectionState(getString(R.string.ble_not_supported), false);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        sensorManager.addListener(sensorListener);
+        requestAutomaticBlunoConnection();
+    }
+
+    @Override
+    protected void onStop() {
+        sensorManager.removeListener(sensorListener);
+        super.onStop();
     }
 
     @Override
@@ -223,12 +254,12 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
     private String[] requiredPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return new String[] {
+            return new String[]{
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.BLUETOOTH_CONNECT
             };
         }
-        return new String[] {Manifest.permission.ACCESS_FINE_LOCATION};
+        return new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
     }
 
     private boolean hasRequiredPermissions() {
@@ -248,6 +279,24 @@ public class HeartRateMonitorView extends AppCompatActivity {
             return;
         }
         beginScan();
+    }
+
+    private void requestAutomaticBlunoConnection() {
+        if (automaticConnectionRequested
+                || sensorManager.isConnected()
+                || sensorManager.isBusy()
+                || bluetoothAdapter == null) {
+            return;
+        }
+        automaticConnectionRequested = true;
+
+        if (!hasRequiredPermissions()) {
+            scanAfterPermission = false;
+            pendingDirectAddress = TARGET_BLUNO_ADDRESS;
+            permissionLauncher.launch(requiredPermissions());
+            return;
+        }
+        connectUsingAddress(TARGET_BLUNO_ADDRESS);
     }
 
     private void connectUsingEnteredDeviceId() {
@@ -277,13 +326,18 @@ public class HeartRateMonitorView extends AppCompatActivity {
         }
         if (!bluetoothAdapter.isEnabled()) {
             pendingDirectAddress = address;
-            enableBluetoothLauncher.launch(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE));
+            enableBluetoothLauncher.launch(
+                    new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            );
             return;
         }
 
         try {
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
-            showConnectionState(getString(R.string.connecting_device_id, address), false);
+            showConnectionState(
+                    getString(R.string.connecting_device_id, address),
+                    false
+            );
             connectToDevice(device);
         } catch (IllegalArgumentException error) {
             deviceIdInput.setError(getString(R.string.invalid_bluetooth_address));
@@ -298,7 +352,9 @@ public class HeartRateMonitorView extends AppCompatActivity {
             return;
         }
         if (!bluetoothAdapter.isEnabled()) {
-            enableBluetoothLauncher.launch(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE));
+            enableBluetoothLauncher.launch(
+                    new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            );
             return;
         }
 
@@ -314,21 +370,19 @@ public class HeartRateMonitorView extends AppCompatActivity {
         discoveredDevices.clear();
         deviceLabels.clear();
         bestDeviceNames.clear();
+        deviceSignalStrengths.clear();
         blunoCandidateAddresses.clear();
         deviceListAdapter.notifyDataSetChanged();
         emptyDeviceText.setText(R.string.scanning_for_devices);
+        emptyDeviceText.setVisibility(View.VISIBLE);
 
-        ScanSettings scanSettings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-                .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
-                .build();
         scanning = true;
         scanButton.setEnabled(false);
         showConnectionState(getString(R.string.scanning), false);
         try {
-            bluetoothLeScanner.startScan(null, scanSettings, scanCallback);
+            // No service/name filter: the demonstration list must show every
+            // nearby BLE advertiser, not only the saved Bluno.
+            bluetoothLeScanner.startScan(scanCallback);
         } catch (SecurityException | IllegalStateException error) {
             scanning = false;
             scanButton.setEnabled(true);
@@ -350,7 +404,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
         if (discoveredDevices.isEmpty()) {
             emptyDeviceText.setText(R.string.no_ble_devices_found);
         }
-        if (!sensorManager.isConnected() && !sensorManager.isConnecting()) {
+        if (!sensorManager.isConnected() && !sensorManager.isBusy()) {
             showConnectionState(getString(R.string.select_bluno_device), false);
         }
     }
@@ -390,10 +444,10 @@ public class HeartRateMonitorView extends AppCompatActivity {
                 || nameLooksLikeBluno;
         String finalReportedName = reportedName;
         boolean finalIsBlunoCandidate = isBlunoCandidate;
+        int signalStrength = result.getRssi();
+
         runOnUiThread(() -> {
             if (finalReportedName != null && !finalReportedName.trim().isEmpty()) {
-                // A scan response often supplies the name after the first unnamed
-                // advertisement. Keep the best name instead of discarding duplicates.
                 bestDeviceNames.put(address, finalReportedName.trim());
             } else if (!bestDeviceNames.containsKey(address)) {
                 bestDeviceNames.put(address, getString(R.string.unnamed_ble_device));
@@ -401,10 +455,15 @@ public class HeartRateMonitorView extends AppCompatActivity {
             if (finalIsBlunoCandidate) {
                 blunoCandidateAddresses.add(address);
             }
+            deviceSignalStrengths.put(address, signalStrength);
 
             boolean likelyBluno = blunoCandidateAddresses.contains(address);
-            String bestName = bestDeviceNames.get(address);
-            String label = getString(R.string.ble_device_label, bestName, address);
+            String label = getString(
+                    R.string.ble_device_label_rssi,
+                    bestDeviceNames.get(address),
+                    address,
+                    deviceSignalStrengths.get(address)
+            );
             if (likelyBluno) {
                 label += "\n" + getString(R.string.likely_bluno_device);
             }
@@ -423,16 +482,12 @@ public class HeartRateMonitorView extends AppCompatActivity {
                 int insertAt = likelyBluno ? 0 : existingIndex;
                 discoveredDevices.add(insertAt, existingDevice);
                 deviceLabels.add(insertAt, label);
-                deviceListAdapter.notifyDataSetChanged();
-                if (likelyBluno) {
-                    showConnectionState(getString(R.string.bluno_found), false);
-                }
-                return;
+            } else {
+                int insertAt = likelyBluno ? 0 : deviceLabels.size();
+                discoveredDevices.add(insertAt, device);
+                deviceLabels.add(insertAt, label);
             }
 
-            int insertAt = likelyBluno ? 0 : deviceLabels.size();
-            discoveredDevices.add(insertAt, device);
-            deviceLabels.add(insertAt, label);
             deviceListAdapter.notifyDataSetChanged();
             emptyDeviceText.setVisibility(View.GONE);
             if (likelyBluno) {
@@ -444,63 +499,72 @@ public class HeartRateMonitorView extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     private void connectToDevice(BluetoothDevice device) {
         if (!hasRequiredPermissions()) {
-            Toast.makeText(this, R.string.bluetooth_permission_needed, Toast.LENGTH_SHORT).show();
+            Toast.makeText(
+                    this,
+                    R.string.bluetooth_permission_needed,
+                    Toast.LENGTH_SHORT
+            ).show();
             return;
         }
         stopScan();
-
-        String name = device.getName();
-        if (name == null || name.trim().isEmpty()) {
-            name = device.getAddress();
-        }
-        showConnectionState(getString(R.string.connecting_to, name), false);
         disconnectButton.setEnabled(true);
-        sensorManager.connect(device);
+        sensorManager.connect(
+                device,
+                TARGET_BLUNO_ADDRESS.equalsIgnoreCase(device.getAddress())
+        );
     }
 
-    private void displayReading(HeartRateReading reading) {
-        rawValueText.setText(getString(R.string.raw_value, reading.getRawValue()));
-        signalRangeText.setText(getString(R.string.signal_range, reading.getSignalRange()));
-        lastPacketText.setText(reading.toPacketString());
+    private void displayReading(
+            HeartRateReading rawReading,
+            HeartRateReading stableReading
+    ) {
+        rawValueText.setText(
+                getString(R.string.raw_value, rawReading.getRawValue())
+        );
+        signalRangeText.setText(
+                getString(R.string.signal_range, rawReading.getSignalRange())
+        );
+        lastPacketText.setText(rawReading.toPacketString());
 
-        if (!reading.hasGoodSignal()) {
+        if (!stableReading.hasGoodSignal()) {
             bpmText.setText(R.string.bpm_placeholder);
             signalStatusText.setText(R.string.no_signal_instructions);
-            signalStatusText.setTextColor(ContextCompat.getColor(this, R.color.zone_warning));
-        } else if (reading.getBpm() == 0) {
+            signalStatusText.setTextColor(
+                    ContextCompat.getColor(this, R.color.zone_warning)
+            );
+        } else if (stableReading.getBpm() == 0) {
             bpmText.setText(R.string.bpm_placeholder);
             signalStatusText.setText(R.string.calculating_bpm);
-            signalStatusText.setTextColor(ContextCompat.getColor(this, R.color.zone_primary));
+            signalStatusText.setTextColor(
+                    ContextCompat.getColor(this, R.color.zone_primary)
+            );
         } else {
-            bpmText.setText(String.valueOf(reading.getBpm()));
+            bpmText.setText(String.valueOf(stableReading.getBpm()));
             signalStatusText.setText(R.string.live_reading);
-            signalStatusText.setTextColor(ContextCompat.getColor(this, R.color.zone_success));
+            signalStatusText.setTextColor(
+                    ContextCompat.getColor(this, R.color.zone_success)
+            );
         }
-        showConnectionState(getString(R.string.connected_receiving_data), true);
     }
 
     private void showConnectionState(String message, boolean connected) {
         connectionStatusText.setText(message);
-        int color = connected ? R.color.zone_success : R.color.zone_text_secondary;
+        int color = connected
+                ? R.color.zone_success : R.color.zone_text_secondary;
         connectionStatusText.setTextColor(ContextCompat.getColor(this, color));
     }
 
     private void disconnectFromDevice() {
-        if (sensorManager != null && hasRequiredPermissions()) {
-            sensorManager.disconnect();
-        } else {
-            showConnectionState(getString(R.string.disconnected), false);
-            disconnectButton.setEnabled(false);
-        }
+        sensorManager.disconnect();
     }
 
     @Override
     protected void onDestroy() {
         stopScan();
-        if (sensorManager != null) {
-            sensorManager.removeListener(sensorListener);
-        }
         mainHandler.removeCallbacksAndMessages(null);
+        // Do not disconnect here. The manager keeps Bluno connected while the
+        // user starts a study session or opens Analytics.
         super.onDestroy();
     }
 }
+

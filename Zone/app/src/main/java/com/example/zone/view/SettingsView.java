@@ -2,54 +2,53 @@ package com.example.zone.view;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
+import com.example.zone.model.Session;
+import com.example.zone.model.TimerModel;
 import com.example.zone.model.VirtualDatabase;
 
 public class SettingsView extends AppCompatActivity {
-    private VirtualDatabase db = new VirtualDatabase();
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_menu);
-        TextView logout = findViewById(R.id.logoutButton);
-        TextView connectDevice = findViewById(R.id.connectDeviceButton);
-        TextView appRestrict = findViewById(R.id.appRestrictButton);
-        TextView Notifications = findViewById(R.id.notificationsButton);
+        Session.init(getApplicationContext());
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Settings");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-        logout.setOnClickListener(v -> {
-            db.signOut();
-            Intent intent = new Intent(this, LoginView.class);
-            startActivity(intent);
-            Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
-        });
 
-        connectDevice.setOnClickListener(v -> {
-            Intent intent = new Intent(this, HeartRateMonitorView.class);
-            startActivity(intent);
-        });
+        findViewById(R.id.connectDeviceButton).setOnClickListener(view ->
+                startActivity(new Intent(this, HeartRateMonitorView.class)));
+        findViewById(R.id.appRestrictButton).setOnClickListener(view ->
+                startActivity(new Intent(this, BlockedAppsView.class)));
+        findViewById(R.id.notificationsButton).setOnClickListener(view ->
+                startActivity(new Intent(this, NotificationSetting.class)));
+        findViewById(R.id.aboutHelpButton).setOnClickListener(view ->
+                startActivity(new Intent(this, AboutHelpView.class)));
+        findViewById(R.id.logoutButton).setOnClickListener(view -> logout());
+    }
 
-        appRestrict.setOnClickListener(v -> {
-            Intent intent = new Intent(this, BlockedAppsView.class);
-            startActivity(intent);
-        });
-        Notifications.setOnClickListener(v -> {
-            Intent intent = new Intent(this, NotificationSetting.class);
-            startActivity(intent);
-        });
+    private void logout() {
+        TimerModel.getInstance().stopAndReset();
+        new VirtualDatabase().signOut();
+        Session.logout();
+        Intent intent = new Intent(this, LoginView.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        Toast.makeText(this, "Logout successful", Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

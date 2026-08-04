@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/zone_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Zone Study App"
+            android:textColor="@color/zone_text_primary"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Zone combines study sessions, objectives, app restriction and optional heart-rate analytics in one app."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Connect the Bluno Nano" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Open Settings → Connect Device. Zone tries the saved Bluno address D0:39:72:DF:D5:0E automatically. You can also scan to demonstrate all nearby BLE devices or use the direct MAC-address button. Keep the sensor connected when you return to the timer."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Use App Restrict" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Open Settings → App Restrict, choose the apps to block, then enable Zone in Android Accessibility settings. Selected apps are stopped only while the study timer is active."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Analytics and History" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Good sensor readings are sampled during the session. After completing the reflection, the session is saved under your account. Analytics shows the live or latest graph, and Session History lets you filter, inspect or delete saved sessions."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Heart-rate note" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="The SEN0203 readings are for project feedback and are not medical measurements. NO_SIGNAL packets and invalid values are not used in Analytics."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="16sp" />
+    </LinearLayout>
+</ScrollView>

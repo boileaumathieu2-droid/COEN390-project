@@ -1,15 +1,19 @@
 package com.example.zone.view;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.widget.Button;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
+import com.example.zone.controller.HeartRateSensorManager;
+import com.example.zone.model.HeartRateReading;
 import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.TimerModel;
 import com.example.zone.model.VirtualDatabase;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -21,135 +25,158 @@ import com.github.mikephil.charting.data.LineDataSet;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class AnalyticsView extends AppCompatActivity {
 
-    private Handler refreshHandler = new Handler(Looper.getMainLooper());
-    private Runnable refreshRunnable;
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final TimerModel timer = TimerModel.getInstance();
+
+    private TextView currentValue;
+    private TextView restingValue;
+    private TextView minValue;
+    private TextView maxValue;
+    private LineChart chart;
+    private StudySessionModel latestSavedSession;
+    private int lastPlottedCount = -1;
+
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refreshAnalytics();
+            refreshHandler.postDelayed(this, 1_000L);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.analytics_page);
 
-        Button mainMenuButton = findViewById(R.id.mainMenuButton);
-        mainMenuButton.setOnClickListener(v -> finish());
+        currentValue = findViewById(R.id.heartRateValue);
+        restingValue = findViewById(R.id.restingHeartRateValue);
+        minValue = findViewById(R.id.minHeartRateValue);
+        maxValue = findViewById(R.id.maxHeartRateValue);
+        chart = findViewById(R.id.heartRateChart);
 
-        // Button for previous sessions
-        Button previousSessionsButton = findViewById(R.id.previousSessionsButton);
-        previousSessionsButton.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, SessionHistoryView.class);
-            startActivity(intent);
-        });
+        findViewById(R.id.mainMenuButton).setOnClickListener(view -> finish());
+        findViewById(R.id.previousSessionsButton).setOnClickListener(view ->
+                startActivity(new Intent(this, SessionHistoryView.class)));
+        findViewById(R.id.recommendedStudyTimesButton).setOnClickListener(view ->
+                startActivity(new Intent(this, RecommendedStudyTimesView.class)));
 
-        Button recommendedStudyTimesButton = findViewById(R.id.recommendedStudyTimesButton);
-        recommendedStudyTimesButton.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, RecommendedStudyTimesView.class);
-            startActivity(intent);
-        });
-
-        setupAnalytics();
-        
-        refreshRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateLiveHeartRate();
-                refreshHandler.postDelayed(this, 1000); // Update every second
-            }
-        };
+        configureChart();
+        loadLatestSavedSession();
+        refreshAnalytics();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshHandler.post(refreshRunnable);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        refreshHandler.removeCallbacks(refreshRunnable);
-    }
-
-    private void updateLiveHeartRate() {
-        TextView heartRateValue = findViewById(R.id.heartRateValue);
-        StudySessionModel liveSession = StudySessionModel.getInstance();
-        
-        if (liveSession != null) {
-            int currentHR = liveSession.getHeartRateReading();
-            heartRateValue.setText(currentHR > 0 ? String.valueOf(currentHR) : "N/A");
-        }
-    }
-
-    private void setupAnalytics() {
-        LineChart chart = findViewById(R.id.heartRateChart);
-        StudySessionModel liveSession = StudySessionModel.getInstance();
-
-        if (liveSession != null && liveSession.isActive()) {
-            displayGraph(chart, liveSession.getHeartRateData());
-        } else {
-            VirtualDatabase vdb = new VirtualDatabase();
-            vdb.getStudySessions(sessions -> {
-                if (!sessions.isEmpty()) {
-                    // Sort to find the last session
-                    sessions.sort((s1, s2) -> {
-                        if (s1.getStartTime() == null || s2.getStartTime() == null) return 0;
-                        return s2.getStartTime().compareTo(s1.getStartTime());
-                    });
-                    StudySessionModel lastSession = sessions.get(0);
-                    displayGraph(chart, lastSession.getHeartRateData());
-                } else {
-                    displayGraph(chart, new int[0]);
-                }
+    private void loadLatestSavedSession() {
+        new VirtualDatabase().getStudySessions(sessions -> {
+            sessions.sort((left, right) -> {
+                if (left.getStartTime() == null) return 1;
+                if (right.getStartTime() == null) return -1;
+                return right.getStartTime().compareTo(left.getStartTime());
             });
-        }
-        updateLiveHeartRate();
+            latestSavedSession = sessions.isEmpty() ? null : sessions.get(0);
+            lastPlottedCount = -1;
+            refreshAnalytics();
+        });
     }
 
-    private void displayGraph(LineChart chart, int[] heartRateData) {
-        if (heartRateData == null || heartRateData.length == 0) {
-            chart.setNoDataText("No heart rate data available for this session.");
+    private void refreshAnalytics() {
+        HeartRateReading stableReading = HeartRateSensorManager
+                .getInstance(getApplicationContext())
+                .getLastStableReading();
+        int currentBpm = stableReading != null
+                && stableReading.hasGoodSignal()
+                ? stableReading.getBpm() : 0;
+        currentValue.setText(valueOrDash(currentBpm));
+
+        StudySessionModel displayedSession = timer.getLiveSession();
+        if (displayedSession == null) {
+            displayedSession = timer.getLastCompletedSession();
+        }
+        if (displayedSession == null) {
+            displayedSession = latestSavedSession;
+        }
+
+        if (displayedSession == null) {
+            restingValue.setText("--");
+            minValue.setText("--");
+            maxValue.setText("--");
+            if (lastPlottedCount != 0) {
+                plot(new int[0]);
+            }
+            return;
+        }
+
+        restingValue.setText(valueOrDash(displayedSession.getRestingHeartRate()));
+        minValue.setText(valueOrDash(displayedSession.getMinHeartRate()));
+        maxValue.setText(valueOrDash(displayedSession.getMaxHeartRate()));
+        int[] data = displayedSession.getHeartRateData();
+        if (data.length != lastPlottedCount) {
+            plot(data);
+        }
+    }
+
+    private String valueOrDash(int value) {
+        return value > 0 ? String.valueOf(value) : "--";
+    }
+
+    private void configureChart() {
+        chart.getDescription().setEnabled(false);
+        chart.getLegend().setEnabled(true);
+        chart.setTouchEnabled(true);
+        chart.setPinchZoom(true);
+        chart.setNoDataText("Start a session to collect heart-rate data.");
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setDrawGridLines(false);
+        chart.getAxisRight().setEnabled(false);
+    }
+
+    private void plot(int[] heartRates) {
+        lastPlottedCount = heartRates == null ? 0 : heartRates.length;
+        if (heartRates == null || heartRates.length == 0) {
+            chart.clear();
             chart.invalidate();
             return;
         }
 
         List<Entry> entries = new ArrayList<>();
-        for (int i = 0; i < heartRateData.length; i++) {
-            entries.add(new Entry(i, heartRateData[i]));
+        int minimum = heartRates[0];
+        int maximum = heartRates[0];
+        for (int i = 0; i < heartRates.length; i++) {
+            entries.add(new Entry(i, heartRates[i]));
+            minimum = Math.min(minimum, heartRates[i]);
+            maximum = Math.max(maximum, heartRates[i]);
         }
 
         LineDataSet dataSet = new LineDataSet(entries, "Heart Rate (BPM)");
-        dataSet.setColor(Color.RED);
+        dataSet.setColor(Color.rgb(216, 50, 90));
         dataSet.setLineWidth(2.5f);
-        dataSet.setCircleRadius(4f);
-        dataSet.setCircleColor(Color.RED);
+        dataSet.setCircleColor(Color.rgb(216, 50, 90));
+        dataSet.setCircleRadius(3f);
         dataSet.setDrawValues(false);
-        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        dataSet.setDrawFilled(true);
-        dataSet.setFillColor(Color.RED);
-        dataSet.setFillAlpha(50);
-
-        LineData lineData = new LineData(dataSet);
-        chart.setData(lineData);
-
-        // Chart styling
-        chart.getDescription().setEnabled(false);
-        chart.getLegend().setEnabled(true);
-        chart.setTouchEnabled(true);
-        chart.setPinchZoom(true);
-
-        XAxis xAxis = chart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(false);
-        xAxis.setGranularity(1f);
+        dataSet.setMode(LineDataSet.Mode.LINEAR);
+        chart.setData(new LineData(dataSet));
 
         YAxis leftAxis = chart.getAxisLeft();
-        leftAxis.setAxisMinimum(40f);
-        leftAxis.setAxisMaximum(200f);
-        leftAxis.setDrawGridLines(true);
-
-        chart.getAxisRight().setEnabled(false);
-        chart.animateX(1000);
+        leftAxis.setAxisMinimum(Math.max(30f, minimum - 10f));
+        leftAxis.setAxisMaximum(Math.min(230f, Math.max(maximum + 10f, minimum + 20f)));
+        chart.notifyDataSetChanged();
         chart.invalidate();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshHandler.removeCallbacks(refreshRunnable);
+        refreshHandler.post(refreshRunnable);
+    }
+
+    @Override
+    protected void onPause() {
+        refreshHandler.removeCallbacks(refreshRunnable);
+        super.onPause();
     }
 }

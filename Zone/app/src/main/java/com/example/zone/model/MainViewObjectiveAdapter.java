@@ -22,23 +22,34 @@ public class MainViewObjectiveAdapter extends ArrayAdapter<Objective> {
     @Override
     @NonNull
     public View getView(int position, View convertView, ViewGroup parent) {
-
+        ViewHolder holder;
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext())
-                    .inflate(R.layout.subject_row, parent, false);
+                    .inflate(R.layout.daily_objective_row, parent, false);
+            holder = new ViewHolder(convertView);
+            convertView.setTag(holder);
+        } else {
+            holder = (ViewHolder) convertView.getTag();
         }
 
         Objective objective = getItem(position);
-
-        TextView objectiveText = convertView.findViewById(R.id.subjectName);
-
         if (objective != null) {
-
-            String display = objective.getEventName();
-
-            objectiveText.setText(display);
+            holder.title.setText(objective.getEventName());
+            String time = objective.getCompletionTime().trim();
+            holder.details.setText(time.isEmpty()
+                    ? objective.getTaskType()
+                    : objective.getTaskType() + " • " + time + " min");
         }
-
         return convertView;
+    }
+
+    private static final class ViewHolder {
+        final TextView title;
+        final TextView details;
+
+        ViewHolder(View view) {
+            title = view.findViewById(R.id.dailyObjectiveTitle);
+            details = view.findViewById(R.id.dailyObjectiveDetails);
+        }
     }
 }

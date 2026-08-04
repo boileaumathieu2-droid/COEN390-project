@@ -21,17 +21,15 @@ public class LoginView extends AppCompatActivity {
         Session.init(this);
         VirtualDatabase db = new VirtualDatabase();
 
-        // If Android recreated the launcher Activity after the app was minimized,
-        // restore the existing authenticated session instead of showing login again.
-//        if (Session.getUsername() != null && Session.getUserID() != -1) {
-//            Intent intent = new Intent(this, MainView.class);
-//            startActivity(intent);
-//            finish();
-//            return;
-//        }
         if(db.getCurrentUserId() != null) {
+            String email = db.getCurrentUserEmail();
+            if (email != null) {
+                ensureLocalSession(email);
+            }
             Intent intent = new Intent(this, MainView.class);
             startActivity(intent);
+            finish();
+            return;
         }
 
         setContentView(R.layout.login_page);
@@ -48,19 +46,11 @@ public class LoginView extends AppCompatActivity {
                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
                     
                     // Initialize local session
-                    int localID = controller.getUserID(userStr);
-                    if (localID == -1) {
-                        // If user doesn't exist locally, create them so we have an ID
-                        Database sqliteDb = new Database(this);
-                        // We use a dummy hash because the real auth is in Firebase
-                        sqliteDb.addUser(userStr, "FIREBASE_AUTHED");
-                        localID = sqliteDb.getUserID(userStr);
-                    }
-                    Session.setUserID(localID);
-                    Session.setUsername(userStr);
+                    ensureLocalSession(userStr);
 
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
+                    finish();
                 }
                 else {
                     Toast.makeText(this, "Incorect information, Try Again!", Toast.LENGTH_SHORT).show();
@@ -75,5 +65,16 @@ public class LoginView extends AppCompatActivity {
             Intent intent = new Intent(this, RegistrationView.class);
             startActivity(intent);
         });
+    }
+
+    private void ensureLocalSession(String username) {
+        Database localDatabase = new Database(this);
+        int localId = localDatabase.getUserID(username);
+        if (localId == -1) {
+            localDatabase.addUser(username, "FIREBASE_AUTHED");
+            localId = localDatabase.getUserID(username);
+        }
+        Session.setUserID(localId);
+        Session.setUsername(username);
     }
 }
