@@ -53,7 +53,7 @@ public class RegistrationView extends AppCompatActivity {
                     Session.setUserID(localID);
                     Session.setUsername(Username);
 
-                    Intent intent = new Intent(this, MainView.class);
+                    Intent intent = new Intent(this, MainContainerActivity.class);
                     startActivity(intent);
                 } else {
                     Toast.makeText(this, "Account not created, Invalid registration information", Toast.LENGTH_SHORT).show();

@@ -1,16 +1,22 @@
 package com.example.zone.view;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.example.zone.R;
-import com.example.zone.model.StudySessionModel;
-import com.example.zone.model.VirtualDatabase;
+import com.example.zone.controller.AnalyticsController;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -21,93 +27,81 @@ import com.github.mikephil.charting.data.LineDataSet;
 import java.util.ArrayList;
 import java.util.List;
 
+public class AnalyticsView extends Fragment {
 
-public class AnalyticsView extends AppCompatActivity {
-
-    private Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private Runnable refreshRunnable;
+    private AnalyticsController controller;
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.analytics_page);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.analytics_page, container, false);
 
-        Button mainMenuButton = findViewById(R.id.mainMenuButton);
-        mainMenuButton.setOnClickListener(v -> finish());
+        controller = new AnalyticsController();
 
-        // Button for previous sessions
-        Button previousSessionsButton = findViewById(R.id.previousSessionsButton);
-        previousSessionsButton.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, SessionHistoryView.class);
-            startActivity(intent);
-        });
+        Button mainMenuButton = view.findViewById(R.id.mainMenuButton);
+        if (mainMenuButton != null) mainMenuButton.setVisibility(View.GONE);
 
-        Button recommendedStudyTimesButton = findViewById(R.id.recommendedStudyTimesButton);
-        recommendedStudyTimesButton.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, RecommendedStudyTimesView.class);
-            startActivity(intent);
-        });
+        Button previousSessionsButton = view.findViewById(R.id.previousSessionsButton);
+        if (previousSessionsButton != null) {
+            previousSessionsButton.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), SessionHistoryView.class));
+            });
+        }
 
-        setupAnalytics();
+        Button recommendedStudyTimesButton = view.findViewById(R.id.recommendedStudyTimesButton);
+        if (recommendedStudyTimesButton != null) {
+            recommendedStudyTimesButton.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), RecommendedStudyTimesView.class));
+            });
+        }
+
+        setupAnalytics(view);
         
         refreshRunnable = new Runnable() {
             @Override
             public void run() {
-                updateLiveHeartRate();
-                refreshHandler.postDelayed(this, 1000); // Update every second
+                updateLiveHeartRate(view);
+                refreshHandler.postDelayed(this, 1000);
             }
         };
+        return view;
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         refreshHandler.post(refreshRunnable);
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         refreshHandler.removeCallbacks(refreshRunnable);
     }
 
-    private void updateLiveHeartRate() {
-        TextView heartRateValue = findViewById(R.id.heartRateValue);
-        StudySessionModel liveSession = StudySessionModel.getInstance();
-        
-        if (liveSession != null) {
-            int currentHR = liveSession.getHeartRateReading();
+    private void updateLiveHeartRate(View view) {
+        if (view == null) return;
+        TextView heartRateValue = view.findViewById(R.id.heartRateValue);
+        if (heartRateValue != null) {
+            int currentHR = controller.getCurrentHeartRate();
             heartRateValue.setText(currentHR > 0 ? String.valueOf(currentHR) : "N/A");
         }
     }
 
-    private void setupAnalytics() {
-        LineChart chart = findViewById(R.id.heartRateChart);
-        StudySessionModel liveSession = StudySessionModel.getInstance();
+    private void setupAnalytics(View view) {
+        LineChart chart = view.findViewById(R.id.heartRateChart);
+        if (chart == null) return;
 
-        if (liveSession != null && liveSession.isActive()) {
-            displayGraph(chart, liveSession.getHeartRateData());
-        } else {
-            VirtualDatabase vdb = new VirtualDatabase();
-            vdb.getStudySessions(sessions -> {
-                if (!sessions.isEmpty()) {
-                    // Sort to find the last session
-                    sessions.sort((s1, s2) -> {
-                        if (s1.getStartTime() == null || s2.getStartTime() == null) return 0;
-                        return s2.getStartTime().compareTo(s1.getStartTime());
-                    });
-                    StudySessionModel lastSession = sessions.get(0);
-                    displayGraph(chart, lastSession.getHeartRateData());
-                } else {
-                    displayGraph(chart, new int[0]);
-                }
-            });
-        }
-        updateLiveHeartRate();
+        controller.getHeartRateData(data -> displayGraph(chart, data));
+        updateLiveHeartRate(view);
     }
 
     private void displayGraph(LineChart chart, int[] heartRateData) {
+        if (chart == null) return;
         if (heartRateData == null || heartRateData.length == 0) {
+            chart.clear();
             chart.setNoDataText("No heart rate data available for this session.");
             chart.invalidate();
             return;
@@ -132,7 +126,6 @@ public class AnalyticsView extends AppCompatActivity {
         LineData lineData = new LineData(dataSet);
         chart.setData(lineData);
 
-        // Chart styling
         chart.getDescription().setEnabled(false);
         chart.getLegend().setEnabled(true);
         chart.setTouchEnabled(true);

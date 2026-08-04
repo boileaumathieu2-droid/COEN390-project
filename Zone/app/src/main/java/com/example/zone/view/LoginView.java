@@ -30,7 +30,7 @@ public class LoginView extends AppCompatActivity {
 //            return;
 //        }
         if(db.getCurrentUserId() != null) {
-            Intent intent = new Intent(this, MainView.class);
+            Intent intent = new Intent(this, MainContainerActivity.class);
             startActivity(intent);
         }
 
@@ -59,7 +59,7 @@ public class LoginView extends AppCompatActivity {
                     Session.setUserID(localID);
                     Session.setUsername(userStr);
 
-                    Intent intent = new Intent(this, MainView.class);
+                    Intent intent = new Intent(this, MainContainerActivity.class);
                     startActivity(intent);
                 }
                 else {

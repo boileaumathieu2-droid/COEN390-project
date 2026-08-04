@@ -1,19 +1,19 @@
 package com.example.zone.controller;
 
+import android.content.Context;
+import android.content.Intent;
 import com.example.zone.view.TimerSettingsView;
-import com.example.zone.view.MainView;
 
 public class MainController {
 
-    private final MainView mainView;
+    private final Context context;
 
-    public MainController(MainView mainView) {
-        this.mainView = mainView;
+    public MainController(Context context) {
+        this.context = context;
     }
 
     public void onTimerSettingsClicked() {
-        // TODO: decision logic could go here later
-        // this is useless for now
-        mainView.openTimerSettings();
+        Intent intent = new Intent(context, TimerSettingsView.class);
+        context.startActivity(intent);
     }
 }

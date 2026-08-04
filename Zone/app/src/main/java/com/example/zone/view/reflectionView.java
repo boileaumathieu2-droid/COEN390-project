@@ -40,7 +40,7 @@ public class reflectionView extends AppCompatActivity {
          objectiveSelected = true;
       });
       extendSessionButton.setOnClickListener(v -> {
-         Intent intent = new Intent(this, MainView.class);
+         Intent intent = new Intent(this, MainContainerActivity.class);
          intent.putExtra("Countdown", true);
          startActivity(intent);
       });
@@ -60,7 +60,7 @@ public class reflectionView extends AppCompatActivity {
             showPopup();
             return;
          }
-         Intent intent = new Intent(this, MainView.class);
+         Intent intent = new Intent(this, MainContainerActivity.class);
          intent.putExtra("objective", objective);
          intent.putExtra("rating", rating);
          intent.putExtra("complete", true);
