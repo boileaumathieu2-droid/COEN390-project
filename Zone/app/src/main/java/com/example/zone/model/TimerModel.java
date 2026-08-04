@@ -1,188 +1,332 @@
 package com.example.zone.model;
 
-public class TimerModel {
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-    private static TimerModel instance; // create a single instance
-    private int studyDuration;   // total duration in seconds defined by user
-    private int breakDuration;    // duration of break in seconds defined by user
-    private boolean isRunning;  // true if the timer is currently running
-    private boolean breakTime;    // true if there is a break after the study session
-    private boolean breakEnabled; // keeps track of the break switch
-    private int remainingTime;  // remaining time in seconds, used for the display
-    private StudySessionModel session;  // use to get the live session
-    // functions:
+/**
+ * Application-wide study timer.
+ *
+ * Activities only display this model. The clock belongs to this singleton, so
+ * opening Analytics, Settings, or another app does not pause the countdown.
+ */
+public final class TimerModel {
+
+    private static final int HEART_RATE_SAMPLE_SECONDS = 5;
+    private static volatile TimerModel instance;
+
+    private final ScheduledExecutorService clock =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "ZoneStudyTimer");
+                thread.setDaemon(true);
+                return thread;
+            });
+
+    private int studyDuration = 1500;
+    private int breakDuration = 300;
+    private int remainingTime = 1500;
+    private boolean running;
+    private boolean breakTime;
+    private boolean breakEnabled;
+    private int sampleSeconds;
+    private long lastClockUpdate;
+
+    private StudySessionModel session;
+    private StudySessionModel lastCompletedSession;
+    private boolean reflectionPending;
+    private ScheduledFuture<?> clockTask;
 
     private TimerModel() {
-        // Default values: 25 minutes (1500 seconds), 5 minute break (300 seconds)
-        this.studyDuration = 1500;
-        this.remainingTime = 1500;
-        this.breakDuration = 300;
-        this.breakEnabled = false;
-        this.breakTime = false;
     }
 
     public static TimerModel getInstance() {
         if (instance == null) {
-            instance = new TimerModel(); // created once, the very first time
+            synchronized (TimerModel.class) {
+                if (instance == null) {
+                    instance = new TimerModel();
+                }
+            }
         }
-        return instance; // every other time, returns the SAME object
+        return instance;
     }
 
-    // setters and getters
-    public void setStudyDuration(int duration) {
+    public synchronized void setStudyDuration(int duration) {
         studyDuration = Math.max(1, duration);
-        if (!isRunning) {
+        if (!running && !breakTime) {
             remainingTime = studyDuration;
         }
     }
 
-    public void setBreakDuration(int duration) {
+    public synchronized void setBreakDuration(int duration) {
         breakDuration = Math.max(1, duration);
+        if (!running && breakTime) {
+            remainingTime = breakDuration;
+        }
     }
 
-    public void setBreakEnabled(boolean enabled) {
+    public synchronized void setBreakEnabled(boolean enabled) {
         breakEnabled = enabled;
     }
 
-    public boolean isBreakEnabled() {
+    public synchronized boolean isBreakEnabled() {
         return breakEnabled;
     }
 
-    public boolean tick() {
-        if (!isRunning) {
+    /** Kept for deterministic unit tests. The app itself uses the clock task. */
+    public synchronized boolean tick() {
+        if (!running) {
             return false;
         }
+        advanceTimer(1);
+        lastClockUpdate = System.currentTimeMillis();
+        return running;
+    }
 
-        if (remainingTime > 0) {
-            remainingTime--;
+    private synchronized void updateFromClock() {
+        if (!running) {
+            return;
         }
 
-        if (remainingTime > 0) {
-            return true;
+        long now = System.currentTimeMillis();
+        int elapsedSeconds = (int) ((now - lastClockUpdate) / 1000L);
+        if (elapsedSeconds < 1) {
+            return;
         }
 
-        finishCurrentPeriod();
-        return false;
+        lastClockUpdate += elapsedSeconds * 1000L;
+        advanceTimer(elapsedSeconds);
+    }
+
+    private void advanceTimer(int elapsedSeconds) {
+        if (!running || elapsedSeconds <= 0) {
+            return;
+        }
+
+        int used = Math.min(elapsedSeconds, remainingTime);
+        remainingTime -= used;
+        sampleSeconds += used;
+
+        while (sampleSeconds >= HEART_RATE_SAMPLE_SECONDS) {
+            if (session != null && !breakTime) {
+                session.addHeartRateReading();
+            }
+            sampleSeconds -= HEART_RATE_SAMPLE_SECONDS;
+        }
+
+        if (remainingTime <= 0) {
+            finishCurrentPeriod();
+        }
     }
 
     private void finishCurrentPeriod() {
-        isRunning = false;
-        if (!breakTime && session != null) {
-            session.endSession(studyDuration);
+        running = false;
+        cancelClock();
+        lastClockUpdate = 0L;
+
+        if (!breakTime) {
+            finishStudySession(studyDuration);
         }
 
         if (!breakTime && breakEnabled) {
             switchToBreak();
         } else {
-            // If it was already a break, or no break is enabled, go back to study state.
             breakTime = false;
             remainingTime = studyDuration;
-            session = null;
         }
+    }
+
+    private void finishStudySession(int elapsedSeconds) {
+        if (session == null) {
+            return;
+        }
+
+        session.addHeartRateReading();
+        session.completeSession();
+        session.setDuration(Math.max(0, elapsedSeconds));
+        lastCompletedSession = session;
+        reflectionPending = true;
+        session = null;
     }
 
     private void switchToBreak() {
         breakTime = true;
         remainingTime = breakDuration;
+        sampleSeconds = 0;
     }
 
-    public void completeSession() {
-        // finalize study session
-        if (!breakTime && session != null) {
-            session.endSession(studyDuration - remainingTime);
+    public synchronized void completeSession() {
+        updateFromClock();
+        running = false;
+        cancelClock();
+        lastClockUpdate = 0L;
+
+        if (!breakTime) {
+            finishStudySession(Math.max(0, studyDuration - remainingTime));
         }
 
-
-        isRunning = false;
         if (!breakTime && breakEnabled) {
             switchToBreak();
         } else {
-            // Already in break or no break enabled: reset to study
             breakTime = false;
             remainingTime = studyDuration;
         }
     }
 
-    public boolean isRunning() {
-        return isRunning;
+    public synchronized boolean isRunning() {
+        updateFromClock();
+        return running;
     }
 
-    public int getRemainingTime() {
+    public synchronized boolean isStudySessionActive() {
+        updateFromClock();
+        return running && !breakTime && session != null;
+    }
+
+    public synchronized int getRemainingTime() {
+        updateFromClock();
         return remainingTime;
     }
 
-    // interract with start/stop
-
-    public void startTimer() { // take the objective to build the studySessionModel
-        if (!isRunning) {
-            int currentDuration = breakTime ? breakDuration : studyDuration;
-            if (remainingTime <= 0 || remainingTime > currentDuration) {
-                remainingTime = currentDuration;
-            }
-            isRunning = true;
-
-            // create StudySessionModel object if study session
-            if(!breakTime){
-                // The BLE manager writes into this shared session instance.
-                // Creating a separate object here used to discard every sensor
-                // reading received from the connectivity page.
-                session = StudySessionModel.getInstance();
-                session.startSession(); // creates and starts the session
-            }
+    public synchronized void startTimer() {
+        if (running) {
+            return;
         }
+
+        int duration = breakTime ? breakDuration : studyDuration;
+        if (remainingTime <= 0 || remainingTime > duration) {
+            remainingTime = duration;
+        }
+
+        if (!breakTime) {
+            session = new StudySessionModel();
+            session.startSession();
+        }
+
+        running = true;
+        sampleSeconds = 0;
+        lastClockUpdate = System.currentTimeMillis();
+        startClock();
     }
 
-    public void pauseTimer() {
-        isRunning = false;
-    }
-
-    public void resumeTimer() {
-        if (remainingTime > 0) {
-            isRunning = true;
-        }
-    }
-
-    public void stopAndReset() {
-        isRunning = false;
-        if (session != null) {
-            session.endSession(Math.max(0, studyDuration - remainingTime));
-        }
+    /** Starts a fresh study period when the user chooses Extend in reflection. */
+    public synchronized void startNewStudySession() {
+        running = false;
+        cancelClock();
         breakTime = false;
         remainingTime = studyDuration;
         session = null;
+        startTimer();
     }
 
-    public void resetTimer() {
-        // set the correct amount of time depending on the state
-        if(breakTime){
-            remainingTime = breakDuration;
+    public synchronized void pauseTimer() {
+        updateFromClock();
+        running = false;
+        cancelClock();
+        lastClockUpdate = 0L;
+        if (session != null && !breakTime) {
+            session.setStatus(StudySessionModel.Status.INACTIVE);
         }
-        else{
-            remainingTime = studyDuration;
+    }
+
+    public synchronized void resumeTimer() {
+        if (running || remainingTime <= 0) {
+            return;
+        }
+        running = true;
+        lastClockUpdate = System.currentTimeMillis();
+        if (session != null && !breakTime) {
+            session.setStatus(StudySessionModel.Status.ACTIVE);
+        }
+        startClock();
+    }
+
+    /** Reset discards an unfinished session and does not add it to History. */
+    public synchronized void stopAndReset() {
+        updateFromClock();
+        running = false;
+        cancelClock();
+        lastClockUpdate = 0L;
+        sampleSeconds = 0;
+        if (session != null) {
+            session.setStatus(StudySessionModel.Status.INACTIVE);
+        }
+        session = null;
+        breakTime = false;
+        remainingTime = studyDuration;
+    }
+
+    public synchronized void resetTimer() {
+        remainingTime = breakTime ? breakDuration : studyDuration;
+    }
+
+    private void startClock() {
+        cancelClock();
+        clockTask = clock.scheduleAtFixedRate(
+                this::updateFromClock,
+                1,
+                1,
+                TimeUnit.SECONDS
+        );
+    }
+
+    private void cancelClock() {
+        if (clockTask != null) {
+            clockTask.cancel(false);
+            clockTask = null;
         }
     }
 
-    // variables useful to display the remaining time
-    public int getMinutes(){
-        return (remainingTime / 60);
+    public synchronized boolean claimPendingReflection() {
+        if (!reflectionPending) {
+            return false;
+        }
+        reflectionPending = false;
+        return true;
     }
 
-    public int getSeconds(){
-        return (remainingTime % 60);
+    public synchronized StudySessionModel applyReflection(
+            boolean objectiveMet,
+            int productivityRating
+    ) {
+        if (lastCompletedSession == null) {
+            return null;
+        }
+        lastCompletedSession.setObjectiveMet(objectiveMet);
+        lastCompletedSession.setProductivityRating(productivityRating);
+        return lastCompletedSession;
     }
 
-    public boolean isBreakTime(){
+    public synchronized void discardLastCompletedSession() {
+        lastCompletedSession = null;
+        reflectionPending = false;
+    }
+
+    public synchronized int getMinutes() {
+        return getRemainingTime() / 60;
+    }
+
+    public synchronized int getSeconds() {
+        return getRemainingTime() % 60;
+    }
+
+    public synchronized boolean isBreakTime() {
         return breakTime;
     }
 
-    public int getStudyDuration(){
+    public synchronized int getStudyDuration() {
         return studyDuration;
     }
-    public int getBreakDuration(){
+
+    public synchronized int getBreakDuration() {
         return breakDuration;
     }
-    public StudySessionModel getLiveSession(){
+
+    public synchronized StudySessionModel getLiveSession() {
         return session;
     }
 
+    public synchronized StudySessionModel getLastCompletedSession() {
+        return lastCompletedSession;
+    }
 }

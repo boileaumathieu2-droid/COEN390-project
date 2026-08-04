@@ -1,8 +1,5 @@
 package com.example.zone.view;
 
-import static com.example.zone.model.BlockedAppsStore.clearBlockedPackages;
-import static com.example.zone.model.BlockedAppsStore.getPermission;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -12,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -37,9 +35,6 @@ public class BlockedAppsView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_blocked_apps);
-        getPermission(this);
-
-
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.manage_blocked_apps);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -47,11 +42,29 @@ public class BlockedAppsView extends AppCompatActivity {
 
         ListView appList = findViewById(R.id.availableAppsList);
         TextView emptyText = findViewById(R.id.emptyAppsText);
+        Button permissionButton = findViewById(R.id.appBlockingPermissionButton);
+        permissionButton.setOnClickListener(view ->
+                BlockedAppsStore.requestPermissionIfNeeded(this));
         adapter = new AppsAdapter();
         appList.setAdapter(adapter);
         appList.setEmptyView(emptyText);
         loadLaunchableApps();
+        updatePermissionButton(permissionButton);
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Button permissionButton = findViewById(R.id.appBlockingPermissionButton);
+        updatePermissionButton(permissionButton);
+    }
+
+    private void updatePermissionButton(Button button) {
+        boolean enabled = BlockedAppsStore.isAccessibilityEnabled(this);
+        button.setText(enabled
+                ? R.string.app_blocking_access_on
+                : R.string.app_blocking_access_off);
+        button.setEnabled(!enabled);
     }
 
     @Override
@@ -122,9 +135,16 @@ public class BlockedAppsView extends AppCompatActivity {
             holder.toggle.setOnCheckedChangeListener(null);
             holder.toggle.setChecked(BlockedAppsStore.isBlocked(
                     BlockedAppsView.this, entry.packageName));
-            holder.toggle.setOnCheckedChangeListener((button, checked) ->
-                    BlockedAppsStore.setBlocked(
-                            BlockedAppsView.this, entry.packageName, checked));
+            holder.toggle.setOnCheckedChangeListener((button, checked) -> {
+                BlockedAppsStore.setBlocked(
+                        BlockedAppsView.this,
+                        entry.packageName,
+                        checked
+                );
+                if (checked) {
+                    BlockedAppsStore.requestPermissionIfNeeded(BlockedAppsView.this);
+                }
+            });
             SwitchMaterial rowToggle = holder.toggle;
             convertView.setOnClickListener(view -> rowToggle.performClick());
             return convertView;

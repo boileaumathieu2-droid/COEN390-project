@@ -13,12 +13,14 @@ import java.util.List;
 public final class HeartRateStabilizer {
     private static final int MIN_VALID_BPM = 35;
     private static final int MAX_VALID_BPM = 220;
-    private static final int WINDOW_SIZE = 5;
-    private static final int REQUIRED_SAMPLES = 3;
-    private static final int MAX_CHANGE_PER_UPDATE = 5;
+    private static final int WINDOW_SIZE = 7;
+    private static final int REQUIRED_SAMPLES = 4;
+    private static final int MAX_CHANGE_PER_UPDATE = 3;
+    private static final long MIN_UPDATE_INTERVAL_MS = 500L;
 
     private final List<Integer> recentBpm = new ArrayList<>();
     private Integer stableBpm;
+    private long lastStableUpdate;
 
     public synchronized HeartRateReading filter(HeartRateReading reading) {
         if (reading == null) {
@@ -53,7 +55,16 @@ public final class HeartRateStabilizer {
 
         if (stableBpm == null) {
             stableBpm = median;
+            lastStableUpdate = System.currentTimeMillis();
         } else {
+            long now = System.currentTimeMillis();
+            if (now - lastStableUpdate < MIN_UPDATE_INTERVAL_MS) {
+                return new HeartRateReading(
+                        reading.getRawValue(),
+                        reading.getSignalRange(),
+                        stableBpm,
+                        reading.getStatus());
+            }
             int smoothed = Math.round(stableBpm * 0.70f + median * 0.30f);
             int difference = smoothed - stableBpm;
             if (difference > MAX_CHANGE_PER_UPDATE) {
@@ -62,6 +73,7 @@ public final class HeartRateStabilizer {
                 smoothed = stableBpm - MAX_CHANGE_PER_UPDATE;
             }
             stableBpm = smoothed;
+            lastStableUpdate = now;
         }
 
         return new HeartRateReading(
@@ -74,5 +86,6 @@ public final class HeartRateStabilizer {
     public synchronized void reset() {
         recentBpm.clear();
         stableBpm = null;
+        lastStableUpdate = 0L;
     }
 }

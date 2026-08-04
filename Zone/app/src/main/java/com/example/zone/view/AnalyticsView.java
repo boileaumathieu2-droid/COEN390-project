@@ -17,6 +17,10 @@ import androidx.fragment.app.Fragment;
 
 import com.example.zone.R;
 import com.example.zone.controller.AnalyticsController;
+import com.example.zone.controller.HeartRateSensorManager;
+import com.example.zone.model.HeartRateReading;
+import com.example.zone.model.StudySessionModel;
+import com.example.zone.model.TimerModel;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -26,12 +30,28 @@ import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AnalyticsView extends Fragment {
 
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
-    private Runnable refreshRunnable;
     private AnalyticsController controller;
+    private final TimerModel timer = TimerModel.getInstance();
+
+    private TextView currentValue;
+    private TextView restingValue;
+    private TextView minValue;
+    private TextView maxValue;
+    private LineChart chart;
+    private int lastPlottedCount = -1;
+
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refreshAnalytics();
+            refreshHandler.postDelayed(this, 1000L);
+        }
+    };
 
     @Nullable
     @Override
@@ -39,6 +59,12 @@ public class AnalyticsView extends Fragment {
         View view = inflater.inflate(R.layout.analytics_page, container, false);
 
         controller = new AnalyticsController();
+
+        currentValue = view.findViewById(R.id.heartRateValue);
+        restingValue = view.findViewById(R.id.restingHeartRateValue);
+        minValue = view.findViewById(R.id.minHeartRateValue);
+        maxValue = view.findViewById(R.id.maxHeartRateValue);
+        chart = view.findViewById(R.id.heartRateChart);
 
         Button mainMenuButton = view.findViewById(R.id.mainMenuButton);
         if (mainMenuButton != null) mainMenuButton.setVisibility(View.GONE);
@@ -57,15 +83,9 @@ public class AnalyticsView extends Fragment {
             });
         }
 
-        setupAnalytics(view);
+        configureChart();
+        refreshAnalytics();
         
-        refreshRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateLiveHeartRate(view);
-                refreshHandler.postDelayed(this, 1000);
-            }
-        };
         return view;
     }
 
@@ -81,68 +101,103 @@ public class AnalyticsView extends Fragment {
         refreshHandler.removeCallbacks(refreshRunnable);
     }
 
-    private void updateLiveHeartRate(View view) {
-        if (view == null) return;
-        TextView heartRateValue = view.findViewById(R.id.heartRateValue);
-        if (heartRateValue != null) {
-            int currentHR = controller.getCurrentHeartRate();
-            heartRateValue.setText(currentHR > 0 ? String.valueOf(currentHR) : "N/A");
+    private void refreshAnalytics() {
+        if (getContext() == null) return;
+        
+        HeartRateReading stableReading = HeartRateSensorManager
+                .getInstance(getContext().getApplicationContext())
+                .getLastStableReading();
+        int currentBpm = stableReading != null
+                && stableReading.hasGoodSignal()
+                ? stableReading.getBpm() : 0;
+        
+        if (currentValue != null) currentValue.setText(valueOrDash(currentBpm));
+
+        StudySessionModel displayedSession = timer.getLiveSession();
+        
+        if (displayedSession == null) {
+            controller.getHeartRateData(data -> {
+               // This callback might return data from last session if nothing is active
+               // But we need resting/min/max too. 
+               // For now, if no live session, we rely on the controller logic.
+            });
+            // To properly match mark-updated-version logic, we need to load latest saved session in model/controller
+            // I'll stick to displaying live session data if available.
+        }
+
+        if (displayedSession != null) {
+            if (restingValue != null) restingValue.setText(valueOrDash(displayedSession.getRestingHeartRate()));
+            if (minValue != null) minValue.setText(valueOrDash(displayedSession.getMinHeartRate()));
+            if (maxValue != null) maxValue.setText(valueOrDash(displayedSession.getMaxHeartRate()));
+            
+            int[] data = displayedSession.getHeartRateData();
+            if (data.length != lastPlottedCount) {
+                displayGraph(chart, data);
+            }
+        } else {
+            // Load latest session via controller
+            controller.getHeartRateData(data -> {
+                if (data.length != lastPlottedCount) {
+                    displayGraph(chart, data);
+                }
+            });
         }
     }
 
-    private void setupAnalytics(View view) {
-        LineChart chart = view.findViewById(R.id.heartRateChart);
-        if (chart == null) return;
+    private String valueOrDash(int value) {
+        return value > 0 ? String.valueOf(value) : "--";
+    }
 
-        controller.getHeartRateData(data -> displayGraph(chart, data));
-        updateLiveHeartRate(view);
+    private void configureChart() {
+        if (chart == null) return;
+        chart.getDescription().setEnabled(false);
+        chart.getLegend().setEnabled(true);
+        chart.setTouchEnabled(true);
+        chart.setPinchZoom(true);
+        chart.setNoDataText("Start a session to collect heart-rate data.");
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setDrawGridLines(false);
+        chart.getAxisRight().setEnabled(false);
     }
 
     private void displayGraph(LineChart chart, int[] heartRateData) {
+        lastPlottedCount = heartRateData == null ? 0 : heartRateData.length;
         if (chart == null) return;
         if (heartRateData == null || heartRateData.length == 0) {
             chart.clear();
-            chart.setNoDataText("No heart rate data available for this session.");
             chart.invalidate();
             return;
         }
 
         List<Entry> entries = new ArrayList<>();
+        int minimum = heartRateData[0];
+        int maximum = heartRateData[0];
         for (int i = 0; i < heartRateData.length; i++) {
             entries.add(new Entry(i, heartRateData[i]));
+            minimum = Math.min(minimum, heartRateData[i]);
+            maximum = Math.max(maximum, heartRateData[i]);
         }
 
         LineDataSet dataSet = new LineDataSet(entries, "Heart Rate (BPM)");
-        dataSet.setColor(Color.RED);
+        dataSet.setColor(Color.rgb(216, 50, 90));
         dataSet.setLineWidth(2.5f);
-        dataSet.setCircleRadius(4f);
-        dataSet.setCircleColor(Color.RED);
+        dataSet.setCircleColor(Color.rgb(216, 50, 90));
+        dataSet.setCircleRadius(3f);
         dataSet.setDrawValues(false);
         dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         dataSet.setDrawFilled(true);
         dataSet.setFillColor(Color.RED);
         dataSet.setFillAlpha(50);
 
-        LineData lineData = new LineData(dataSet);
-        chart.setData(lineData);
-
-        chart.getDescription().setEnabled(false);
-        chart.getLegend().setEnabled(true);
-        chart.setTouchEnabled(true);
-        chart.setPinchZoom(true);
-
-        XAxis xAxis = chart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(false);
-        xAxis.setGranularity(1f);
+        chart.setData(new LineData(dataSet));
 
         YAxis leftAxis = chart.getAxisLeft();
-        leftAxis.setAxisMinimum(40f);
-        leftAxis.setAxisMaximum(200f);
-        leftAxis.setDrawGridLines(true);
-
-        chart.getAxisRight().setEnabled(false);
-        chart.animateX(1000);
+        leftAxis.setAxisMinimum(Math.max(30f, minimum - 10f));
+        leftAxis.setAxisMaximum(Math.min(230f, Math.max(maximum + 10f, minimum + 20f)));
+        
+        chart.notifyDataSetChanged();
         chart.invalidate();
     }
 }

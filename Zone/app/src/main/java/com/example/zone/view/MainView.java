@@ -24,9 +24,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.zone.R;
+import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.controller.MainController;
 import com.example.zone.controller.NotificationController;
 import com.example.zone.controller.ObjectiveController;
+import com.example.zone.model.BlockedAppsStore;
 import com.example.zone.model.Database;
 import com.example.zone.model.MainViewObjectiveAdapter;
 import com.example.zone.model.Objective;
@@ -42,28 +44,58 @@ import java.util.Date;
 import java.util.Locale;
 
 public class MainView extends Fragment {
+    private static final long TIMER_UI_DELAY_MS = 500L;
+    private static final long TIP_DELAY_MS = 45_000L;
+
     private SharedPreferences prefs;
     private StudyTipsModel tipModel;
     private MainController mainController;
     private ObjectiveController objectiveController;
-    private MainViewObjectiveAdapter adapter;
+    private MainViewObjectiveAdapter objectiveAdapter;
+    private ArrayList<Objective> dailyObjectives;
     private String today;
-    VirtualDatabase db = new VirtualDatabase();
+    private VirtualDatabase db = new VirtualDatabase();
+
+    private final TimerModel timer = TimerModel.getInstance();
+    private final Handler timerUiHandler = new Handler(Looper.getMainLooper());
+    private final Handler tipHandler = new Handler(Looper.getMainLooper());
 
     private TextView timerDisplay;
+    private TextView timerTitle;
     private TextView tipText;
-    private Handler handler = new Handler(Looper.getMainLooper());
-    private final int delay = 45000;
-    private ListView dailyGoals;
     private TextView objectivesPrompt;
-    private ArrayList<Objective> dailyGoalsArray;
+    private ListView dailyGoals;
+    private Button startButton;
     private Button pauseButton;
     private Button resetButton;
-    private Button startButton;
     private Button completeButton;
-    private Handler timerHandler = new Handler(Looper.getMainLooper());
-    private Runnable timerRunnable;
-    private StudySessionModel StudySession = StudySessionModel.getInstance();
+    
+    private boolean reflectionScreenOpen;
+
+    private final Runnable timerUiUpdater = new Runnable() {
+        @Override
+        public void run() {
+            updateTimerUi();
+            openReflectionIfPending();
+            timerUiHandler.postDelayed(this, TIMER_UI_DELAY_MS);
+        }
+    };
+
+    private final Runnable tipUpdater = new Runnable() {
+        @Override
+        public void run() {
+            if (tipText != null && tipModel != null) {
+                tipText.animate()
+                        .alpha(0f)
+                        .setDuration(500)
+                        .withEndAction(() -> {
+                            tipText.setText(tipModel.randomTip());
+                            tipText.animate().alpha(1f).setDuration(500);
+                        });
+            }
+            tipHandler.postDelayed(this, TIP_DELAY_MS);
+        }
+    };
 
     @Nullable
     @Override
@@ -74,258 +106,265 @@ public class MainView extends Fragment {
         objectiveController = new ObjectiveController(new Database(requireContext()));
         mainController = new MainController(requireContext());
 
-        // define buttons
-        Button timerSettingsButton = view.findViewById(R.id.timerSettings);
+        bindViews(view);
+        setupDailyObjectives();
+        setupStudyTips();
+        setupButtons(view);
+
+        // Reconnect silently only when Bluetooth permission has already been granted.
+        HeartRateSensorManager.getInstance(requireContext().getApplicationContext())
+                .autoConnectToSavedBluno();
+
+        handleIntent(getActivity() != null ? getActivity().getIntent() : null);
+        updateTimerUi();
+        
+        return view;
+    }
+
+    private void bindViews(View view) {
+        timerDisplay = view.findViewById(R.id.timerDisplay);
+        timerTitle = view.findViewById(R.id.timerTitle);
+        tipText = view.findViewById(R.id.studyTipTextView);
+        objectivesPrompt = view.findViewById(R.id.goalPrompt);
+        dailyGoals = view.findViewById(R.id.dailyGoalsListView);
         startButton = view.findViewById(R.id.startStudySeshButton);
         pauseButton = view.findViewById(R.id.pauseTimer);
         resetButton = view.findViewById(R.id.resetTimer);
         completeButton = view.findViewById(R.id.completeTimer);
-        Button gradesButton = view.findViewById(R.id.gradesTrackerButton);
-        Button analyticsButton = view.findViewById(R.id.analyticsButton);
-        Button objectivesButton = view.findViewById(R.id.objectivesButton);
-        timerDisplay = view.findViewById(R.id.timerDisplay);
-        objectivesPrompt = view.findViewById(R.id.goalPrompt);
-        tipText = view.findViewById(R.id.studyTipTextView);
+    }
 
-        // Hide swiping-replaced buttons
-        analyticsButton.setVisibility(View.GONE);
-        objectivesButton.setVisibility(View.GONE);
-
-        dailyGoals = view.findViewById(R.id.dailyGoalsListView);
-        dailyGoalsArray = new ArrayList<>();
-        adapter = new MainViewObjectiveAdapter(requireContext(), dailyGoalsArray);
-        dailyGoals.setAdapter(adapter);
-
-        tipModel = new StudyTipsModel();
-        tipText.setText(tipModel.randomTip());
-        handler.postDelayed(tipUpdater, delay);
-
-        refresh();
-
+    private void setupDailyObjectives() {
+        dailyObjectives = new ArrayList<>();
+        objectiveAdapter = new MainViewObjectiveAdapter(requireContext(), dailyObjectives);
+        dailyGoals.setAdapter(objectiveAdapter);
+        dailyGoals.setOnItemClickListener((parent, view, position, id) ->
+                startActivity(new Intent(requireContext(), ObjectiveView.class)));
         objectivesPrompt.setOnClickListener(v -> {
             if (getActivity() instanceof MainContainerActivity) {
                 ((MainContainerActivity) getActivity()).switchToTab(0);
             }
         });
+    }
 
+    private void setupStudyTips() {
+        tipModel = new StudyTipsModel();
+        tipText.setText(tipModel.randomTip());
         tipText.setOnClickListener(v -> startActivity(new Intent(requireContext(), StudyTipsView.class)));
+    }
 
-        gradesButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), GradesTrackerView.class)));
+    private void setupButtons(View view) {
+        view.findViewById(R.id.timerSettings).setOnClickListener(v -> mainController.onTimerSettingsClicked());
+        
+        // Swiping replaces these buttons
+        view.findViewById(R.id.objectivesButton).setVisibility(View.GONE);
+        view.findViewById(R.id.analyticsButton).setVisibility(View.GONE);
+        view.findViewById(R.id.gradesTrackerButton).setOnClickListener(v -> 
+                startActivity(new Intent(requireContext(), GradesTrackerView.class)));
 
-        timerSettingsButton.setOnClickListener(v -> mainController.onTimerSettingsClicked());
-
-        startButton.setOnClickListener(v -> {
-            StudySession.startSession();
-            startCountdown();
-            TimerModel model = TimerModel.getInstance();
-            if (hasDndAccess()) manageDnD(true);
-            if (model.isBreakTime()) {
-                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
-            } else {
-                StudySession = model.getLiveSession();
-            }
-            showStatus();
-        });
-
-        pauseButton.setOnClickListener(v -> {
-            if (TimerModel.getInstance().isRunning()) {
-                if (hasDndAccess()) manageDnD(false);
-                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
-                TimerModel.getInstance().pauseTimer();
-            } else {
-                resumeCountdown();
-                StudySession.setStatus(StudySessionModel.Status.ACTIVE);
-                if (hasDndAccess()) manageDnD(true);
-            }
-            if (TimerModel.getInstance().isBreakTime()) {
-                StudySession.setStatus(StudySessionModel.Status.INACTIVE);
-            }
-            updateTimerUI(view);
-        });
-
-        resetButton.setOnClickListener(v -> {
-            TimerModel.getInstance().stopAndReset();
-            updateTimerUI(view);
-            StudySession.setStatus(StudySessionModel.Status.INACTIVE);
-            showStatus();
-            if (hasDndAccess()) manageDnD(false);
-        });
-
-        completeButton.setOnClickListener(v -> {
-            TimerModel model = TimerModel.getInstance();
-            model.completeSession();
-            StudySession.setStatus(StudySessionModel.Status.COMPLETE);
-            showStatus();
-            if (hasDndAccess()) manageDnD(false);
-            String message = model.isBreakEnabled() ? (model.isBreakTime() ? "Study Finished! Time for a Break" : "Break Finished! Time to Study.") : "Study Finished!";
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-            updateTimerUI(view);
-            startActivity(new Intent(requireContext(), reflectionView.class));
-        });
-
-        timerRunnable = new Runnable() {
-            @Override
-            public void run() {
-                TimerModel model = TimerModel.getInstance();
-                if (model.isRunning()) {
-                    boolean wasBreakTime = model.isBreakTime();
-                    boolean stillRunning = model.tick();
-                    updateTimerUI(view);
-                    if (stillRunning) {
-                        timerHandler.postDelayed(this, 1000);
-                    } else {
-                        if (!wasBreakTime) {
-                            startActivity(new Intent(requireContext(), reflectionView.class));
-                        } else {
-                            Toast.makeText(requireContext(), "Break Finished! Time to Study.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }
-            }
-        };
-
-        return view;
+        startButton.setOnClickListener(v -> startStudyOrBreak());
+        pauseButton.setOnClickListener(v -> pauseOrResume());
+        resetButton.setOnClickListener(v -> resetTimer());
+        completeButton.setOnClickListener(v -> completeCurrentPeriod());
     }
 
     private void handleIntent(Intent intent) {
         if (intent == null) return;
         if (intent.getBooleanExtra("Countdown", false)) {
-            startButton.performClick();
+            startStudyOrBreak();
             intent.removeExtra("Countdown");
         }
         if (intent.getBooleanExtra("complete", false)) {
             int rating = intent.getIntExtra("rating", -1);
             boolean objective = intent.getBooleanExtra("objective", false);
-            StudySession.setObjectiveMet(objective);
-            StudySession.setProductivityRating(rating);
+            StudySessionModel session = StudySessionModel.getInstance();
+            session.setObjectiveMet(objective);
+            session.setProductivityRating(rating);
             db.saveStudySession();
             intent.removeExtra("complete");
         }
     }
 
-    private void refresh() {
-        dailyGoalsArray.clear();
-        dailyGoalsArray.addAll(objectiveController.getObjectivesForDate(Session.getUserID(), today));
-        adapter.notifyDataSetChanged();
-        if (dailyGoalsArray.isEmpty()) {
-            dailyGoals.setVisibility(View.GONE);
-            objectivesPrompt.setVisibility(View.VISIBLE);
-            objectivesPrompt.setText("You have not set any goals for today. Swipe left to set goals.");
+    private void startStudyOrBreak() {
+        if (!timer.isBreakTime()) {
+            BlockedAppsStore.requestPermissionIfNeeded(requireActivity());
+        }
+        timer.startTimer();
+        if (!timer.isBreakTime() && hasDndAccess()) {
+            manageDnD(true);
+        }
+        updateTimerUi();
+    }
+
+    private void pauseOrResume() {
+        if (timer.isRunning()) {
+            timer.pauseTimer();
+            manageDnD(false);
         } else {
-            dailyGoals.setVisibility(View.VISIBLE);
-            objectivesPrompt.setVisibility(View.GONE);
+            timer.resumeTimer();
+            if (!timer.isBreakTime() && hasDndAccess()) {
+                manageDnD(true);
+            }
+        }
+        updateTimerUi();
+    }
+
+    private void resetTimer() {
+        timer.stopAndReset();
+        manageDnD(false);
+        updateTimerUi();
+        Toast.makeText(requireContext(), "Timer reset", Toast.LENGTH_SHORT).show();
+    }
+
+    private void completeCurrentPeriod() {
+        boolean completingBreak = timer.isBreakTime();
+        timer.completeSession();
+        manageDnD(false);
+        updateTimerUi();
+
+        if (completingBreak) {
+            Toast.makeText(requireContext(), "Break finished", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(requireContext(), "Study session complete", Toast.LENGTH_SHORT).show();
+            openReflectionIfPending();
         }
     }
 
-    protected void startCountdown() {
-        TimerModel model = TimerModel.getInstance();
-        if (!model.isRunning()) {
-            model.startTimer();
-            updateTimerUI(getView());
-            timerHandler.postDelayed(timerRunnable, 1000);
+    private void openReflectionIfPending() {
+        if (reflectionScreenOpen || !timer.claimPendingReflection()) {
+            return;
+        }
+        reflectionScreenOpen = true;
+        manageDnD(false);
+        startActivity(new Intent(requireContext(), reflectionView.class));
+    }
+
+    private void refreshDailyObjectives() {
+        if (dailyObjectives == null || objectiveController == null) {
+            return;
+        }
+        dailyObjectives.clear();
+        int userId = Session.getUserID();
+        if (userId >= 0) {
+            dailyObjectives.addAll(
+                    objectiveController.getObjectivesForDate(userId, today)
+            );
+        }
+        objectiveAdapter.notifyDataSetChanged();
+
+        boolean empty = dailyObjectives.isEmpty();
+        dailyGoals.setVisibility(empty ? View.GONE : View.VISIBLE);
+        objectivesPrompt.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (empty) {
+            objectivesPrompt.setText("You have not set any goals for today. Swipe left to set goals.");
+        }
+        resizeDailyGoalsList();
+    }
+
+    private void resizeDailyGoalsList() {
+        if (dailyObjectives.isEmpty()) {
+            return;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        int rowHeight = Math.round(72f * density);
+        ViewGroup.LayoutParams params = dailyGoals.getLayoutParams();
+        params.height = rowHeight * dailyObjectives.size()
+                + dailyGoals.getDividerHeight() * Math.max(0, dailyObjectives.size() - 1);
+        dailyGoals.setLayoutParams(params);
+    }
+
+    private void updateTimerUi() {
+        if (timerDisplay == null) return;
+        int minutes = timer.getMinutes();
+        int seconds = timer.getSeconds();
+        timerDisplay.setText(String.format(
+                Locale.getDefault(),
+                "%02d:%02d",
+                minutes,
+                seconds
+        ));
+
+        int fullDuration = timer.isBreakTime()
+                ? timer.getBreakDuration() : timer.getStudyDuration();
+        boolean activeOrPaused = timer.isRunning()
+                || (timer.getRemainingTime() > 0
+                && timer.getRemainingTime() < fullDuration);
+
+        if (timerTitle != null) timerTitle.setText(timer.isBreakTime() ? "Break Time" : "Study Time");
+        if (pauseButton != null) {
+            pauseButton.setText(timer.isRunning() ? "Pause" : "Resume");
+            int controlsVisibility = activeOrPaused ? View.VISIBLE : View.GONE;
+            pauseButton.setVisibility(controlsVisibility);
+            if (resetButton != null) resetButton.setVisibility(controlsVisibility);
+            if (completeButton != null) completeButton.setVisibility(controlsVisibility);
+        }
+        if (startButton != null) {
+            startButton.setVisibility(activeOrPaused ? View.GONE : View.VISIBLE);
+            startButton.setText(timer.isBreakTime()
+                ? "Start Break" : "Start Study Session");
+        }
+        
+        if (minutes == 0 && seconds == 0 && timer.isRunning()) {
+            // Timer just finished
+            if (hasDndAccess()) manageDnD(false);
+            NotificationController notificationHelper = new NotificationController(requireContext());
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                notificationHelper.sendNotifications("STUDY APP", "Session Finished!");
+            }
         }
     }
 
-    private void resumeCountdown() {
-        TimerModel model = TimerModel.getInstance();
-        if (!model.isRunning()) {
-            model.resumeTimer();
-            updateTimerUI(getView());
-            timerHandler.postDelayed(timerRunnable, 1000);
+    private boolean hasDndAccess() {
+        if (getContext() == null) return false;
+        SharedPreferences preferences = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        NotificationManager manager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        return preferences.getBoolean("Mute", false)
+                && manager != null
+                && manager.isNotificationPolicyAccessGranted();
+    }
+
+    private void manageDnD(boolean enable) {
+        if (getContext() == null) return;
+        NotificationManager manager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null || !manager.isNotificationPolicyAccessGranted()) {
+            return;
+        }
+        try {
+            manager.setInterruptionFilter(enable
+                    ? NotificationManager.INTERRUPTION_FILTER_NONE
+                    : NotificationManager.INTERRUPTION_FILTER_ALL);
+        } catch (SecurityException exception) {
+            Log.w("DND", "Could not change Do Not Disturb state", exception);
         }
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        reflectionScreenOpen = false;
+        today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                .format(new Date());
+        refreshDailyObjectives();
+        timerUiHandler.removeCallbacks(timerUiUpdater);
+        timerUiHandler.post(timerUiUpdater);
+        tipHandler.removeCallbacks(tipUpdater);
+        tipHandler.post(tipUpdater);
+        
         if (getActivity() != null) {
             handleIntent(getActivity().getIntent());
-        }
-        refresh();
-        updateTimerUI(getView());
-        if (TimerModel.getInstance().isRunning()) {
-            timerHandler.removeCallbacks(timerRunnable);
-            timerHandler.post(timerRunnable);
         }
     }
 
     @Override
     public void onPause() {
+        timerUiHandler.removeCallbacks(timerUiUpdater);
+        tipHandler.removeCallbacks(tipUpdater);
         super.onPause();
-        timerHandler.removeCallbacks(timerRunnable);
     }
-
-    private void updateTimerUI(View view) {
-        if (view == null) return;
-        TimerModel model = TimerModel.getInstance();
-        int mins = model.getMinutes();
-        int secs = model.getSeconds();
-        if (timerDisplay != null) {
-            timerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", mins, secs));
-        }
-
-        int currentDuration = model.isBreakTime() ? model.getBreakDuration() : model.getStudyDuration();
-        boolean isTimerActive = model.isRunning() || (model.getRemainingTime() < currentDuration && model.getRemainingTime() > 0);
-
-        int visibility = isTimerActive ? View.VISIBLE : View.GONE;
-        if (pauseButton != null) pauseButton.setVisibility(visibility);
-        if (resetButton != null) resetButton.setVisibility(visibility);
-        if (completeButton != null) completeButton.setVisibility(visibility);
-
-        TextView timerTitle = view.findViewById(R.id.timerTitle);
-        if (timerTitle != null) timerTitle.setText(model.isBreakTime() ? "Break Time" : "Time for Study");
-        if (pauseButton != null) pauseButton.setText(model.isRunning() ? "Pause" : "Resume");
-
-        if (mins == 0 && secs == 0) {
-            if (hasDndAccess()) manageDnD(true);
-            StudySession.setStatus(StudySessionModel.Status.INACTIVE);
-            NotificationController notificationHelper = new NotificationController(requireContext());
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                notificationHelper.sendNotifications("STUDY APP", "GET BACK TO WORK!");
-            }
-        }
-        if (startButton != null) startButton.setVisibility(isTimerActive ? View.GONE : View.VISIBLE);
-    }
-
-    public void manageDnD(boolean enable) {
-        NotificationManager notificationManager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager == null || !notificationManager.isNotificationPolicyAccessGranted()) return;
-
-        try {
-            notificationManager.setInterruptionFilter(enable ? NotificationManager.INTERRUPTION_FILTER_NONE : NotificationManager.INTERRUPTION_FILTER_ALL);
-        } catch (SecurityException exception) {
-            Log.w("DND", "Could not change Do Not Disturb state.", exception);
-        }
-    }
-
-    private boolean hasDndAccess() {
-        prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
-        boolean mute = prefs.getBoolean("Mute", false);
-        NotificationManager notificationManager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        return notificationManager != null && notificationManager.isNotificationPolicyAccessGranted() && mute;
-    }
-
-    public void showStatus() {
-        String msg = StudySession.getStatus().name();
-        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
-    }
-
-    private Runnable tipUpdater = new Runnable() {
-        @Override
-        public void run() {
-            if (tipText != null) {
-                tipText.animate().alpha(0f).setDuration(500).withEndAction(() -> {
-                    tipText.setText(tipModel.randomTip());
-                    tipText.animate().alpha(1f).setDuration(500);
-                });
-            }
-            handler.postDelayed(this, delay);
-        }
-    };
 
     @Override
     public void onDestroyView() {
+        timerUiHandler.removeCallbacksAndMessages(null);
+        tipHandler.removeCallbacksAndMessages(null);
         super.onDestroyView();
-        handler.removeCallbacks(tipUpdater);
     }
 }

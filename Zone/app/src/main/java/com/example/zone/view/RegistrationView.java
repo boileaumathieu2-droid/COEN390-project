@@ -10,8 +10,6 @@ import com.example.zone.R;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.VirtualDatabase;
-import com.google.firebase.Firebase;
-import com.google.firebase.auth.FirebaseAuth;
 
 
 public class RegistrationView extends AppCompatActivity {
@@ -55,6 +53,7 @@ public class RegistrationView extends AppCompatActivity {
 
                     Intent intent = new Intent(this, MainContainerActivity.class);
                     startActivity(intent);
+                    finish();
                 } else {
                     Toast.makeText(this, "Account not created, Invalid registration information", Toast.LENGTH_SHORT).show();
                 }
@@ -62,30 +61,10 @@ public class RegistrationView extends AppCompatActivity {
             });
         });
 
-
-//        register.setOnClickListener(v -> {
-//            String enteredUsername = username.getText().toString().trim();
-//            boolean success = controller.confirmRegistration(
-//                    enteredUsername,
-//                    password.getText().toString(),
-//                    confirm.getText().toString()
-//            );
-//            if (success) {
-//                Toast.makeText(this, "User created!", Toast.LENGTH_SHORT).show();
-//                Session.setUsername(enteredUsername);
-//                Session.setUserID(controller.getUserID(enteredUsername));
-//                Intent intent = new Intent(this, MainView.class);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-//                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//                startActivity(intent);
-//                finish();
-//            } else {
-//                Toast.makeText(this, "User not created!", Toast.LENGTH_SHORT).show();
-//            }
-//        });
         login.setOnClickListener(v -> {
             Intent intent = new Intent(this, LoginView.class);
             startActivity(intent);
+            finish();
         });
     }
 }

@@ -78,13 +78,13 @@ public class StudySessionModel {
         return instance;
     }
     // function that gets the current heart rate value from HeartRateMonitorView.java and HeartRateReading.java
-    public int getHeartRateReading() {
+    public synchronized int getHeartRateReading() {
         if (currentHeartRateReading != null && currentHeartRateReading.hasGoodSignal()) {
             return currentHeartRateReading.getBpm();
         }
         return 0;
     }
-    public void startSession() {
+    public synchronized void startSession() {
         // Start with clean analytics while retaining the most recent live sensor
         // packet so the first sample can be recorded immediately.
         endTime = null;
@@ -100,9 +100,12 @@ public class StudySessionModel {
         restingHeartRate = getHeartRateReading();
         addHeartRateReading();
     }
-    public void addHeartRateReading(){
+    public synchronized void addHeartRateReading(){
         int heartRate = getHeartRateReading();
         if (heartRate > 0) {
+            if (restingHeartRate <= 0) {
+                restingHeartRate = heartRate;
+            }
             heartRateDataList.add(heartRate);
 
             // initialize max/min if they are null
@@ -126,12 +129,12 @@ public class StudySessionModel {
     }
 
 
-    public void completeSession() {
+    public synchronized void completeSession() {
         completeSession(this.objectiveMet, this.productivityRating);
     }
 
     // Complete session logs all the session data
-    public void completeSession(Boolean objectiveMet, int productivityRating) { // save the duration and end time
+    public synchronized void completeSession(Boolean objectiveMet, int productivityRating) { // save the duration and end time
         endTime = LocalDateTime.now();
         if (startTime != null) {
             // save the session data
@@ -196,27 +199,27 @@ public class StudySessionModel {
         return productivityRating;
     }
 
-    public int[] getHeartRateData() {
+    public synchronized int[] getHeartRateData() {
         int[] data = new int[heartRateDataList.size()];
         for (int i = 0; i < heartRateDataList.size(); i++) {
             data[i] = heartRateDataList.get(i);
         }
         return data;
     }
-    public List<Integer> getHeartRateDataList() {
-        return heartRateDataList;
+    public synchronized List<Integer> getHeartRateDataList() {
+        return new ArrayList<>(heartRateDataList);
     }
 
-    public int getRestingHeartRate() {
+    public synchronized int getRestingHeartRate() {
         return restingHeartRate;
     }
-    public int getHeartRate() {
+    public synchronized int getHeartRate() {
         return averageHeartRate;
     }
-    public int getMaxHeartRate() {
+    public synchronized int getMaxHeartRate() {
         return maxHeartRate != null ? maxHeartRate.getHeartRate() : 0;
     }
-    public int getMinHeartRate() {
+    public synchronized int getMinHeartRate() {
         return minHeartRate != null ? minHeartRate.getHeartRate() : 0;
     }
     public int getMaxHeartRateIndex() {
@@ -226,7 +229,7 @@ public class StudySessionModel {
         return minHeartRate != null ? minHeartRate.getIndex() : -1;
     }
 
-    public void setCurrentHeartRateReading(HeartRateReading reading) {
+    public synchronized void setCurrentHeartRateReading(HeartRateReading reading) {
         this.currentHeartRateReading = reading;
     }
 
@@ -287,7 +290,7 @@ public class StudySessionModel {
             this.minHeartRate.setIndex(minHeartRateIndex);
         }
     }
-    public void addHistoricalHeartRate(int hr) {
+    public synchronized void addHistoricalHeartRate(int hr) {
         this.heartRateDataList.add(hr);
     }
 
@@ -317,7 +320,7 @@ public class StudySessionModel {
         }
         averageHeartRate = (int) (total / heartRateDataList.size());
     }
-    public Map<String, Object> toMap() {
+    public synchronized Map<String, Object> toMap() {
 
         Map<String, Object> session = new HashMap<>();
 
@@ -330,7 +333,7 @@ public class StudySessionModel {
         session.put("objectiveMet", objectiveMet);
         session.put("productivityRating", productivityRating);
 
-        session.put("heartRateData", heartRateDataList);
+        session.put("heartRateData", new ArrayList<>(heartRateDataList));
         session.put("averageHeartRate", averageHeartRate);
 
         session.put("maxHeartRate", maxHeartRate != null ?

@@ -50,10 +50,19 @@
     <string name="no_signal_instructions">No signal — place your finger firmly on the sensor</string>
     <string name="calculating_bpm">Signal found — keep still while BPM is calculated</string>
     <string name="live_reading">Live heart-rate reading</string>
+    <string name="ble_device_label_rssi">%1$s\nDevice ID: %2$s\nSignal: %3$d dBm</string>
+    <string name="bluno_reconnecting">Bluno disconnected. Reconnecting in %1$d seconds…</string>
+    <string name="bluno_reconnect_paused">Bluno reconnect paused. Open Connect Device to retry.</string>
 
     <string name="manage_blocked_apps">Manage blocked apps</string>
     <string name="manage_blocked_apps_subtitle">Choose which apps are unavailable during an active study session.</string>
     <string name="no_launchable_apps">No launchable apps were found.</string>
+    <string name="app_blocking_access_on">App blocking access is enabled</string>
+    <string name="app_blocking_access_off">Enable app blocking access</string>
+    <string name="app_blocking_permission_title">App blocking permission</string>
+    <string name="app_blocking_permission_message">Zone needs Accessibility access to stop the apps you selected during a study session. Open Android settings now?</string>
+    <string name="open_settings">Open settings</string>
+    <string name="not_now">Not now</string>
     <string name="blocked_app_package">Package: %1$s</string>
     <string name="selected_date_tasks">Tasks for %1$s</string>
     <string name="no_tasks_for_date">No tasks for this date. Tap New Objective to add one.</string>

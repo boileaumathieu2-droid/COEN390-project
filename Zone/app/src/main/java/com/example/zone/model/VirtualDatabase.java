@@ -69,6 +69,11 @@ public class VirtualDatabase {
         return auth.getCurrentUser().getUid();
     }
 
+    public String getCurrentUserEmail() {
+        return auth.getCurrentUser() == null
+                ? null : auth.getCurrentUser().getEmail();
+    }
+
     public void signOut() {
         auth.signOut();
     }
@@ -88,9 +93,10 @@ public class VirtualDatabase {
         if (uid == null) {
             return;
         }
-        db.collection("studySessions")
+        db.collection("users")
                 .document(uid)
-                .set(session)
+                .collection("studySessions")
+                .add(session.toMap())
                 .addOnSuccessListener(unused ->
                         System.out.println("Session saved"))
                 .addOnFailureListener(e ->
@@ -153,6 +159,12 @@ public class VirtualDatabase {
             Long restingHR = doc.getLong("restingHeartRate");
             if (restingHR != null) session.setRestingHeartRate(restingHR.intValue());
 
+            Long maxHR = doc.getLong("maxHeartRate");
+            if (maxHR != null) session.setMaxHeartRate(maxHR.intValue());
+
+            Long minHR = doc.getLong("minHeartRate");
+            if (minHR != null) session.setMinHeartRate(minHR.intValue());
+
             // Handle heart rate data list
             Object hrDataObj = doc.get("heartRateData");
             if (hrDataObj instanceof java.util.List) {
@@ -171,13 +183,27 @@ public class VirtualDatabase {
         }
     }
     public void saveStudySession() {
+        saveStudySession(StudySessionModel.getInstance(), success -> { });
+    }
 
+    public void saveStudySession(
+            StudySessionModel session,
+            AuthCallback callback
+    ) {
         String userId = getCurrentUserId();
-        StudySessionModel session = StudySessionModel.getInstance();
+        if (userId == null || session == null) {
+            callback.onResult(false);
+            return;
+        }
         db.collection("users")
                 .document(userId)
                 .collection("studySessions")
-                .add(session.toMap());
+                .add(session.toMap())
+                .addOnSuccessListener(document -> {
+                    session.setDocumentId(document.getId());
+                    callback.onResult(true);
+                })
+                .addOnFailureListener(error -> callback.onResult(false));
     }
 
 
