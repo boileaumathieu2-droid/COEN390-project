@@ -141,6 +141,8 @@ public class ObjectiveView extends AppCompatActivity {
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
+                    VirtualDatabase db = new VirtualDatabase();
+                    db.deleteObjective(objective.getObjectiveID());
                     controller.deleteObjective(objective.getObjectiveID());
                     refreshSelectedDateTasks();
                 })

@@ -144,10 +144,13 @@ public class TaskCreationView extends AppCompatActivity {
             completionTimeInput.setError(getString(R.string.completion_time_required));
             return;
         }
+//        public void editTask(String id, String objective, String date,
+//                String name, String time, String type) {
 
-        if (taskId != null) {
-            controller.updateTask(
-                    taskId, eventName, dueDate, completionTime, taskType, objectives);
+
+            if (taskId != null) {
+            db.editTask(
+                    taskId, objectives, dueDate, eventName, completionTime, taskType);
         } else {
             controller.addTask(db.getCurrentUserId()
                     , eventName, dueDate, completionTime, taskType, objectives);

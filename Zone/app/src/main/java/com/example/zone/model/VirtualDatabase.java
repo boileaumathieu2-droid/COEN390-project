@@ -5,6 +5,7 @@ import static androidx.core.content.ContextCompat.getSystemService;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -266,14 +267,52 @@ public class VirtualDatabase {
                 .delete();
     }
 
-    public void deleteObjective(String objective) {
+    public void deleteObjective(String objectiveID) {
         String userId = getCurrentUserId();
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
-                .document(objective)
+                .document(objectiveID)
                 .delete();
     }
+//    public void saveObjective(String objective, String date, String name, String time, String type) {
+//        String userId = getCurrentUserId();
+//
+//        DocumentReference docRef = db.collection("users")
+//                .document(userId)
+//                .collection("objectives")
+//                .document();
+//        String id = docRef.getId();
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("objectiveID", id);
+//        data.put("objectiveText", objective);
+//        data.put("objectiveDate", date);
+//        data.put("eventName", name);
+//        data.put("completionTime", time);
+//        data.put("taskType", type);
+//        docRef.set(data);
+//    }
+public void editTask(String id, String objective, String date,
+                     String name, String time, String type) {
+
+    String userId = getCurrentUserId();
+
+    Map<String, Object> data = new HashMap<>();
+    data.put("objectiveText", objective);
+    data.put("objectiveDate", date);
+    data.put("eventName", name);
+    data.put("completionTime", time);
+    data.put("taskType", type);
+    db.collection("users")
+            .document(userId)
+            .collection("objectives")
+            .document(id)
+            .update(data)
+            .addOnSuccessListener(unused ->
+                    Log.d("Firestore", "Task updated"))
+            .addOnFailureListener(e ->
+                    Log.e("Firestore", "Error updating task", e));
+}
 
     public void getSubjects() {
         String userId = getCurrentUserId();
@@ -296,6 +335,7 @@ public class VirtualDatabase {
     public interface ObjectiveCallback {
         void onComplete(ArrayList<Objective> objectives);
     }
+
 //
     public void getObjectives(ObjectiveCallback callback) {
 
