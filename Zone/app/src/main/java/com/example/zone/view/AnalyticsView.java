@@ -71,6 +71,11 @@ public class AnalyticsView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.analytics_page);
 
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+
         currentValue = findViewById(R.id.heartRateValue);
         restingValue = findViewById(R.id.restingHeartRateValue);
         minValue = findViewById(R.id.minHeartRateValue);
