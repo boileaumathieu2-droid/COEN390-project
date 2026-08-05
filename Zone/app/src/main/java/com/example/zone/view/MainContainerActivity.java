@@ -18,12 +18,14 @@ public class MainContainerActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private ImageView cloudFar;
     private ImageView cloudNear;
+    private float screenDensity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_container);
 
+        screenDensity = getResources().getDisplayMetrics().density;
         viewPager = findViewById(R.id.mainViewPager);
         bottomNavigationView = findViewById(R.id.bottomNavigation);
         cloudFar = findViewById(R.id.cloudFar);
@@ -48,10 +50,10 @@ public class MainContainerActivity extends AppCompatActivity {
                 float offset = scrollTotal - 1.0f;
                 
                 if (cloudFar != null) {
-                    cloudFar.setTranslationX(-offset * 150f);
+                    cloudFar.setTranslationX(-offset * (100f * screenDensity));
                 }
                 if (cloudNear != null) {
-                    cloudNear.setTranslationX(-offset * 400f);
+                    cloudNear.setTranslationX(-offset * (250f * screenDensity));
                 }
             }
 
