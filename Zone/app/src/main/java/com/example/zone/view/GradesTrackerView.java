@@ -32,7 +32,11 @@ public class GradesTrackerView extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
+        Intent intent = new Intent(this, MainView.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
         finish();
+
         return true;
     }
     @Override
