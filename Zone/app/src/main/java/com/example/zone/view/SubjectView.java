@@ -117,16 +117,26 @@ public class SubjectView extends AppCompatActivity {
             EditText userGrade = popupView.findViewById(R.id.gradeEditText);
             cancel.setOnClickListener(x -> dialog.dismiss());
             save.setOnClickListener(View -> {
-                String grade = userGrade.getText().toString();
+                String grade = userGrade.getText().toString().trim();
 
                 if (grade.isEmpty()) {
                     userGrade.setError("Enter a grade");
                     return;
                 }
-                else {
-                    controller.addGrade(subjectID, grade);
-
+                if (!SubjectController.isGradeInRange(grade)) {
+                    userGrade.setError("Grade must be a number from 0 to 100");
+                    return;
                 }
+
+                if (!controller.addGrade(subjectID, grade)) {
+                    Toast.makeText(
+                            SubjectView.this,
+                            "Unable to save the grade",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                    return;
+                }
+
                 refresh();
                 dialog.dismiss();
             });

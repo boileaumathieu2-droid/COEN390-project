@@ -10,13 +10,11 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
 import com.example.zone.controller.GradesTracker;
-import com.example.zone.controller.Login;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.Subject;
@@ -34,11 +32,7 @@ public class GradesTrackerView extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        Intent intent = new Intent(this, MainView.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
         finish();
-
         return true;
     }
     @Override
@@ -70,6 +64,7 @@ public class GradesTrackerView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Session.init(getApplicationContext());
         setContentView(R.layout.grades_tracker);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("Grades Tracker");

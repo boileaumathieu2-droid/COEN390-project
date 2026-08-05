@@ -33,9 +33,11 @@
             android:layout_gravity="center"
             android:layout_marginTop="5dp"
             android:backgroundTint="#000000"
+            android:digits="0123456789."
             android:ems="10"
-            android:hint="Grade"
+            android:hint="Grade (0–100)"
             android:inputType="number|numberDecimal"
+            android:maxLength="6"
             android:padding="10dp"
             android:textColorHint="#5F5F5F"
             android:textSize="20sp" />

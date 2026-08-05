@@ -33,7 +33,11 @@ public class GradeAdapter extends ArrayAdapter<String> {
         TextView text = convertView.findViewById(R.id.subjectName);
 
         if (grade != null) {
-            text.setText(grade);
+            String displayedGrade = grade.trim();
+            if (!displayedGrade.endsWith("%")) {
+                displayedGrade += "%";
+            }
+            text.setText(displayedGrade);
         }
 
         return convertView;
