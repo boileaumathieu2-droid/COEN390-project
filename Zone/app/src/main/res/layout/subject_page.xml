@@ -48,6 +48,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+             android:layout_marginTop="10dp"
             android:layout_marginEnd="30dp"
             android:backgroundTint="#1E3A6F"
             android:text="New Grade"
