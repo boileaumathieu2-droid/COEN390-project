@@ -13,4 +13,8 @@ public class RecommendedStudyTimesController {
     public void getHourlyAverages(RecommendedStudyTimesModel.HourlyAveragesCallback callback) {
         model.getAverageRatingsByHour(callback);
     }
+
+    public void getDetailedAverages(RecommendedStudyTimesModel.HourlyAveragesCallback callback) {
+        model.getDetailedHourlyAverages(callback);
+    }
 }

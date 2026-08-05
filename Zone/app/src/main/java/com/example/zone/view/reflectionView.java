@@ -14,11 +14,14 @@ import com.example.zone.R;
 import com.example.zone.model.StudySessionModel;
 import com.example.zone.model.TimerModel;
 import com.example.zone.model.VirtualDatabase;
+import com.google.android.material.button.MaterialButton;
 
 public class reflectionView extends AppCompatActivity {
 
     private final TimerModel timer = TimerModel.getInstance();
     private EditText ratingInput;
+    private MaterialButton btnYes;
+    private MaterialButton btnNo;
     private boolean objectiveSelected;
     private boolean objectiveMet;
     private boolean saving;
@@ -29,24 +32,26 @@ public class reflectionView extends AppCompatActivity {
         setContentView(R.layout.reflection_popup);
 
         ratingInput = findViewById(R.id.editTextNumber);
-        Button noButton = findViewById(R.id.btnNo);
-        Button yesButton = findViewById(R.id.btnYes);
+        btnNo = findViewById(R.id.btnNo);
+        btnYes = findViewById(R.id.btnYes);
         Button extendButton = findViewById(R.id.extendSeshButton);
         Button finishButton = findViewById(R.id.finishSeshButton);
 
-        noButton.setOnClickListener(view -> {
+        btnNo.setOnClickListener(view -> {
             objectiveMet = false;
             objectiveSelected = true;
+            updateSelectionUI();
         });
-        yesButton.setOnClickListener(view -> {
+        btnYes.setOnClickListener(view -> {
             objectiveMet = true;
             objectiveSelected = true;
+            updateSelectionUI();
         });
 
         extendButton.setOnClickListener(view -> {
             timer.discardLastCompletedSession();
             timer.startNewStudySession();
-            returnToMain();
+            returnToMainWithAction("Countdown");
         });
 
         finishButton.setOnClickListener(view -> {
@@ -108,7 +113,19 @@ public class reflectionView extends AppCompatActivity {
         );
     }
 
-    private Integer readRating() {
+    private void updateSelectionUI() {
+      if (!objectiveSelected) return;
+
+      if (objectiveMet) {
+         btnYes.setStrokeWidth(10);
+         btnNo.setStrokeWidth(0);
+      } else {
+         btnYes.setStrokeWidth(0);
+         btnNo.setStrokeWidth(10);
+      }
+   }
+
+   private Integer readRating() {
         try {
             int rating = Integer.parseInt(ratingInput.getText().toString().trim());
             return rating >= 0 && rating <= 10 ? rating : null;
@@ -139,7 +156,15 @@ public class reflectionView extends AppCompatActivity {
     }
 
     private void returnToMain() {
-        Intent intent = new Intent(this, MainView.class);
+        Intent intent = new Intent(this, MainContainerActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+    private void returnToMainWithAction(String action) {
+        Intent intent = new Intent(this, MainContainerActivity.class);
+        intent.putExtra(action, true);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
         finish();

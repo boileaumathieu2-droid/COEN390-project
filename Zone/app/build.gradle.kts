@@ -32,7 +32,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.firebase.common)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.activity:activity:1.8.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

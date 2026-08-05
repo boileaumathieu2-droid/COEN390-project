@@ -26,7 +26,7 @@ public class LoginView extends AppCompatActivity {
             if (email != null) {
                 ensureLocalSession(email);
             }
-            Intent intent = new Intent(this, MainView.class);
+            Intent intent = new Intent(this, MainContainerActivity.class);
             startActivity(intent);
             finish();
             return;
@@ -48,7 +48,7 @@ public class LoginView extends AppCompatActivity {
                     // Initialize local session
                     ensureLocalSession(userStr);
 
-                    Intent intent = new Intent(this, MainView.class);
+                    Intent intent = new Intent(this, MainContainerActivity.class);
                     startActivity(intent);
                     finish();
                 }

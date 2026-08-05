@@ -53,7 +53,11 @@ public class SessionHistoryView extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.sessionRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new SessionHistoryAdapter(shownSessions, this::showSessionDetail);
+        adapter = new SessionHistoryAdapter(
+                shownSessions,
+                this::showSessionDetail,
+                session -> confirmDelete(session, null)
+        );
         recyclerView.setAdapter(adapter);
         emptyText = findViewById(R.id.historyEmptyText);
 
@@ -191,7 +195,9 @@ public class SessionHistoryView extends AppCompatActivity {
                 .setPositiveButton("Delete", (dialog, which) ->
                         database.deleteStudySession(session.getDocumentId(), success -> {
                             if (success) {
-                                detailDialog.dismiss();
+                                if (detailDialog != null) {
+                                    detailDialog.dismiss();
+                                }
                                 allSessions.remove(session);
                                 applyRange();
                                 Toast.makeText(
@@ -244,15 +250,22 @@ public class SessionHistoryView extends AppCompatActivity {
             void onItemClick(StudySessionModel session);
         }
 
+        interface OnDeleteClickListener {
+            void onDeleteClick(StudySessionModel session);
+        }
+
         private final List<StudySessionModel> sessions;
         private final OnItemClickListener listener;
+        private final OnDeleteClickListener deleteListener;
 
         SessionHistoryAdapter(
                 List<StudySessionModel> sessions,
-                OnItemClickListener listener
+                OnItemClickListener listener,
+                OnDeleteClickListener deleteListener
         ) {
             this.sessions = sessions;
             this.listener = listener;
+            this.deleteListener = deleteListener;
         }
 
         @NonNull
@@ -285,6 +298,7 @@ public class SessionHistoryView extends AppCompatActivity {
                             ? session.getHeartRate() + " BPM" : "No data"
             ));
             holder.itemView.setOnClickListener(view -> listener.onItemClick(session));
+            holder.deleteButton.setOnClickListener(view -> deleteListener.onDeleteClick(session));
         }
 
         @Override
@@ -295,11 +309,13 @@ public class SessionHistoryView extends AppCompatActivity {
         static final class ViewHolder extends RecyclerView.ViewHolder {
             final TextView dateTime;
             final TextView summary;
+            final View deleteButton;
 
             ViewHolder(View view) {
                 super(view);
                 dateTime = view.findViewById(R.id.sessionDateTime);
                 summary = view.findViewById(R.id.sessionSummary);
+                deleteButton = view.findViewById(R.id.deleteSessionButton);
             }
         }
     }

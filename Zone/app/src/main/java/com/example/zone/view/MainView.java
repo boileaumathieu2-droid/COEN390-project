@@ -2,6 +2,7 @@ package com.example.zone.view;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -9,8 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -18,11 +18,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
 
 import com.example.zone.R;
 import com.example.zone.controller.HeartRateSensorManager;
+import com.example.zone.controller.MainController;
 import com.example.zone.controller.NotificationController;
 import com.example.zone.controller.ObjectiveController;
 import com.example.zone.model.BlockedAppsStore;
@@ -30,27 +33,32 @@ import com.example.zone.model.Database;
 import com.example.zone.model.MainViewObjectiveAdapter;
 import com.example.zone.model.Objective;
 import com.example.zone.model.Session;
+import com.example.zone.model.StudySessionModel;
 import com.example.zone.model.StudyTipsModel;
 import com.example.zone.model.TimerModel;
+import com.example.zone.model.VirtualDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
-public class MainView extends AppCompatActivity {
-
+public class MainView extends Fragment {
     private static final long TIMER_UI_DELAY_MS = 500L;
     private static final long TIP_DELAY_MS = 45_000L;
 
-    private final TimerModel timer = TimerModel.getInstance();
-    private final Handler timerUiHandler = new Handler(Looper.getMainLooper());
-    private final Handler tipHandler = new Handler(Looper.getMainLooper());
-
+    private SharedPreferences prefs;
+    private StudyTipsModel tipModel;
+    private MainController mainController;
     private ObjectiveController objectiveController;
     private MainViewObjectiveAdapter objectiveAdapter;
     private ArrayList<Objective> dailyObjectives;
     private String today;
+    private VirtualDatabase db = new VirtualDatabase();
+
+    private final TimerModel timer = TimerModel.getInstance();
+    private final Handler timerUiHandler = new Handler(Looper.getMainLooper());
+    private final Handler tipHandler = new Handler(Looper.getMainLooper());
 
     private TextView timerDisplay;
     private TextView timerTitle;
@@ -61,7 +69,7 @@ public class MainView extends AppCompatActivity {
     private Button pauseButton;
     private Button resetButton;
     private Button completeButton;
-    private StudyTipsModel tipModel;
+    
     private boolean reflectionScreenOpen;
 
     private final Runnable timerUiUpdater = new Runnable() {
@@ -81,7 +89,8 @@ public class MainView extends AppCompatActivity {
                         .alpha(0f)
                         .setDuration(500)
                         .withEndAction(() -> {
-                            tipText.setText(tipModel.randomTip());
+                            String tip = tipModel.randomTip();
+                            tipText.setText("Study Tip: " + tip);
                             tipText.animate().alpha(1f).setDuration(500);
                         });
             }
@@ -89,86 +98,99 @@ public class MainView extends AppCompatActivity {
         }
     };
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Session.init(getApplicationContext());
-        setContentView(R.layout.activity_main);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.activity_main, container, false);
 
-        today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                .format(new Date());
-        objectiveController = new ObjectiveController(new Database(this));
+        today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        objectiveController = new ObjectiveController(new Database(requireContext()));
+        mainController = new MainController(requireContext());
 
-        bindViews();
+        bindViews(view);
         setupDailyObjectives();
         setupStudyTips();
-        setupButtons();
+        setupButtons(view);
 
         // Reconnect silently only when Bluetooth permission has already been granted.
-        HeartRateSensorManager.getInstance(getApplicationContext())
+        HeartRateSensorManager.getInstance(requireContext().getApplicationContext())
                 .autoConnectToSavedBluno();
 
-        if (getIntent().getBooleanExtra("Countdown", false)) {
-            startStudyOrBreak();
-        }
+        handleIntent(getActivity() != null ? getActivity().getIntent() : null);
         updateTimerUi();
+        
+        return view;
     }
 
-    private void bindViews() {
-        timerDisplay = findViewById(R.id.timerDisplay);
-        timerTitle = findViewById(R.id.timerTitle);
-        tipText = findViewById(R.id.studyTipTextView);
-        objectivesPrompt = findViewById(R.id.goalPrompt);
-        dailyGoals = findViewById(R.id.dailyGoalsListView);
-        startButton = findViewById(R.id.startStudySeshButton);
-        pauseButton = findViewById(R.id.pauseTimer);
-        resetButton = findViewById(R.id.resetTimer);
-        completeButton = findViewById(R.id.completeTimer);
+    private void bindViews(View view) {
+        timerDisplay = view.findViewById(R.id.timerDisplay);
+        timerTitle = view.findViewById(R.id.timerTitle);
+        tipText = view.findViewById(R.id.studyTipTextView);
+        objectivesPrompt = view.findViewById(R.id.goalPrompt);
+        dailyGoals = view.findViewById(R.id.dailyGoalsListView);
+        startButton = view.findViewById(R.id.startStudySeshButton);
+        pauseButton = view.findViewById(R.id.pauseTimer);
+        resetButton = view.findViewById(R.id.resetTimer);
+        completeButton = view.findViewById(R.id.completeTimer);
     }
 
     private void setupDailyObjectives() {
         dailyObjectives = new ArrayList<>();
-        objectiveAdapter = new MainViewObjectiveAdapter(this, dailyObjectives);
+        objectiveAdapter = new MainViewObjectiveAdapter(requireContext(), dailyObjectives);
         dailyGoals.setAdapter(objectiveAdapter);
         dailyGoals.setOnItemClickListener((parent, view, position, id) ->
-                startActivity(new Intent(this, ObjectiveView.class)));
-        objectivesPrompt.setOnClickListener(view ->
-                startActivity(new Intent(this, ObjectiveView.class)));
+                startActivity(new Intent(requireContext(), ObjectiveView.class)));
+        objectivesPrompt.setOnClickListener(v -> {
+            if (getActivity() instanceof MainContainerActivity) {
+                ((MainContainerActivity) getActivity()).switchToTab(0);
+            }
+        });
     }
 
     private void setupStudyTips() {
-        // This is the existing team feature. The timer/BLE fixes do not change it.
         tipModel = new StudyTipsModel();
-        tipText.setText(tipModel.randomTip());
-        tipText.setOnClickListener(view ->
-                startActivity(new Intent(this, StudyTipsView.class)));
-        tipHandler.postDelayed(tipUpdater, TIP_DELAY_MS);
+        if (tipText != null) {
+            String tip = tipModel.randomTip();
+            tipText.setText("Study Tip: " + tip);
+            tipText.setOnClickListener(v -> startActivity(new Intent(requireContext(), StudyTipsView.class)));
+        }
     }
 
-    private void setupButtons() {
-        findViewById(R.id.timerSettings).setOnClickListener(view ->
-                startActivity(new Intent(this, TimerSettingsView.class)));
-        findViewById(R.id.objectivesButton).setOnClickListener(view ->
-                startActivity(new Intent(this, ObjectiveView.class)));
-        findViewById(R.id.gradesTrackerButton).setOnClickListener(view ->
-                startActivity(new Intent(this, GradesTrackerView.class)));
-        findViewById(R.id.analyticsButton).setOnClickListener(view ->
-                startActivity(new Intent(this, AnalyticsView.class)));
+    private void setupButtons(View view) {
+        view.findViewById(R.id.timerSettings).setOnClickListener(v -> mainController.onTimerSettingsClicked());
+        
+        // Swiping replaces these buttons
+        view.findViewById(R.id.objectivesButton).setVisibility(View.GONE);
+        view.findViewById(R.id.analyticsButton).setVisibility(View.GONE);
+        view.findViewById(R.id.gradesTrackerButton).setOnClickListener(v -> 
+                startActivity(new Intent(requireContext(), GradesTrackerView.class)));
 
-        startButton.setOnClickListener(view -> startStudyOrBreak());
-        pauseButton.setOnClickListener(view -> pauseOrResume());
-        resetButton.setOnClickListener(view -> resetTimer());
-        completeButton.setOnClickListener(view -> completeCurrentPeriod());
+        startButton.setOnClickListener(v -> startStudyOrBreak());
+        pauseButton.setOnClickListener(v -> pauseOrResume());
+        resetButton.setOnClickListener(v -> resetTimer());
+        completeButton.setOnClickListener(v -> completeCurrentPeriod());
     }
 
-    /** Kept public because MainController also routes to this screen. */
-    public void openTimerSettings() {
-        startActivity(new Intent(this, TimerSettingsView.class));
+    private void handleIntent(Intent intent) {
+        if (intent == null) return;
+        if (intent.getBooleanExtra("Countdown", false)) {
+            startStudyOrBreak();
+            intent.removeExtra("Countdown");
+        }
+        if (intent.getBooleanExtra("complete", false)) {
+            int rating = intent.getIntExtra("rating", -1);
+            boolean objective = intent.getBooleanExtra("objective", false);
+            StudySessionModel session = StudySessionModel.getInstance();
+            session.setObjectiveMet(objective);
+            session.setProductivityRating(rating);
+            db.saveStudySession();
+            intent.removeExtra("complete");
+        }
     }
 
     private void startStudyOrBreak() {
         if (!timer.isBreakTime()) {
-            BlockedAppsStore.requestPermissionIfNeeded(this);
+            BlockedAppsStore.requestPermissionIfNeeded(requireActivity());
         }
         timer.startTimer();
         if (!timer.isBreakTime() && hasDndAccess()) {
@@ -194,7 +216,7 @@ public class MainView extends AppCompatActivity {
         timer.stopAndReset();
         manageDnD(false);
         updateTimerUi();
-        Toast.makeText(this, "Timer reset", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "Timer reset", Toast.LENGTH_SHORT).show();
     }
 
     private void completeCurrentPeriod() {
@@ -204,9 +226,9 @@ public class MainView extends AppCompatActivity {
         updateTimerUi();
 
         if (completingBreak) {
-            Toast.makeText(this, "Break finished", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Break finished", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Study session complete", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Study session complete", Toast.LENGTH_SHORT).show();
             openReflectionIfPending();
         }
     }
@@ -217,7 +239,7 @@ public class MainView extends AppCompatActivity {
         }
         reflectionScreenOpen = true;
         manageDnD(false);
-        startActivity(new Intent(this, reflectionView.class));
+        startActivity(new Intent(requireContext(), reflectionView.class));
     }
 
     private void refreshDailyObjectives() {
@@ -236,10 +258,12 @@ public class MainView extends AppCompatActivity {
         boolean empty = dailyObjectives.isEmpty();
         dailyGoals.setVisibility(empty ? View.GONE : View.VISIBLE);
         objectivesPrompt.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (empty) {
+            objectivesPrompt.setText("You have not set any goals for today. Swipe left to set goals.");
+        }
         resizeDailyGoalsList();
     }
 
-    /** The parent is already a ScrollView, so make every daily task visible. */
     private void resizeDailyGoalsList() {
         if (dailyObjectives.isEmpty()) {
             return;
@@ -253,6 +277,7 @@ public class MainView extends AppCompatActivity {
     }
 
     private void updateTimerUi() {
+        if (timerDisplay == null) return;
         int minutes = timer.getMinutes();
         int seconds = timer.getSeconds();
         timerDisplay.setText(String.format(
@@ -268,27 +293,42 @@ public class MainView extends AppCompatActivity {
                 || (timer.getRemainingTime() > 0
                 && timer.getRemainingTime() < fullDuration);
 
-        timerTitle.setText(timer.isBreakTime() ? "Break Time" : "Study Time");
-        pauseButton.setText(timer.isRunning() ? "Pause" : "Resume");
-        int controlsVisibility = activeOrPaused ? View.VISIBLE : View.GONE;
-        pauseButton.setVisibility(controlsVisibility);
-        resetButton.setVisibility(controlsVisibility);
-        completeButton.setVisibility(controlsVisibility);
-        startButton.setVisibility(activeOrPaused ? View.GONE : View.VISIBLE);
-        startButton.setText(timer.isBreakTime()
+        if (timerTitle != null) timerTitle.setText(timer.isBreakTime() ? "Break Time" : "Study Time");
+        if (pauseButton != null) {
+            pauseButton.setText(timer.isRunning() ? "Pause" : "Resume");
+            int controlsVisibility = activeOrPaused ? View.VISIBLE : View.GONE;
+            pauseButton.setVisibility(controlsVisibility);
+            if (resetButton != null) resetButton.setVisibility(controlsVisibility);
+            if (completeButton != null) completeButton.setVisibility(controlsVisibility);
+        }
+        if (startButton != null) {
+            startButton.setVisibility(activeOrPaused ? View.GONE : View.VISIBLE);
+            startButton.setText(timer.isBreakTime()
                 ? "Start Break" : "Start Study Session");
+        }
+        
+        if (minutes == 0 && seconds == 0 && timer.isRunning()) {
+            // Timer just finished
+            if (hasDndAccess()) manageDnD(false);
+            NotificationController notificationHelper = new NotificationController(requireContext());
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                notificationHelper.sendNotifications("STUDY APP", "Session Finished!");
+            }
+        }
     }
 
     private boolean hasDndAccess() {
-        SharedPreferences preferences = getSharedPreferences("settings", MODE_PRIVATE);
-        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (getContext() == null) return false;
+        SharedPreferences preferences = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        NotificationManager manager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
         return preferences.getBoolean("Mute", false)
                 && manager != null
                 && manager.isNotificationPolicyAccessGranted();
     }
 
     private void manageDnD(boolean enable) {
-        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (getContext() == null) return;
+        NotificationManager manager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null || !manager.isNotificationPolicyAccessGranted()) {
             return;
         }
@@ -302,7 +342,7 @@ public class MainView extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         reflectionScreenOpen = false;
         today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -310,33 +350,25 @@ public class MainView extends AppCompatActivity {
         refreshDailyObjectives();
         timerUiHandler.removeCallbacks(timerUiUpdater);
         timerUiHandler.post(timerUiUpdater);
+        tipHandler.removeCallbacks(tipUpdater);
+        tipHandler.post(tipUpdater);
+        
+        if (getActivity() != null) {
+            handleIntent(getActivity().getIntent());
+        }
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         timerUiHandler.removeCallbacks(timerUiUpdater);
+        tipHandler.removeCallbacks(tipUpdater);
         super.onPause();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroyView() {
         timerUiHandler.removeCallbacksAndMessages(null);
         tipHandler.removeCallbacksAndMessages(null);
-        super.onDestroy();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.action_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsView.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        super.onDestroyView();
     }
 }

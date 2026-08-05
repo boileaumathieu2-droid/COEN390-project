@@ -77,6 +77,10 @@ public class StudySessionModel {
         }
         return instance;
     }
+
+    public static void reset() {
+        instance = new StudySessionModel();
+    }
     // function that gets the current heart rate value from HeartRateMonitorView.java and HeartRateReading.java
     public synchronized int getHeartRateReading() {
         if (currentHeartRateReading != null && currentHeartRateReading.hasGoodSignal()) {
