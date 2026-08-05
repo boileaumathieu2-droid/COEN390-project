@@ -1,15 +1,9 @@
 package com.example.zone.model;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -75,12 +69,23 @@ public class VirtualDatabase {
         return auth.getCurrentUser().getUid();
     }
 
+    public String getCurrentUserEmail() {
+        return auth.getCurrentUser() == null
+                ? null : auth.getCurrentUser().getEmail();
+    }
+
     public void signOut() {
         auth.signOut();
     }
 
-    public interface StudySessionCallback {
-        void onComplete(ArrayList<StudySessionModel> sessions);
+    public void verifyConnection() {
+        Map<String, Object> user = new HashMap<>();
+        user.put("key1", "it works");
+        db.collection("users")
+                .document("testUser")
+                .set(user)
+                .addOnSuccessListener(unused -> System.out.println("Data saved!!"))
+                .addOnFailureListener(e -> System.out.println("FAILED!!!!"));
     }
 
     public void insertStudySession(StudySessionModel session) {
@@ -88,9 +93,10 @@ public class VirtualDatabase {
         if (uid == null) {
             return;
         }
-        db.collection("studySessions")
+        db.collection("users")
                 .document(uid)
-                .set(session)
+                .collection("studySessions")
+                .add(session.toMap())
                 .addOnSuccessListener(unused ->
                         System.out.println("Session saved"))
                 .addOnFailureListener(e ->
@@ -103,6 +109,7 @@ public class VirtualDatabase {
             callback.onComplete(new ArrayList<>());
             return;
         }
+
         db.collection("users")
                 .document(userId)
                 .collection("studySessions")
@@ -127,30 +134,36 @@ public class VirtualDatabase {
         try {
             StudySessionModel session = new StudySessionModel();
             session.setDocumentId(doc.getId());
-
+            
             String startTime = doc.getString("startTime");
             if (startTime != null) session.setStartTime(java.time.LocalDateTime.parse(startTime));
-
+            
             String endTime = doc.getString("endTime");
             if (endTime != null) session.setEndTime(java.time.LocalDateTime.parse(endTime));
-
+            
             Long duration = doc.getLong("duration");
             if (duration != null) session.setDuration(duration.intValue());
-
+            
             String status = doc.getString("status");
             if (status != null) session.setStatus(StudySessionModel.Status.valueOf(status));
-
+            
             Boolean objectiveMet = doc.getBoolean("objectiveMet");
             if (objectiveMet != null) session.setObjectiveMet(objectiveMet);
-
+            
             Long rating = doc.getLong("productivityRating");
             if (rating != null) session.setProductivityRating(rating.intValue());
-
+            
             Long avgHR = doc.getLong("averageHeartRate");
             if (avgHR != null) session.setHeartRate(avgHR.intValue());
-
+            
             Long restingHR = doc.getLong("restingHeartRate");
             if (restingHR != null) session.setRestingHeartRate(restingHR.intValue());
+
+            Long maxHR = doc.getLong("maxHeartRate");
+            if (maxHR != null) session.setMaxHeartRate(maxHR.intValue());
+
+            Long minHR = doc.getLong("minHeartRate");
+            if (minHR != null) session.setMinHeartRate(minHR.intValue());
 
             // Handle heart rate data list
             Object hrDataObj = doc.get("heartRateData");
@@ -169,36 +182,30 @@ public class VirtualDatabase {
             return null;
         }
     }
-
-    public void DeleteStudySession(String Session) {
-        String UserId = getCurrentUserId();
-        db.collection("users")
-                .document(UserId)
-                .collection("studySessions")
-                .document(Session)
-                .delete();
-    }
-
     public void saveStudySession() {
+        saveStudySession(StudySessionModel.getInstance(), success -> { });
+    }
 
+    public void saveStudySession(
+            StudySessionModel session,
+            AuthCallback callback
+    ) {
         String userId = getCurrentUserId();
-        StudySessionModel session = StudySessionModel.getInstance();
+        if (userId == null || session == null) {
+            callback.onResult(false);
+            return;
+        }
         db.collection("users")
                 .document(userId)
                 .collection("studySessions")
-                .add(session.toMap());
+                .add(session.toMap())
+                .addOnSuccessListener(document -> {
+                    session.setDocumentId(document.getId());
+                    callback.onResult(true);
+                })
+                .addOnFailureListener(error -> callback.onResult(false));
     }
 
-    public void saveSubject(String subjectName) {
-        String userId = getCurrentUserId();
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", subjectName);
-        db.collection("users")
-                .document(userId)
-                .collection("Subjects")
-                .document(subjectName)
-                .set(data);
-    }
 
     public void deleteStudySession(String documentId, AuthCallback callback) {
         String userId = getCurrentUserId();
@@ -217,215 +224,7 @@ public class VirtualDatabase {
     }
 
 
-    public void saveGrade(String subjectId, String assignment, double grade) {
-        String userId = getCurrentUserId();
-        Map<String, Object> data = new HashMap<>();
-        data.put("assignment", assignment);
-        data.put("grade", grade);
-        db.collection("users")
-                .document(userId)
-                .collection("Subjects")
-                .document(subjectId)
-                .collection("Grades")
-                .add(data);
-    }
-    public void saveObjective(String objective, String date, String name, String time, String type) {
-        String userId = getCurrentUserId();
-
-        DocumentReference docRef = db.collection("users")
-                .document(userId)
-                .collection("objectives")
-                .document();
-        String id = docRef.getId();
-        Map<String, Object> data = new HashMap<>();
-        data.put("objectiveID", id);
-        data.put("objectiveText", objective);
-        data.put("objectiveDate", date);
-        data.put("eventName", name);
-        data.put("completionTime", time);
-        data.put("taskType", type);
-        docRef.set(data);
-    }
-
-    public void deleteSubject(String subject) {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("subjects")
-                .document(subject)
-                .delete();
-    }
-
-    public void deleteGrade(String subjectId, String gradeId) {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("subjects")
-                .document(subjectId)
-                .collection("grades")
-                .document(gradeId)
-                .delete();
-    }
-
-    public void deleteObjective(String objectiveID) {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("objectives")
-                .document(objectiveID)
-                .delete();
-    }
-//    public void saveObjective(String objective, String date, String name, String time, String type) {
-//        String userId = getCurrentUserId();
-//
-//        DocumentReference docRef = db.collection("users")
-//                .document(userId)
-//                .collection("objectives")
-//                .document();
-//        String id = docRef.getId();
-//        Map<String, Object> data = new HashMap<>();
-//        data.put("objectiveID", id);
-//        data.put("objectiveText", objective);
-//        data.put("objectiveDate", date);
-//        data.put("eventName", name);
-//        data.put("completionTime", time);
-//        data.put("taskType", type);
-//        docRef.set(data);
-//    }
-public void editTask(String id, String objective, String date,
-                     String name, String time, String type) {
-
-    String userId = getCurrentUserId();
-
-    Map<String, Object> data = new HashMap<>();
-    data.put("objectiveText", objective);
-    data.put("objectiveDate", date);
-    data.put("eventName", name);
-    data.put("completionTime", time);
-    data.put("taskType", type);
-    db.collection("users")
-            .document(userId)
-            .collection("objectives")
-            .document(id)
-            .update(data)
-            .addOnSuccessListener(unused ->
-                    Log.d("Firestore", "Task updated"))
-            .addOnFailureListener(e ->
-                    Log.e("Firestore", "Error updating task", e));
-}
-    public void getSubjects() {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("Subjects")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    for (DocumentSnapshot doc : querySnapshot) {
-                        String subjectId = doc.getId();
-                        String subjectName = doc.getString("name");
-
-                        System.out.println(subjectName + " -> " + subjectId);
-                    }
-                });
-
-    }
-    public interface ObjectiveCallback {
-        void onComplete(ArrayList<Objective> objectives);
-    }
-
-//
-    public void getObjectives(ObjectiveCallback callback) {
-
-        String userId = getCurrentUserId();
-
-        db.collection("users")
-                .document(userId)
-                .collection("objectives")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    ArrayList<Objective> objectives = new ArrayList<>();
-                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        String objectiveID = document.getString("objectiveID");
-                        String objectiveText = document.getString("objectiveText");
-                        String objectiveDate = document.getString("objectiveDate");
-                        String eventName = document.getString("eventName");
-                        String completionTime = document.getString("completionTime");
-                        String taskType = document.getString("taskType");
-                        Objective objective = new Objective(
-                                objectiveID,
-                                eventName,
-                                objectiveDate,
-                                completionTime,
-                                taskType,
-                                objectiveText
-                        );
-                        objectives.add(objective);
-                    }
-                    callback.onComplete(objectives);
-                });
-    }
-
-    public interface GradesCallback {
-        void onComplete(ArrayList<String> Grades);
-    }
-
-    public void getGrades(GradesCallback callback, String subjectId) {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("Subjects")
-                .document(subjectId)
-                .collection("Grades")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    ArrayList<String> Grades = new ArrayList<>();
-                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        String grade = document.getString("grade");
-                        Grades.add(grade);
-                    }
-                    callback.onComplete(Grades);
-                });
-  }
-    public void GetDailyObjectives(ObjectiveCallback callback, String date) {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("objectives")
-                .whereEqualTo("objectiveDate", date)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    ArrayList<Objective> objectives = new ArrayList<>();
-                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        Objective objective = document.toObject(Objective.class);
-                        objectives.add(objective);
-                    }
-                    callback.onComplete(objectives);
-                });
-    }
-    public void GetFutureObjectives(ObjectiveCallback callback, String date) {
-        String userId = getCurrentUserId();
-        db.collection("users")
-                .document(userId)
-                .collection("objectives")
-                .whereNotEqualTo("objectiveDate", date)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    ArrayList<Objective> objectives = new ArrayList<>();
-                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        Objective objective = document.toObject(Objective.class);
-                        objectives.add(objective);
-                    }
-                    callback.onComplete(objectives);
-                });
-    }
-
-
-    public static boolean isInternetAvailable(Context context) {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-        return networkInfo != null && networkInfo.isConnected();
+    public interface StudySessionCallback {
+        void onComplete(ArrayList<StudySessionModel> sessions);
     }
 }
