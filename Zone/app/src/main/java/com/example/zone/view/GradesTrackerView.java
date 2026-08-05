@@ -35,21 +35,6 @@ public class GradesTrackerView extends AppCompatActivity {
         finish();
         return true;
     }
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.action_menu, menu);
-        return true;}
-    public boolean onOptionsItemSelected(MenuItem option) {
-        int id = option.getItemId();
-
-        if (id == R.id.action_settings) {
-            Intent intent = new Intent(GradesTrackerView.this, SettingsView.class);
-            startActivity(intent);
-
-        }
-
-        return super.onOptionsItemSelected(option);
-    }
     private void  refresh() {
         subjects.clear();
         subjects.addAll(controller.getSubjects(Session.getUserID()));
@@ -78,20 +63,6 @@ public class GradesTrackerView extends AppCompatActivity {
         Button newSubject = findViewById(R.id.newSubjectButton);
         controller = new GradesTracker(new Database(this));
         refresh();
-        subjectList.setOnItemClickListener((parent, view, position, id) -> {
-
-            Subject selectedSubject = subjects.get(position);
-
-            Intent intent = new Intent(
-                    GradesTrackerView.this,
-                    SubjectView.class
-            );
-
-            intent.putExtra("subjectName", selectedSubject.getSubjectName());
-            intent.putExtra("subjectID", selectedSubject.getSubjectID());
-
-            startActivity(intent);
-        });
         newSubject.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(GradesTrackerView.this);
             View popupView = getLayoutInflater().inflate(R.layout.add_subject_popup, null);
@@ -132,3 +103,4 @@ public class GradesTrackerView extends AppCompatActivity {
     }
 
 }
+
