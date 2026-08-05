@@ -74,4 +74,5 @@ public class ObjectiveController {
     public int deletePastObjectives(int userID, String date){
         return database.deletePastObjectives(userID, date);
     }
+
 }
