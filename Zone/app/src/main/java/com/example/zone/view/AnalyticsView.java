@@ -8,10 +8,12 @@ import android.os.Looper;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.zone.R;
 import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.model.HeartRateReading;
+import com.example.zone.model.HeartRateRange;
 import com.example.zone.model.StudySessionModel;
 import com.example.zone.model.TimerModel;
 import com.example.zone.model.VirtualDatabase;
@@ -31,6 +33,7 @@ public class AnalyticsView extends AppCompatActivity {
     private final TimerModel timer = TimerModel.getInstance();
 
     private TextView currentValue;
+    private TextView currentStatus;
     private TextView restingValue;
     private TextView minValue;
     private TextView maxValue;
@@ -52,6 +55,7 @@ public class AnalyticsView extends AppCompatActivity {
         setContentView(R.layout.analytics_page);
 
         currentValue = findViewById(R.id.heartRateValue);
+        currentStatus = findViewById(R.id.heartRateStatus);
         restingValue = findViewById(R.id.restingHeartRateValue);
         minValue = findViewById(R.id.minHeartRateValue);
         maxValue = findViewById(R.id.maxHeartRateValue);
@@ -89,6 +93,7 @@ public class AnalyticsView extends AppCompatActivity {
                 && stableReading.hasGoodSignal()
                 ? stableReading.getBpm() : 0;
         currentValue.setText(valueOrDash(currentBpm));
+        applyHeartRateColour(currentBpm);
 
         StudySessionModel displayedSession = timer.getLiveSession();
         if (displayedSession == null) {
@@ -119,6 +124,34 @@ public class AnalyticsView extends AppCompatActivity {
 
     private String valueOrDash(int value) {
         return value > 0 ? String.valueOf(value) : "--";
+    }
+
+    private void applyHeartRateColour(int bpm) {
+        HeartRateRange.Level level = HeartRateRange.classify(bpm);
+        int colourId;
+        int statusId;
+        switch (level) {
+            case TYPICAL:
+                colourId = R.color.zone_success;
+                statusId = R.string.heart_rate_typical;
+                break;
+            case CAUTION:
+                colourId = R.color.zone_caution;
+                statusId = R.string.heart_rate_caution;
+                break;
+            case ALERT:
+                colourId = R.color.zone_alert;
+                statusId = R.string.heart_rate_alert;
+                break;
+            default:
+                colourId = R.color.zone_text_secondary;
+                statusId = R.string.heart_rate_no_reading;
+                break;
+        }
+        int colour = ContextCompat.getColor(this, colourId);
+        currentValue.setTextColor(colour);
+        currentStatus.setTextColor(colour);
+        currentStatus.setText(statusId);
     }
 
     private void configureChart() {

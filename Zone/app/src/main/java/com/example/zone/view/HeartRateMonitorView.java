@@ -8,7 +8,10 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +23,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +36,7 @@ import androidx.core.content.ContextCompat;
 import com.example.zone.R;
 import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.model.HeartRateReading;
+import com.example.zone.model.HeartRateRange;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,6 +68,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
     private boolean scanning;
     private boolean scanAfterPermission;
     private boolean automaticConnectionRequested;
+    private boolean bluetoothReceiverRegistered;
     private String pendingDirectAddress;
 
     private TextView connectionStatusText;
@@ -72,10 +78,23 @@ public class HeartRateMonitorView extends AppCompatActivity {
     private TextView signalRangeText;
     private TextView lastPacketText;
     private TextView emptyDeviceText;
+    private ImageView heartIcon;
     private EditText deviceIdInput;
     private Button scanButton;
     private Button connectByIdButton;
     private Button disconnectButton;
+
+    private final BroadcastReceiver bluetoothDiscoveryReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (BluetoothDevice.ACTION_FOUND.equals(intent.getAction())) {
+                BluetoothDevice device = getBluetoothDeviceExtra(intent);
+                if (device != null) {
+                    addClassicDevice(device, getString(R.string.classic_device_source));
+                }
+            }
+        }
+    };
 
     private final HeartRateSensorManager.Listener sensorListener =
             new HeartRateSensorManager.Listener() {
@@ -187,6 +206,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
         signalRangeText = findViewById(R.id.signalRangeText);
         lastPacketText = findViewById(R.id.lastPacketText);
         emptyDeviceText = findViewById(R.id.emptyDeviceText);
+        heartIcon = findViewById(R.id.heartIcon);
         deviceIdInput = findViewById(R.id.deviceIdInput);
         scanButton = findViewById(R.id.scanButton);
         connectByIdButton = findViewById(R.id.connectByIdButton);
@@ -223,10 +243,8 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
         BluetoothManager manager = getSystemService(BluetoothManager.class);
         bluetoothAdapter = manager == null ? null : manager.getAdapter();
-        if (bluetoothAdapter == null
-                || !getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH_LE
-        )) {
+        registerBluetoothDiscoveryReceiver();
+        if (bluetoothAdapter == null) {
             scanButton.setEnabled(false);
             connectByIdButton.setEnabled(false);
             showConnectionState(getString(R.string.ble_not_supported), false);
@@ -359,10 +377,6 @@ public class HeartRateMonitorView extends AppCompatActivity {
         }
 
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
-        if (bluetoothLeScanner == null) {
-            showConnectionState(getString(R.string.scanner_unavailable), false);
-            return;
-        }
 
         if (scanning) {
             stopScan();
@@ -373,20 +387,36 @@ public class HeartRateMonitorView extends AppCompatActivity {
         deviceSignalStrengths.clear();
         blunoCandidateAddresses.clear();
         deviceListAdapter.notifyDataSetChanged();
-        emptyDeviceText.setText(R.string.scanning_for_devices);
-        emptyDeviceText.setVisibility(View.VISIBLE);
+        addPairedDevices();
+        emptyDeviceText.setText(R.string.scanning_for_nearby_devices);
+        emptyDeviceText.setVisibility(
+                discoveredDevices.isEmpty() ? View.VISIBLE : View.GONE
+        );
 
         scanning = true;
         scanButton.setEnabled(false);
         showConnectionState(getString(R.string.scanning), false);
+        boolean discoveryStarted = false;
         try {
-            // No service/name filter: the demonstration list must show every
-            // nearby BLE advertiser, not only the saved Bluno.
-            bluetoothLeScanner.startScan(scanCallback);
+            if (bluetoothLeScanner != null) {
+                // No filter: show all BLE advertisers, not only the Bluno.
+                bluetoothLeScanner.startScan(scanCallback);
+                discoveryStarted = true;
+            }
+            if (bluetoothAdapter.isDiscovering()) {
+                bluetoothAdapter.cancelDiscovery();
+            }
+            discoveryStarted = bluetoothAdapter.startDiscovery() || discoveryStarted;
         } catch (SecurityException | IllegalStateException error) {
             scanning = false;
             scanButton.setEnabled(true);
             showConnectionState(getString(R.string.scan_start_failed), false);
+            return;
+        }
+        if (!discoveryStarted) {
+            scanning = false;
+            scanButton.setEnabled(true);
+            showConnectionState(getString(R.string.scanner_unavailable), false);
             return;
         }
         mainHandler.removeCallbacks(scanTimeout);
@@ -399,14 +429,90 @@ public class HeartRateMonitorView extends AppCompatActivity {
         if (scanning && bluetoothLeScanner != null && hasRequiredPermissions()) {
             bluetoothLeScanner.stopScan(scanCallback);
         }
+        if (bluetoothAdapter != null
+                && hasRequiredPermissions()
+                && bluetoothAdapter.isDiscovering()) {
+            bluetoothAdapter.cancelDiscovery();
+        }
         scanning = false;
         scanButton.setEnabled(bluetoothAdapter != null);
         if (discoveredDevices.isEmpty()) {
-            emptyDeviceText.setText(R.string.no_ble_devices_found);
+            emptyDeviceText.setText(R.string.no_bluetooth_devices_found);
         }
         if (!sensorManager.isConnected() && !sensorManager.isBusy()) {
             showConnectionState(getString(R.string.select_bluno_device), false);
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void addPairedDevices() {
+        if (!hasRequiredPermissions() || bluetoothAdapter == null) {
+            return;
+        }
+        try {
+            for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
+                addClassicDevice(device, getString(R.string.paired_device_source));
+            }
+        } catch (SecurityException ignored) {
+            // Permission can be changed while this screen is open.
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void addClassicDevice(BluetoothDevice device, String source) {
+        if (!hasRequiredPermissions() || device == null) {
+            return;
+        }
+        String address = device.getAddress();
+        for (int index = 0; index < discoveredDevices.size(); index++) {
+            if (discoveredDevices.get(index).getAddress().equalsIgnoreCase(address)) {
+                return;
+            }
+        }
+
+        String name = device.getName();
+        if (name == null || name.trim().isEmpty()) {
+            name = getString(R.string.unnamed_ble_device);
+        }
+        boolean likelyBluno = address.equalsIgnoreCase(TARGET_BLUNO_ADDRESS)
+                || name.toLowerCase(Locale.US).contains("bluno")
+                || name.toLowerCase(Locale.US).contains("dfrobot");
+        String label = getString(R.string.bluetooth_device_label, name, address, source);
+        if (likelyBluno) {
+            label += "\n" + getString(R.string.likely_bluno_device);
+            blunoCandidateAddresses.add(address);
+        }
+
+        int insertAt = likelyBluno ? 0 : discoveredDevices.size();
+        discoveredDevices.add(insertAt, device);
+        deviceLabels.add(insertAt, label);
+        deviceListAdapter.notifyDataSetChanged();
+        emptyDeviceText.setVisibility(View.GONE);
+    }
+
+    private void registerBluetoothDiscoveryReceiver() {
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                    bluetoothDiscoveryReceiver,
+                    filter,
+                    Context.RECEIVER_NOT_EXPORTED
+            );
+        } else {
+            registerReceiver(bluetoothDiscoveryReceiver, filter);
+        }
+        bluetoothReceiverRegistered = true;
+    }
+
+    @SuppressWarnings("deprecation")
+    private BluetoothDevice getBluetoothDeviceExtra(Intent intent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return intent.getParcelableExtra(
+                    BluetoothDevice.EXTRA_DEVICE,
+                    BluetoothDevice.class
+            );
+        }
+        return intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
     }
 
     @SuppressLint("MissingPermission")
@@ -528,23 +634,43 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
         if (!stableReading.hasGoodSignal()) {
             bpmText.setText(R.string.bpm_placeholder);
+            setHeartRateColour(R.color.zone_text_secondary);
             signalStatusText.setText(R.string.no_signal_instructions);
             signalStatusText.setTextColor(
                     ContextCompat.getColor(this, R.color.zone_warning)
             );
         } else if (stableReading.getBpm() == 0) {
             bpmText.setText(R.string.bpm_placeholder);
+            setHeartRateColour(R.color.zone_primary);
             signalStatusText.setText(R.string.calculating_bpm);
             signalStatusText.setTextColor(
                     ContextCompat.getColor(this, R.color.zone_primary)
             );
         } else {
             bpmText.setText(String.valueOf(stableReading.getBpm()));
-            signalStatusText.setText(R.string.live_reading);
-            signalStatusText.setTextColor(
-                    ContextCompat.getColor(this, R.color.zone_success)
-            );
+            showHeartRateRange(stableReading.getBpm());
         }
+    }
+
+    private void showHeartRateRange(int bpm) {
+        HeartRateRange.Level level = HeartRateRange.classify(bpm);
+        if (level == HeartRateRange.Level.TYPICAL) {
+            signalStatusText.setText(R.string.heart_rate_typical);
+            setHeartRateColour(R.color.zone_success);
+        } else if (level == HeartRateRange.Level.CAUTION) {
+            signalStatusText.setText(R.string.heart_rate_caution);
+            setHeartRateColour(R.color.zone_caution);
+        } else {
+            signalStatusText.setText(R.string.heart_rate_alert);
+            setHeartRateColour(R.color.zone_alert);
+        }
+    }
+
+    private void setHeartRateColour(int colourId) {
+        int colour = ContextCompat.getColor(this, colourId);
+        bpmText.setTextColor(colour);
+        signalStatusText.setTextColor(colour);
+        heartIcon.setColorFilter(colour);
     }
 
     private void showConnectionState(String message, boolean connected) {
@@ -562,9 +688,12 @@ public class HeartRateMonitorView extends AppCompatActivity {
     protected void onDestroy() {
         stopScan();
         mainHandler.removeCallbacksAndMessages(null);
+        if (bluetoothReceiverRegistered) {
+            unregisterReceiver(bluetoothDiscoveryReceiver);
+            bluetoothReceiverRegistered = false;
+        }
         // Do not disconnect here. The manager keeps Bluno connected while the
         // user starts a study session or opens Analytics.
         super.onDestroy();
     }
 }
-

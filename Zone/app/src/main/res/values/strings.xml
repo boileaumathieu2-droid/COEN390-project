@@ -86,6 +86,7 @@
     <string name="task_saved">Task saved</string>
     <string name="event_name_required">Enter an event name.</string>
     <string name="completion_time_required">Enter the estimated completion time.</string>
+    <string name="past_due_date_not_allowed">The due date cannot be before today.</string>
     <string name="task_details">Type: %1$s\nDue: %2$s\nEstimated time: %3$s\n\nObjectives:\n%4$s</string>
     <string name="minutes_value">%1$s minutes</string>
     <string name="not_set">Not set</string>
@@ -96,6 +97,21 @@
     <string name="recommended_study_times_btn">Recommended Study Times</string>
     <string name="performance_label">Performance</string>
     <string name="time_of_day_label">Time of Day</string>
+    <string name="loading_recommendations">Loading your study history…</string>
+    <string name="no_recommendation_data">Complete and rate a study session to see recommendations.</string>
+    <string name="recommendation_load_failed">Study recommendations could not be loaded. Please try again.</string>
+    <string name="heart_rate_typical">Typical resting range</string>
+    <string name="heart_rate_caution">Outside the typical resting range</string>
+    <string name="heart_rate_alert">Unusual resting reading — rest and recheck</string>
+    <string name="heart_rate_no_reading">Waiting for a reliable sensor reading</string>
+    <string name="heart_rate_range_note">Colours use the general adult resting range of 60–100 BPM. They are informational and are not a medical diagnosis.</string>
+    <string name="scan_nearby_devices">Scan Nearby Devices</string>
+    <string name="tap_scan_to_find_devices">Tap Scan Nearby Devices to list BLE advertisers, discoverable Bluetooth devices, and devices already paired with this phone.</string>
+    <string name="scanning_for_nearby_devices">Scanning for nearby Bluetooth devices…</string>
+    <string name="no_bluetooth_devices_found">No devices were found. Make the other device discoverable or enable BLE advertising, then scan again.</string>
+    <string name="paired_device_source">Paired device</string>
+    <string name="classic_device_source">Discoverable Bluetooth device</string>
+    <string name="bluetooth_device_label">%1$s\nDevice ID: %2$s\n%3$s</string>
     <string-array name="task_types">
         <item>Assignment</item>
         <item>Exam</item>

@@ -64,6 +64,7 @@
                 android:padding="24dp">
 
                 <ImageView
+                    android:id="@+id/heartIcon"
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:contentDescription="@string/heart_icon_description"
@@ -99,6 +100,15 @@
                     android:text="@string/connect_to_begin"
                     android:textColor="@color/zone_text_secondary"
                     android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:text="@string/heart_rate_range_note"
+                    android:textColor="@color/zone_text_secondary"
+                    android:textSize="12sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -176,24 +186,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:orientation="horizontal"
-            android:weightSum="2">
+            android:orientation="vertical">
 
             <Button
                 android:id="@+id/scanButton"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:text="@string/scan_for_bluno" />
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="@string/scan_nearby_devices" />
 
             <Button
                 android:id="@+id/disconnectButton"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/disconnect" />
         </LinearLayout>
 
@@ -222,7 +228,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:padding="20dp"
-                android:text="@string/tap_scan_to_find_bluno"
+                android:text="@string/tap_scan_to_find_devices"
                 android:textColor="@color/zone_text_secondary"
                 android:textSize="14sp" />
         </FrameLayout>
