@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "database.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 5;
 
     public Database(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -23,8 +23,6 @@ public class Database extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
 
         Log.d("DATABASE", "CREATING tables");
-
-
 
         String userQuery =
                 "CREATE TABLE users (" +
@@ -77,6 +75,8 @@ public class Database extends SQLiteOpenHelper {
                         "event_name TEXT," +
                         "completion_time TEXT," +
                         "task_type TEXT," +
+                        "completed INTEGER DEFAULT 0," +
+                        "failed INTEGER DEFAULT 0," +
                         "FOREIGN KEY(user_id) REFERENCES users(id)" +
                         ")";
 
@@ -103,6 +103,12 @@ public class Database extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE objectives ADD COLUMN completion_time TEXT NOT NULL DEFAULT ''");
             db.execSQL("ALTER TABLE objectives ADD COLUMN task_type TEXT NOT NULL DEFAULT 'Other'");
             db.execSQL("UPDATE objectives SET event_name=objective_text WHERE event_name='' ");
+        }
+        if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE objectives ADD COLUMN completed INTEGER DEFAULT 0");
+        }
+        if (oldVersion < 5) {
+            db.execSQL("ALTER TABLE objectives ADD COLUMN failed INTEGER DEFAULT 0");
         }
     }
 
@@ -376,18 +382,10 @@ public class Database extends SQLiteOpenHelper {
             String endTimeStr = cursor.getString(cursor.getColumnIndexOrThrow("end_time"));
 
             if (startTimeStr != null) {
-                try {
-                    session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
-                } catch (Exception e) {
-                    Log.e("DATABASE", "Error parsing start_time: " + startTimeStr, e);
-                }
+                session.setStartTime(java.time.LocalDateTime.parse(startTimeStr));
             }
             if (endTimeStr != null) {
-                try {
-                    session.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
-                } catch (Exception e) {
-                    Log.e("DATABASE", "Error parsing end_time: " + endTimeStr, e);
-                }
+                session.setEndTime(java.time.LocalDateTime.parse(endTimeStr));
             }
 
             session.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow("duration")));
@@ -524,7 +522,57 @@ public class Database extends SQLiteOpenHelper {
         Cursor cursor = db.query(
                 "objectives",
                 null,
-                "user_id=? AND objective_date=?",
+                "user_id=? AND objective_date=? AND completed=0 AND failed=0",
+                new String[]{String.valueOf(userID), date},
+                null,
+                null,
+                null
+        );
+
+        while (cursor.moveToNext()) {
+
+            objectives.add(readObjective(cursor));
+        }
+
+        cursor.close();
+        return objectives;
+    }
+
+    public ArrayList<Objective> getCompletedObjectivesForDate(int userID, String date) {
+
+        ArrayList<Objective> objectives = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.query(
+                "objectives",
+                null,
+                "user_id=? AND objective_date=? AND completed=1",
+                new String[]{String.valueOf(userID), date},
+                null,
+                null,
+                null
+        );
+
+        while (cursor.moveToNext()) {
+
+            objectives.add(readObjective(cursor));
+        }
+
+        cursor.close();
+        return objectives;
+    }
+
+    public ArrayList<Objective> getFailedObjectivesForDate(int userID, String date) {
+
+        ArrayList<Objective> objectives = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.query(
+                "objectives",
+                null,
+                "user_id=? AND objective_date=? AND failed=1",
                 new String[]{String.valueOf(userID), date},
                 null,
                 null,
@@ -549,7 +597,7 @@ public class Database extends SQLiteOpenHelper {
         Cursor cursor = db.query(
                 "objectives",
                 null,
-                "user_id=? AND objective_date>?",
+                "user_id=? AND objective_date>? AND completed=0 AND failed=0",
                 new String[]{
                         String.valueOf(userID),
                         today
@@ -625,18 +673,50 @@ public class Database extends SQLiteOpenHelper {
         return updated == 1;
     }
 
+    public boolean markObjectiveCompleted(int objectiveID) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("completed", 1);
+        values.put("failed", 0);
+        int updated = db.update(
+                "objectives",
+                values,
+                "id=?",
+                new String[]{String.valueOf(objectiveID)}
+        );
+        return updated == 1;
+    }
+
+    public boolean markObjectiveFailed(int objectiveID) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("completed", 0);
+        values.put("failed", 1);
+        int updated = db.update(
+                "objectives",
+                values,
+                "id=?",
+                new String[]{String.valueOf(objectiveID)}
+        );
+        return updated == 1;
+    }
+
     private Objective readObjective(Cursor cursor) {
         String objectiveText = cursor.getString(
                 cursor.getColumnIndexOrThrow("objective_text"));
         String eventName = cursor.getString(
                 cursor.getColumnIndexOrThrow("event_name"));
+        boolean completed = cursor.getInt(cursor.getColumnIndexOrThrow("completed")) == 1;
+        boolean failed = cursor.getInt(cursor.getColumnIndexOrThrow("failed")) == 1;
         return new Objective(
                 cursor.getInt(cursor.getColumnIndexOrThrow("id")),
                 eventName,
                 cursor.getString(cursor.getColumnIndexOrThrow("objective_date")),
                 cursor.getString(cursor.getColumnIndexOrThrow("completion_time")),
                 cursor.getString(cursor.getColumnIndexOrThrow("task_type")),
-                objectiveText
+                objectiveText,
+                completed,
+                failed
         );
     }
 
