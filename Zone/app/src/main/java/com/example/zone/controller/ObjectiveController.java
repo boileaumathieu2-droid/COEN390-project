@@ -51,12 +51,27 @@ public class ObjectiveController {
         return database.getObjectivesForDate(userID, date);
     }
 
+    public ArrayList<Objective> getCompletedObjectivesForDate(int userID, String date){
+        return database.getCompletedObjectivesForDate(userID, date);
+    }
+
+    public ArrayList<Objective> getFailedObjectivesForDate(int userID, String date){
+        return database.getFailedObjectivesForDate(userID, date);
+    }
+
     public ArrayList<Objective> getObjectivesForFuture(int userID, String date){
         return database.getObjectivesForFuture(userID, date);
+    }
+
+    public boolean markObjectiveCompleted(int objectiveID) {
+        return database.markObjectiveCompleted(objectiveID);
+    }
+
+    public boolean markObjectiveFailed(int objectiveID) {
+        return database.markObjectiveFailed(objectiveID);
     }
 
     public int deletePastObjectives(int userID, String date){
         return database.deletePastObjectives(userID, date);
     }
-
 }
