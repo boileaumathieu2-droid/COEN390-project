@@ -22,8 +22,8 @@ import static org.junit.Assert.assertTrue;
 public class MainViewTimerTest {
 
     @Rule
-    public ActivityScenarioRule<MainView> activityRule =
-            new ActivityScenarioRule<>(MainView.class);
+    public ActivityScenarioRule<MainContainerActivity> activityRule =
+            new ActivityScenarioRule<>(MainContainerActivity.class);
 
     @Before
     public void setUp() {

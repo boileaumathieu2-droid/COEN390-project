@@ -14,11 +14,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.zone.R;
@@ -164,7 +159,7 @@ public class AnalyticsView extends Fragment {
                 statusId = R.string.heart_rate_no_reading;
                 break;
         }
-        int colour = ContextCompat.getColor(this, colourId);
+        int colour = ContextCompat.getColor(requireContext(), colourId);
         currentValue.setTextColor(colour);
         currentStatus.setTextColor(colour);
         currentStatus.setText(statusId);
