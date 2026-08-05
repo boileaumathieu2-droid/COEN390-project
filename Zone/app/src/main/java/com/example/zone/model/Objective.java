@@ -7,9 +7,11 @@ public class Objective {
     private String eventName;
     private String completionTime;
     private String taskType;
+    private boolean completed;
+    private boolean failed;
 
     public Objective(int objectiveID, String objectiveText, String objectiveDate) {
-        this(objectiveID, objectiveText, objectiveDate, "", "Other", objectiveText);
+        this(objectiveID, objectiveText, objectiveDate, "", "Other", objectiveText, false, false);
     }
 
     public Objective(
@@ -18,13 +20,17 @@ public class Objective {
             String objectiveDate,
             String completionTime,
             String taskType,
-            String objectiveText) {
+            String objectiveText,
+            boolean completed,
+            boolean failed) {
         this.objectiveID = objectiveID;
         this.objectiveText = objectiveText;
         this.objectiveDate = objectiveDate;
         this.eventName = eventName;
         this.completionTime = completionTime;
         this.taskType = taskType;
+        this.completed = completed;
+        this.failed = failed;
     }
 
     public void setObjectiveText(String objectiveText){
@@ -35,6 +41,14 @@ public class Objective {
         this.objectiveDate = objectiveDate;
     }
 
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
+    }
+
+    public void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+
     public String getObjectiveText(){
         return objectiveText;
     }
@@ -43,6 +57,14 @@ public class Objective {
     }
     public int getObjectiveID(){
         return objectiveID;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public boolean isFailed() {
+        return failed;
     }
 
     public String getEventName() {
