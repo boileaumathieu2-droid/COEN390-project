@@ -18,6 +18,7 @@ import com.example.zone.controller.ObjectiveController;
 import com.example.zone.model.Database;
 import com.example.zone.model.Objective;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -140,6 +141,8 @@ public class ObjectiveView extends AppCompatActivity {
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
+                    VirtualDatabase db = new VirtualDatabase();
+                    db.deleteObjective(objective.getObjectiveID());
                     controller.deleteObjective(objective.getObjectiveID());
                     refreshSelectedDateTasks();
                 })
@@ -148,13 +151,28 @@ public class ObjectiveView extends AppCompatActivity {
     }
 
     private void refreshSelectedDateTasks() {
-        selectedObjectives.clear();
-        selectedObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), date));
-        objectiveLabels.clear();
-        for (Objective objective : selectedObjectives) {
-            objectiveLabels.add(objective.getEventName());
-        }
-        selectedDateTitle.setText(getString(R.string.selected_date_tasks, date));
-        objectiveAdapter.notifyDataSetChanged();
+        VirtualDatabase db = new VirtualDatabase();
+        db.GetDailyObjectives(new VirtualDatabase.ObjectiveCallback() {
+            @Override
+            public void onComplete(ArrayList<Objective> objectives) {
+                // 1. Clear previous state
+                selectedObjectives.clear();
+                objectiveLabels.clear();
+
+                // 2. Add fetched Firestore objectives
+                selectedObjectives.addAll(objectives);
+
+                // 3. Extract event names into objectiveLabels
+                for (Objective objective : selectedObjectives) {
+                    if (objective.getEventName() != null) {
+                        objectiveLabels.add(objective.getEventName());
+                    }
+                }
+
+                // 4. Update UI elements once data is ready
+                selectedDateTitle.setText(getString(R.string.selected_date_tasks, date));
+                objectiveAdapter.notifyDataSetChanged();
+            }
+        }, date);
     }
 }

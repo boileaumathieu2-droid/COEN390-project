@@ -91,6 +91,7 @@ public class MainView extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Timer = TimerModel.getInstance(this);
         super.onCreate(savedInstanceState);
         Session.init(getApplicationContext());
         setContentView(R.layout.activity_main);

@@ -13,6 +13,7 @@ import com.example.zone.model.Database;
 import com.example.zone.model.Objective;
 import com.example.zone.model.ObjectiveAdapter;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -105,12 +106,18 @@ public class ObjectivesPageView extends AppCompatActivity {
     }
 
     private void refreshObjectives() {
+        VirtualDatabase db = new VirtualDatabase();
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        todayObjectives.clear();
-        todayObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), today));
-        futureObjectives.clear();
-        futureObjectives.addAll(controller.getObjectivesForFuture(Session.getUserID(), today));
-        todayAdapter.notifyDataSetChanged();
-        futureAdapter.notifyDataSetChanged();
+        db.GetDailyObjectives(todayList -> {
+            todayObjectives.clear();
+            todayObjectives.addAll(todayList);
+            todayAdapter.notifyDataSetChanged();
+            db.GetFutureObjectives(futureList -> {
+                futureObjectives.clear();
+                futureObjectives.addAll(futureList);
+                futureAdapter.notifyDataSetChanged();
+            }, today);
+
+        }, today);
     }
 }

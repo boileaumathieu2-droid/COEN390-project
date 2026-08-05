@@ -41,10 +41,9 @@ public class TimerSettingsView extends AppCompatActivity {
 
         initializeViews();
 
-        timerSettingsController = new TimerSettingsController(this);
+        timerSettingsController = new TimerSettingsController(this, this);
         timerSettingsController.initializeView();
     }
-
     private void initializeViews() {
         studyMinutes = findViewById(R.id.edit_study_minutes);
         studySeconds = findViewById(R.id.edit_study_seconds);

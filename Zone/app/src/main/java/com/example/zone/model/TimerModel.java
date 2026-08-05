@@ -1,9 +1,12 @@
 package com.example.zone.model;
 
+import android.content.Context;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import android.content.SharedPreferences;
 
 /**
  * Application-wide study timer.
@@ -12,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * opening Analytics, Settings, or another app does not pause the countdown.
  */
 public final class TimerModel {
-
+    private final SharedPreferences prefs;
     private static final int HEART_RATE_SAMPLE_SECONDS = 5;
     private static volatile TimerModel instance;
 
@@ -37,14 +40,21 @@ public final class TimerModel {
     private boolean reflectionPending;
     private ScheduledFuture<?> clockTask;
 
-    private TimerModel() {
+    private TimerModel(Context context) {
+        prefs = context.getApplicationContext()
+                .getSharedPreferences("timer_preferences", Context.MODE_PRIVATE);
+        studyDuration = prefs.getInt("studyDuration", 1500);
+        breakDuration = prefs.getInt("breakDuration", 300);
+        breakEnabled = prefs.getBoolean("breakEnabled", false);
+
+        remainingTime = studyDuration;
     }
 
-    public static TimerModel getInstance() {
+    public static TimerModel getInstance(Context context) {
         if (instance == null) {
             synchronized (TimerModel.class) {
                 if (instance == null) {
-                    instance = new TimerModel();
+                    instance = new TimerModel(context);
                 }
             }
         }
@@ -56,6 +66,9 @@ public final class TimerModel {
         if (!running && !breakTime) {
             remainingTime = studyDuration;
         }
+        prefs.edit()
+                .putInt("studyDuration", studyDuration)
+                .apply();
     }
 
     public synchronized void setBreakDuration(int duration) {
@@ -67,6 +80,9 @@ public final class TimerModel {
 
     public synchronized void setBreakEnabled(boolean enabled) {
         breakEnabled = enabled;
+        prefs.edit()
+                .putBoolean("breakEnabled", breakEnabled)
+                .apply();
     }
 
     public synchronized boolean isBreakEnabled() {

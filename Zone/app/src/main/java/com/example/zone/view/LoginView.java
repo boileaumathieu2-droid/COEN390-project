@@ -1,5 +1,7 @@
 package com.example.zone.view;
 
+import static com.example.zone.model.VirtualDatabase.isInternetAvailable;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
@@ -11,21 +13,17 @@ import com.example.zone.controller.Login;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.VirtualDatabase;
-
-
 public class LoginView extends AppCompatActivity {
     private Login controller;
-
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Session.init(this);
         VirtualDatabase db = new VirtualDatabase();
+        Database SQLdb = new Database(this);
+        String Username = db.getCurrentUserId();
 
-        if(db.getCurrentUserId() != null) {
-            String email = db.getCurrentUserEmail();
-            if (email != null) {
-                ensureLocalSession(email);
-            }
+        if (Username != null) {
+            ensureLocalSession(Username);
             Intent intent = new Intent(this, MainView.class);
             startActivity(intent);
             finish();
@@ -33,30 +31,36 @@ public class LoginView extends AppCompatActivity {
         }
 
         setContentView(R.layout.login_page);
-        EditText username = findViewById(R.id.usernameEditText);
+        EditText email = findViewById(R.id.usernameEditText);
         EditText password = findViewById(R.id.passwordEditText);
         TextView loginButton = findViewById(R.id.loginButton);
         TextView forgot_password = findViewById(R.id.forgotPassword);
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
-            String userStr = username.getText().toString();
-            db.signIn(userStr, password.getText().toString(), success-> {
+            String emailStr = email.getText().toString().trim();
+            String passwordStr = password.getText().toString().trim();
+            db.signIn(emailStr, passwordStr, success -> {
                 if (success) {
                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
-                    
-                    // Initialize local session
-                    ensureLocalSession(userStr);
-
+                    ensureLocalSession(db.getCurrentUserId());
                     Intent intent = new Intent(this, MainView.class);
                     startActivity(intent);
                     finish();
-                }
-                else {
-                    Toast.makeText(this, "Incorect information, Try Again!", Toast.LENGTH_SHORT).show();
+                } else {
+                    if (!isInternetAvailable(this)) {
+                        Toast.makeText(this,
+                                "Internet connection required to sign in.",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this,
+                                "Incorrect email or password.",
+                                Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         });
+        
         forgot_password.setOnClickListener(v -> {
             //Intent intent = new Intent(this, MainView.class);
             //startActivity(intent);
@@ -76,5 +80,6 @@ public class LoginView extends AppCompatActivity {
         }
         Session.setUserID(localId);
         Session.setUsername(username);
+        }
     }
-}
+
