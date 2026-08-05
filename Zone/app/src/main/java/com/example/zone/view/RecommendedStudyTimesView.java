@@ -172,6 +172,9 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
     }
 
     private void showDetailPopup(int binIndex) {
+        String[] ranges = {"0h-3h", "4h-7h", "8h-11h", "12h-15h", "16h-19h", "20h-23h"};
+        if (binIndex < 0 || binIndex >= ranges.length) return;
+
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_study_time_detail, null);
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -181,7 +184,6 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
         BarChart detailChart = dialogView.findViewById(R.id.detailedBarChart);
         Button closeButton = dialogView.findViewById(R.id.closeDetailButton);
 
-        String[] ranges = {"0h-3h", "4h-7h", "8h-11h", "12h-15h", "16h-19h", "20h-23h"};
         if (title != null) title.setText(getString(R.string.performance_detail_title, ranges[binIndex]));
 
         if (detailChart != null) setupDetailChart(detailChart, binIndex);
