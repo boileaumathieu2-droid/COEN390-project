@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -27,6 +28,7 @@ public class GradesTrackerView extends AppCompatActivity {
 
     private GradesTracker controller;
     private ListView subjectList;
+    private TextView noSubject;
     private ArrayList<Subject> subjects;
     private SubjectAdapter adapter;
 
@@ -58,6 +60,12 @@ public class GradesTrackerView extends AppCompatActivity {
         subjects.clear();
         subjects.addAll(controller.getSubjects(Session.getUserID()));
         adapter.notifyDataSetChanged();
+        if (subjects.isEmpty()){
+            noSubject.setVisibility(View.VISIBLE);
+        }
+        else{
+            noSubject.setVisibility(View.GONE);
+        }
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +75,7 @@ public class GradesTrackerView extends AppCompatActivity {
             getSupportActionBar().setTitle("Grades Tracker");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+        noSubject = findViewById(R.id.noSubjectsTextView);
         subjectList = findViewById(R.id.subjectListView);
         subjects = new ArrayList<>();
         adapter = new SubjectAdapter(this, subjects);
