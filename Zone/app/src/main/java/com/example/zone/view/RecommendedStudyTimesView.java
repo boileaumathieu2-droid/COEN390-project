@@ -31,6 +31,7 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
 
     private RecommendedStudyTimesController controller;
     private BarChart barChart;
+    private TextView chartStatusText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +39,12 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
         setContentView(R.layout.recommended_study_times);
 
         barChart = findViewById(R.id.performanceBarChart);
+        chartStatusText = findViewById(R.id.chartStatusText);
         Button backButton = findViewById(R.id.backToAnalyticsButton);
         Button mainMenuButton = findViewById(R.id.mainMenuButton);
 
         backButton.setOnClickListener(v -> finish());
-        mainMenuButton.setOnClickListener(v -> {
-            // Logic to return to main menu (might need to clear task stack)
-            finish(); 
-        });
+        mainMenuButton.setOnClickListener(v -> finish());
 
         // Initialize session
         Session.init(getApplicationContext());
@@ -99,12 +98,23 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
         leftAxis.setAxisMaximum(10f); // Rating scale 0-10
         leftAxis.setLabelCount(11, true);
         leftAxis.setDrawGridLines(true);
+        leftAxis.setTextColor(Color.DKGRAY);
 
         barChart.getAxisRight().setEnabled(false);
     }
 
     private void displayData() {
-        controller.getHourlyAverages(averages -> {
+        chartStatusText.setText(R.string.loading_recommendations);
+        chartStatusText.setVisibility(View.VISIBLE);
+        try {
+            controller.getHourlyAverages(averages -> showAverages(averages));
+        } catch (RuntimeException error) {
+            showLoadError();
+        }
+    }
+
+    private void showAverages(float[] averages) {
+        runOnUiThread(() -> {
             List<BarEntry> entries = new ArrayList<>();
             List<Integer> colors = new ArrayList<>();
 
@@ -119,8 +129,10 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
 
             if (entries.isEmpty()) {
                 barChart.clear();
-                barChart.setNoDataText("No productivity data available yet.");
+                barChart.setNoDataText(getString(R.string.no_recommendation_data));
                 barChart.invalidate();
+                chartStatusText.setText(R.string.no_recommendation_data);
+                chartStatusText.setVisibility(View.VISIBLE);
                 return;
             }
 
@@ -131,7 +143,17 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
             BarData barData = new BarData(dataSet);
             barData.setBarWidth(0.8f);
             barChart.setData(barData);
+            barChart.animateY(500);
             barChart.invalidate();
+        });
+    }
+
+    private void showLoadError() {
+        runOnUiThread(() -> {
+            barChart.clear();
+            barChart.invalidate();
+            chartStatusText.setText(R.string.recommendation_load_failed);
+            chartStatusText.setVisibility(View.VISIBLE);
         });
     }
 

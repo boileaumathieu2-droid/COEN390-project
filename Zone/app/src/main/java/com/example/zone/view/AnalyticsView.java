@@ -14,11 +14,18 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.zone.R;
 import com.example.zone.controller.AnalyticsController;
 import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.model.HeartRateReading;
+import com.example.zone.model.HeartRateRange;
 import com.example.zone.model.StudySessionModel;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -36,6 +43,7 @@ public class AnalyticsView extends Fragment {
     private AnalyticsController controller;
 
     private TextView currentValue;
+    private TextView currentStatus;
     private TextView restingValue;
     private TextView minValue;
     private TextView maxValue;
@@ -132,6 +140,34 @@ public class AnalyticsView extends Fragment {
 
     private String valueOrDash(int value) {
         return value > 0 ? String.valueOf(value) : "--";
+    }
+
+    private void applyHeartRateColour(int bpm) {
+        HeartRateRange.Level level = HeartRateRange.classify(bpm);
+        int colourId;
+        int statusId;
+        switch (level) {
+            case TYPICAL:
+                colourId = R.color.zone_success;
+                statusId = R.string.heart_rate_typical;
+                break;
+            case CAUTION:
+                colourId = R.color.zone_caution;
+                statusId = R.string.heart_rate_caution;
+                break;
+            case ALERT:
+                colourId = R.color.zone_alert;
+                statusId = R.string.heart_rate_alert;
+                break;
+            default:
+                colourId = R.color.zone_text_secondary;
+                statusId = R.string.heart_rate_no_reading;
+                break;
+        }
+        int colour = ContextCompat.getColor(this, colourId);
+        currentValue.setTextColor(colour);
+        currentStatus.setTextColor(colour);
+        currentStatus.setText(statusId);
     }
 
     private void configureChart() {

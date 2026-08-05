@@ -7,10 +7,10 @@
 
     <LinearLayout
         android:id="@+id/TextView"
-        android:layout_width="353dp"
-        android:layout_height="220dp"
+        android:layout_width="384dp"
+        android:layout_height="251dp"
         android:layout_marginTop="1dp"
-        android:background="#878787"
+        android:background="@color/white"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,37 +22,44 @@
             android:layout_height="42dp"
             android:gravity="center"
             android:text="New Grade"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp" />
+            android:textColor="#0C2666"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/gradeEditText"
-            android:layout_width="337dp"
-            android:layout_height="60dp"
+            android:layout_width="326dp"
+            android:layout_height="57dp"
             android:layout_gravity="center"
-            android:backgroundTint="#FFFFFF"
+            android:layout_marginTop="5dp"
+            android:backgroundTint="#000000"
             android:ems="10"
             android:hint="Grade"
-            android:inputType="text"
-            android:textColorHint="#FFFFFF" />
+            android:inputType="number|numberDecimal"
+            android:padding="10dp"
+            android:textColorHint="#5F5F5F"
+            android:textSize="20sp" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:id="@+id/layou"
+            android:layout_width="319dp"
+            android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:padding="20dp">
 
             <Button
                 android:id="@+id/buttonSave"
-                android:layout_width="45dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:layout_gravity="center"
                 android:layout_weight="1"
                 android:backgroundTint="#142EC1"
+                android:gravity="center"
                 android:text="Save"
-                android:textColor="#FFFFFF" />
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                app:cornerRadius="10dp" />
 
             <View
                 android:layout_width="0dp"
@@ -62,12 +69,16 @@
 
             <Button
                 android:id="@+id/buttonCancel"
-                android:layout_width="45dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
                 android:layout_weight="1"
                 android:backgroundTint="#142EC1"
                 android:text="Cancel"
-                android:textColor="#FFFFFF" />
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                app:cornerRadius="10dp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,13 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/zone_background"
     android:padding="16dp">
 
     <TextView
         android:id="@+id/studyTimesTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="20dp"
         android:text="@string/recommended_study_times_title"
         android:textColor="@color/black"
         android:textSize="28sp"
@@ -22,27 +23,42 @@
 
     <TextView
         android:id="@+id/chartDescription"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/recommended_study_times_desc"
         android:textColor="@color/black"
         android:textSize="16sp"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/studyTimesTitle" />
 
-    <!-- Bar Chart for Performance History -->
+    <TextView
+        android:id="@+id/chartStatusText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="@string/loading_recommendations"
+        android:textColor="@color/zone_text_secondary"
+        android:textSize="15sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/chartDescription" />
+
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/performanceBarChart"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="40dp"
-        app:layout_constraintBottom_toTopOf="@+id/backToAnalyticsButton"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/device_list_background"
+        android:padding="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/xAxisLabel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/chartDescription" />
+        app:layout_constraintTop_toBottomOf="@id/chartStatusText" />
 
     <TextView
         android:id="@+id/xAxisLabel"
@@ -52,6 +68,7 @@
         android:text="@string/time_of_day_label"
         android:textColor="@color/black"
         android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@id/backToAnalyticsButton"
         app:layout_constraintEnd_toEndOf="@+id/performanceBarChart"
         app:layout_constraintStart_toStartOf="@+id/performanceBarChart"
         app:layout_constraintTop_toBottomOf="@+id/performanceBarChart" />
@@ -60,7 +77,7 @@
         android:id="@+id/backToAnalyticsButton"
         android:layout_width="0dp"
         android:layout_height="52dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="12dp"
         android:text="@string/back_to_analytics"
         app:layout_constraintBottom_toTopOf="@+id/mainMenuButton"
         app:layout_constraintEnd_toEndOf="parent"

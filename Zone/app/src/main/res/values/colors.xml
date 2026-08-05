@@ -10,6 +10,8 @@
     <color name="zone_heart">#D8325A</color>
     <color name="zone_success">#197A4A</color>
     <color name="zone_warning">#B24B24</color>
+    <color name="zone_caution">#A36B00</color>
+    <color name="zone_alert">#B3261E</color>
     <color name="zone_text_primary">#231F22</color>
     <color name="zone_text_secondary">#655D62</color>
     <color name="blue0">#6750A4</color>

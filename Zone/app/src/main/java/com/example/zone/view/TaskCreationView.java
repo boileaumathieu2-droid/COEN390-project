@@ -1,7 +1,5 @@
 package com.example.zone.view;
 
-import static android.content.Intent.getIntent;
-
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
@@ -99,7 +97,7 @@ public class TaskCreationView extends AppCompatActivity {
     }
 
     private void showDatePicker() {
-        new DatePickerDialog(
+        DatePickerDialog dialog = new DatePickerDialog(
                 this,
                 (view, year, month, dayOfMonth) -> {
                     selectedCalendar.set(year, month, dayOfMonth);
@@ -108,7 +106,15 @@ public class TaskCreationView extends AppCompatActivity {
                 selectedCalendar.get(Calendar.YEAR),
                 selectedCalendar.get(Calendar.MONTH),
                 selectedCalendar.get(Calendar.DAY_OF_MONTH)
-        ).show();
+        );
+
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        dialog.getDatePicker().setMinDate(today.getTimeInMillis());
+        dialog.show();
     }
 
     private void updateDueDateButton() {
@@ -142,6 +148,10 @@ public class TaskCreationView extends AppCompatActivity {
             completionTimeInput.setError(getString(R.string.completion_time_required));
             return;
         }
+        if (isBeforeToday(selectedCalendar)) {
+            Toast.makeText(this, R.string.past_due_date_not_allowed, Toast.LENGTH_LONG).show();
+            return;
+        }
 
         if (taskId >= 0) {
             controller.updateTask(
@@ -153,5 +163,20 @@ public class TaskCreationView extends AppCompatActivity {
         Toast.makeText(this, R.string.task_saved, Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);
         finish();
+    }
+
+    private boolean isBeforeToday(Calendar date) {
+        Calendar dueDate = (Calendar) date.clone();
+        dueDate.set(Calendar.HOUR_OF_DAY, 0);
+        dueDate.set(Calendar.MINUTE, 0);
+        dueDate.set(Calendar.SECOND, 0);
+        dueDate.set(Calendar.MILLISECOND, 0);
+
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        return dueDate.before(today);
     }
 }
