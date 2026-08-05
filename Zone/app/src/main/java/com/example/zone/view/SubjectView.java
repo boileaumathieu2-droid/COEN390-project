@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -26,6 +27,7 @@ public class SubjectView extends AppCompatActivity {
     private String subjectName;
     private int subjectID;
     private ListView gradesList;
+    private TextView noGrades;
     private ArrayList<String> subjectGrades;
 
     private GradeAdapter adapter;
@@ -34,6 +36,12 @@ public class SubjectView extends AppCompatActivity {
         subjectGrades.clear();
         subjectGrades.addAll(controller.getGrades(subjectID));
         adapter.notifyDataSetChanged();
+        if (subjectGrades.isEmpty()){
+            noGrades.setVisibility(View.VISIBLE);
+        }
+        else{
+            noGrades.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -76,10 +84,12 @@ public class SubjectView extends AppCompatActivity {
 
 
         controller = new SubjectController(new Database(this));
+        
         subjectName = getIntent().getStringExtra("subjectName");
         subjectID = getIntent().getIntExtra("subjectID", -1);
         Button newGrade = findViewById(R.id.newGradeButton);
         gradesList = findViewById(R.id.gradeList);
+        noGrades = findViewById(R.id.noGradesTextView);
 
         subjectGrades = new ArrayList<>();
 
@@ -124,3 +134,4 @@ public class SubjectView extends AppCompatActivity {
         });
     }
 }
+
