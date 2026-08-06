@@ -21,8 +21,11 @@ public class DetectBlockedApplication extends AppCompatActivity {
         button = findViewById(R.id.button);
 
         button.setOnClickListener(v -> {
-            Intent intent = new Intent(this, MainView.class);
+            Intent intent = new Intent(this, MainContainerActivity.class);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
+            finish();
 
         });
     }
