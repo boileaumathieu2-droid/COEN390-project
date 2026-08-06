@@ -41,10 +41,8 @@ public class RecommendedStudyTimesView extends AppCompatActivity {
         barChart = findViewById(R.id.performanceBarChart);
         chartStatusText = findViewById(R.id.chartStatusText);
         Button backButton = findViewById(R.id.backToAnalyticsButton);
-        Button mainMenuButton = findViewById(R.id.mainMenuButton);
 
         backButton.setOnClickListener(v -> finish());
-        mainMenuButton.setOnClickListener(v -> finish());
 
         // Initialize session
         Session.init(getApplicationContext());

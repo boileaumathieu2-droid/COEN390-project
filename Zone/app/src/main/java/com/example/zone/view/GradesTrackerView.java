@@ -83,20 +83,6 @@ public class GradesTrackerView extends AppCompatActivity {
         Button newSubject = findViewById(R.id.newSubjectButton);
         controller = new GradesTracker(new Database(this));
         refresh();
-        subjectList.setOnItemClickListener((parent, view, position, id) -> {
-
-            Subject selectedSubject = subjects.get(position);
-
-            Intent intent = new Intent(
-                    GradesTrackerView.this,
-                    SubjectView.class
-            );
-
-            intent.putExtra("subjectName", selectedSubject.getSubjectName());
-            intent.putExtra("subjectID", selectedSubject.getSubjectID());
-
-            startActivity(intent);
-        });
         newSubject.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(GradesTrackerView.this);
             View popupView = getLayoutInflater().inflate(R.layout.add_subject_popup, null);
@@ -135,3 +121,4 @@ public class GradesTrackerView extends AppCompatActivity {
         });
     }
 }
+

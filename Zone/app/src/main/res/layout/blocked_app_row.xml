@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_vertical"
     android:minHeight="72dp"
     android:orientation="horizontal"
@@ -47,5 +48,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:contentDescription="@string/manage_blocked_apps" />
+        android:contentDescription="@string/manage_blocked_apps" 
+        app:thumbTint="@color/switch_color_thumb"
+        app:trackTint="@color/switch_color_track"
+        app:useMaterialThemeColors="false"/>
 </LinearLayout>

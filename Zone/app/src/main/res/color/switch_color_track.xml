@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Color when ON -->
+    <item android:state_checked="true" android:color="#D3D3D3" />
+    <!-- Color when OFF -->
+    <item android:color="#808080" />
+</selector>

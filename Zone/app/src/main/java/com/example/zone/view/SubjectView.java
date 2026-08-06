@@ -95,6 +95,7 @@ public class SubjectView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.subject_page);
         controller = new SubjectController(new Database(this));
+
         subjectName = getIntent().getStringExtra("subjectName");
         subjectID = getIntent().getStringExtra("subjectID");
         Button newGrade = findViewById(R.id.newGradeButton);
