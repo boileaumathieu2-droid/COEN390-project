@@ -11,6 +11,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.w3c.dom.Document;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -354,7 +356,203 @@ public class VirtualDatabase {
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
     }
+
+
+
+
+    public void deleteGrade(String subjectId, String gradeId) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("subjects")
+                .document(subjectId)
+                .collection("grades")
+                .document(gradeId)
+                .delete();
+    }
+    public interface GradesCallback {
+        void onComplete(ArrayList<String> Grades);
+    }
+
+    public void getGrades(GradesCallback callback, String subjectId) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(subjectId)
+                .collection("Grades")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<String> Grades = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        String grade = document.getString("grade");
+                        Grades.add(grade);
+                    }
+                    callback.onComplete(Grades);
+                });
+    }
+    public interface GradeEditCallback {
+        void onComplete(boolean success);
+    }
+    public void editGrade(GradeEditCallback callback, String subjectId, String gradeId, int grade, String type) {
+        String userId = getCurrentUserId();
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("grade", grade);
+        updates.put("type", type);
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(subjectId)
+                .collection("Grades")
+                .document(gradeId)
+                .update(updates)
+                .addOnSuccessListener(unused -> {
+                    callback.onComplete(true);
+                })
+                .addOnFailureListener(e -> {
+                    System.out.println("Edit grade failed: " + e.getMessage());
+                    callback.onComplete(false);
+                });
+    }
+
+    public void saveSubject(String subjectName) {
+        String userId = getCurrentUserId();
+     DocumentReference docRef = db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document();
+     String id = docRef.getId();
+     Map <String, Object> data = new HashMap<>();
+     data.put("SubjectID", id);
+     data.put("SubjectName", subjectName);
+     docRef.set(data);
+    }
+    public void saveGrade(String type, String grade, String SubjectId) {
+        String userId = getCurrentUserId();
+        DocumentReference docRef = db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(SubjectId)
+                .collection("Grades")
+                .document();
+        String id  =docRef.getId();
+        Map <String, Object> data = new HashMap<>();
+        data.put("GradeId", id);
+        data.put("type", type);
+        data.put("grade", grade);
+        docRef.set(data);
+    }
+
+    public void deleteSubject(String subject) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .document(subject)
+                .delete();
+    }
+    public interface SubjectsCallback {
+        void onSubjectsLoaded(ArrayList<Subject> subjects);
+    }
+    public interface SubjectExistsCallback {
+        void onResult(boolean exists);
+    }
+    public void checkIfSubjectExists(String subjectName, SubjectExistsCallback callback) {
+
+        String userId = getCurrentUserId();
+
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    for (DocumentSnapshot doc : querySnapshot) {
+
+                        String name = doc.getString("SubjectName");
+
+                        if (subjectName.equals(name)) {
+                            callback.onResult(true);
+                            return;
+                        }
+                    }
+
+                    callback.onResult(false);
+                })
+                .addOnFailureListener(e -> {
+                    callback.onResult(false);
+                });
+    }
+
+
+
+
+
+    public void getSubjects(SubjectsCallback callback) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("Subjects")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Subject> subjects = new ArrayList<>();
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        String subjectId = doc.getId();
+                        String subjectName = doc.getString("SubjectName");
+                        Subject subject = new Subject(subjectName, subjectId);
+                        subjects.add(subject);
+                    }
+
+                    callback.onSubjectsLoaded(subjects);
+                })
+                .addOnFailureListener(e -> {
+                    callback.onSubjectsLoaded(new ArrayList<>());
+                });
+    }
+//    public void getObjectives(ObjectiveCallback callback) {
+//        String userId = getCurrentUserId();
+//        db.collection("users")
+//                .document(userId)
+//                .collection("objectives")
+//                .get()
+//                .addOnSuccessListener(querySnapshot -> {
+//                    ArrayList<Objective> objectives = new ArrayList<>();
+//                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+//                        String objectiveID = document.getString("objectiveID");
+//                        String objectiveText = document.getString("objectiveText");
+//                        String objectiveDate = document.getString("objectiveDate");
+//                        String eventName = document.getString("eventName");
+//                        String completionTime = document.getString("completionTime");
+//                        String taskType = document.getString("taskType");
+//                        Objective objective = new Objective(
+//                                objectiveID,
+//                                eventName,
+//                                objectiveDate,
+//                                completionTime,
+//                                taskType,
+//                                objectiveText
+//                        );
+//                        objectives.add(objective);
+//                    }
+//                    callback.onComplete(objectives);
+//                });
+//    }
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
 
 
 

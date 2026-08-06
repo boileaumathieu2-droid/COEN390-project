@@ -18,6 +18,7 @@ import com.example.zone.R;
 import com.example.zone.controller.SubjectController;
 import com.example.zone.model.Database;
 import com.example.zone.model.GradeAdapter;
+import com.example.zone.model.VirtualDatabase;
 
 import java.util.ArrayList;
 
@@ -25,7 +26,7 @@ public class SubjectView extends AppCompatActivity {
 
     private SubjectController controller;
     private String subjectName;
-    private int subjectID;
+    private String subjectID;
     private ListView gradesList;
     private TextView noGrades;
     private ArrayList<String> subjectGrades;
@@ -33,16 +34,24 @@ public class SubjectView extends AppCompatActivity {
     private GradeAdapter adapter;
 
     private void refresh() {
-        subjectGrades.clear();
-        subjectGrades.addAll(controller.getGrades(subjectID));
-        adapter.notifyDataSetChanged();
-        if (subjectGrades.isEmpty()){
-            noGrades.setVisibility(View.VISIBLE);
-        }
-        else{
-            noGrades.setVisibility(View.GONE);
-        }
+        VirtualDatabase db = new VirtualDatabase();
+
+        db.getGrades(grades -> {
+            subjectGrades.clear();
+            subjectGrades.addAll(grades);
+
+            adapter.notifyDataSetChanged();
+
+            if (subjectGrades.isEmpty()) {
+                noGrades.setVisibility(View.VISIBLE);
+            } else {
+                noGrades.setVisibility(View.GONE);
+            }
+
+        }, subjectID);
     }
+
+
 
     @Override
     public boolean onSupportNavigateUp() {
@@ -50,36 +59,62 @@ public class SubjectView extends AppCompatActivity {
         return true;
     }
 
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.action_menu1, menu);
+        return true;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem option) {
+
+        int id = option.getItemId();
+
+        if (id == R.id.action_delete_subject) {
+            VirtualDatabase db = new VirtualDatabase();
+            System.out.println("SUBJECTID IS: " +subjectID);
+            db.deleteSubject(subjectID);
+
+          //  controller.deleteSubject(subjectID);
+            Intent intent = new Intent(this, GradesTrackerView.class);
+            startActivity(intent);
+            Toast.makeText(
+                    getApplicationContext(),
+                    "Subject deleted",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+
+        return super.onOptionsItemSelected(option);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.subject_page);
-
-
         controller = new SubjectController(new Database(this));
 
         subjectName = getIntent().getStringExtra("subjectName");
-        subjectID = getIntent().getIntExtra("subjectID", -1);
+        subjectID = getIntent().getStringExtra("subjectID");
         Button newGrade = findViewById(R.id.newGradeButton);
         gradesList = findViewById(R.id.gradeList);
         noGrades = findViewById(R.id.noGradesTextView);
-
+        VirtualDatabase db = new VirtualDatabase();
         subjectGrades = new ArrayList<>();
+
 
         adapter = new GradeAdapter(
                 this,
                 subjectGrades
         );
-
         gradesList.setAdapter(adapter);
-
         refresh();
-
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(subjectName);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
         newGrade.setOnClickListener(view -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(SubjectView.this);
             View popupView = getLayoutInflater().inflate(R.layout.add_grade_popup, null);
@@ -91,7 +126,6 @@ public class SubjectView extends AppCompatActivity {
             cancel.setOnClickListener(x -> dialog.dismiss());
             save.setOnClickListener(View -> {
                 String grade = userGrade.getText().toString().trim();
-
                 if (grade.isEmpty()) {
                     userGrade.setError("Enter a grade");
                     return;
@@ -100,16 +134,7 @@ public class SubjectView extends AppCompatActivity {
                     userGrade.setError("Grade must be a number from 0 to 100");
                     return;
                 }
-
-                if (!controller.addGrade(subjectID, grade)) {
-                    Toast.makeText(
-                            SubjectView.this,
-                            "Unable to save the grade",
-                            Toast.LENGTH_SHORT
-                    ).show();
-                    return;
-                }
-
+                db.saveGrade("", grade, subjectID);
                 refresh();
                 dialog.dismiss();
             });

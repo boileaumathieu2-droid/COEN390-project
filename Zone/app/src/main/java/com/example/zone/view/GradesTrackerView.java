@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +20,7 @@ import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.Subject;
 import com.example.zone.model.SubjectAdapter;
+import com.example.zone.model.VirtualDatabase;
 
 import java.util.ArrayList;
 
@@ -29,23 +31,41 @@ public class GradesTrackerView extends AppCompatActivity {
     private TextView noSubject;
     private ArrayList<Subject> subjects;
     private SubjectAdapter adapter;
+    private VirtualDatabase db = new VirtualDatabase();
 
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
     }
-    private void  refresh() {
-        subjects.clear();
-        subjects.addAll(controller.getSubjects(Session.getUserID()));
-        adapter.notifyDataSetChanged();
-        if (subjects.isEmpty()){
-            noSubject.setVisibility(View.VISIBLE);
-        }
-        else{
-            noSubject.setVisibility(View.GONE);
-        }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.action_menu, menu);
+//        return true;}
+//    public boolean onOptionsItemSelected(MenuItem option) {
+//        int id = option.getItemId();
+//        if (id == R.id.action_settings) {
+//            Intent intent = new Intent(GradesTrackerView.this, SettingsView.class);
+//            startActivity(intent);
+//        }
+//        return super.onOptionsItemSelected(option);
+//    }
+    private void refresh() {
+        db.getSubjects(subjectList -> {
+            subjects.clear();
+            subjects.addAll(subjectList);
+
+            adapter.notifyDataSetChanged();
+
+            if (subjects.isEmpty()) {
+                noSubject.setVisibility(View.VISIBLE);
+            } else {
+                noSubject.setVisibility(View.GONE);
+            }
+        });
     }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,34 +93,32 @@ public class GradesTrackerView extends AppCompatActivity {
             EditText subjectName = popupView.findViewById(R.id.subjectEditText);
             cancel.setOnClickListener(x -> dialog.dismiss());
             save.setOnClickListener(View -> {
-
-                String name = subjectName.getText().toString();
-
+                String name = subjectName.getText().toString().trim();
                 if (name.isEmpty()) {
                     subjectName.setError("Error: Input a valid subject name");
+                    return;
                 }
-                else if (controller.subjectAlreadyExists(
-                        Session.getUserID(),
-                        name
-                )) {
-                    subjectName.setError(
-                            "Error: You already have a subject called " + name
-                    );
-                }
-                else {
-                    controller.addSubject(
-                            name,
-                            Session.getUserID()
-                    );
-
-                    refresh();
-                    dialog.dismiss();
-                }
+                db.checkIfSubjectExists(name, exists -> {
+                    if (exists) {
+                        Toast.makeText(
+                                GradesTrackerView.this,
+                                "Subject already exists",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    } else {
+                        db.saveSubject(name);
+                        Toast.makeText(
+                                GradesTrackerView.this,
+                                "Subject saved",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                        refresh();
+                        dialog.dismiss();
+                    }
+                });
             });
             dialog.show();
         });
-
     }
-
 }
 
