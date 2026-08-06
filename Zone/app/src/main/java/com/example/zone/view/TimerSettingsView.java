@@ -41,7 +41,7 @@ public class TimerSettingsView extends AppCompatActivity {
 
         initializeViews();
 
-        timerSettingsController = new TimerSettingsController(this);
+        timerSettingsController = new TimerSettingsController(this, this);
         timerSettingsController.initializeView();
     }
 

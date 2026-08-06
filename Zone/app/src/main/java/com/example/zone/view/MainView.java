@@ -36,6 +36,7 @@ import com.example.zone.model.Session;
 import com.example.zone.model.StudySessionModel;
 import com.example.zone.model.StudyTipsModel;
 import com.example.zone.model.TimerModel;
+import com.example.zone.model.TimerSettingsModel;
 import com.example.zone.model.VirtualDatabase;
 
 import java.text.SimpleDateFormat;
@@ -59,6 +60,7 @@ public class MainView extends Fragment {
     private final TimerModel timer = TimerModel.getInstance();
     private final Handler timerUiHandler = new Handler(Looper.getMainLooper());
     private final Handler tipHandler = new Handler(Looper.getMainLooper());
+
 
     private TextView timerDisplay;
     private TextView timerTitle;
@@ -101,12 +103,16 @@ public class MainView extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_main, container, false);
 
+        TimerSettingsModel timerSettingsModel = new TimerSettingsModel(requireContext());
+        timer.setStudyDuration(timerSettingsModel.getStudyDuration());
+        timer.setBreakDuration(timerSettingsModel.getBreakDuration());
+        timer.setBreakEnabled(timerSettingsModel.isBreakEnabled());
+
+        View view = inflater.inflate(R.layout.activity_main, container, false);
         today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         objectiveController = new ObjectiveController(new Database(requireContext()));
         mainController = new MainController(requireContext());
-
         bindViews(view);
         setupDailyObjectives();
         setupStudyTips();
@@ -376,4 +382,6 @@ public class MainView extends Fragment {
         tipHandler.removeCallbacksAndMessages(null);
         super.onDestroyView();
     }
+
+
 }

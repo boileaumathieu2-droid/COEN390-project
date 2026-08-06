@@ -484,6 +484,21 @@ public class VirtualDatabase {
                 });
     }
 
+    public void setTimerSettings(double studyTime, double breakTime, boolean isBreakEnabled) {
+        String userId = getCurrentUserId();
+        Map<String, Object> data = new HashMap<>();
+        data.put("studyTime", studyTime);
+        data.put("breakTime", breakTime);
+        data.put("isBreakEnabled", isBreakEnabled);
+        db.collection("users")
+                .document(userId)
+                .collection("timerSettings")
+                .document("settings")
+                .set(data);
+        }
+    public interface TimerSettingsCallback {
+        void onComplete();
+    }
 
 
 

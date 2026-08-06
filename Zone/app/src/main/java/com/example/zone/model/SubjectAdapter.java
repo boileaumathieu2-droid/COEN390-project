@@ -52,9 +52,8 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
             });
 
             deleteButton.setOnClickListener(v -> {
-
-                controller.deleteSubject(currentSubject.getSubjectID());
-
+                VirtualDatabase db = new VirtualDatabase();
+                db.deleteSubject(currentSubject.getSubjectID());
                 remove(currentSubject);
 
                 notifyDataSetChanged();

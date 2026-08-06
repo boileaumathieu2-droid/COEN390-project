@@ -1,18 +1,22 @@
 package com.example.zone.controller;
 
+import android.content.Context;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 import com.example.zone.model.TimerModel;
 import com.example.zone.R;
+import com.example.zone.model.TimerSettingsModel;
 import com.example.zone.view.TimerSettingsView;
+
+import java.util.Timer;
 
 public class TimerSettingsController {
 
     private TimerSettingsView timerSettingsView;
     private TimerModel timerModel;
 
-    public TimerSettingsController(TimerSettingsView activity) {
+    public TimerSettingsController(TimerSettingsView activity, Context context) {
         this.timerSettingsView = activity;
         this.timerModel = TimerModel.getInstance();
 
@@ -25,7 +29,7 @@ public class TimerSettingsController {
         // Link buttons to their actions
         Button saveButton = activity.findViewById(R.id.button_save_settings);
         if (saveButton != null) {
-            saveButton.setOnClickListener(v -> saveSettings());
+            saveButton.setOnClickListener(v -> saveSettings(context));
         }
 
         Button cancelButton = activity.findViewById(R.id.button_cancel_settings);
@@ -81,15 +85,13 @@ public class TimerSettingsController {
     /**
      * Controller function: Gathers data from View, validates/parses it, and updates the Model.
      */
-    public void saveSettings() {
+    public void saveSettings(Context context) {
         int studyMins = parseInput(timerSettingsView.getStudyMinsText());
         int studySecs = parseInput(timerSettingsView.getStudySecsText());
         int breakMins = parseInput(timerSettingsView.getBreakMinsText());
         int breakSecs = parseInput(timerSettingsView.getBreakSecsText());
-
         int studyTotal = (studyMins * 60) + studySecs;
         int breakTotal = (breakMins * 60) + breakSecs;
-
         if (studyTotal <= 0) {
             Toast.makeText(timerSettingsView,
                     "Enter a study time greater than 0.",
@@ -104,14 +106,16 @@ public class TimerSettingsController {
                     Toast.LENGTH_LONG).show();
             return;
         }
-
+        TimerSettingsModel model = new TimerSettingsModel(context);
+        model.setStudyDuration(studyTotal);
+        model.setBreakEnabled(breakEnabled);
+        model.setStudyBreak(breakTotal);
         timerModel.stopAndReset();
         timerModel.setStudyDuration(studyTotal);
         timerModel.setBreakDuration(breakTotal);
         timerModel.setBreakEnabled(breakEnabled);
         timerSettingsView.finish();
     }
-
     public void cancelSettings() {
         timerSettingsView.finish();
     }
