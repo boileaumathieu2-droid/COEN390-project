@@ -52,7 +52,7 @@ public class Database extends SQLiteOpenHelper {
         String sessionQuery =
                 "CREATE TABLE sessions (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "user_id INTEGER," +
+                        "user_id TEXT," +
                         "start_time TEXT," +
                         "end_time TEXT," +
                         "duration INTEGER," +
@@ -456,7 +456,7 @@ public class Database extends SQLiteOpenHelper {
         return data != null ? data : new int[0];
     }
 
-    public long addObjective(int userID, String text, String date) {
+    public long addObjective(String userID, String text, String date) {
 
         SQLiteDatabase db = getWritableDatabase();
 
@@ -472,7 +472,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public long addTask(
-            int userID,
+            String userID,
             String eventName,
             String dueDate,
             String completionTime,
@@ -568,7 +568,7 @@ public class Database extends SQLiteOpenHelper {
         return objectives;
     }
 
-    public boolean deleteObjective(int objectiveID){
+    public boolean deleteObjective(String objectiveID){
         SQLiteDatabase db = getWritableDatabase();
         int deleted = db.delete(
                 "objectives",
@@ -588,7 +588,7 @@ public class Database extends SQLiteOpenHelper {
         return deleted == 1;
     }
 
-    public boolean updateObjective(int objectiveID, String text, String date) {
+    public boolean updateObjective(String objectiveID, String text, String date) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("objective_text", text);
@@ -603,7 +603,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public boolean updateTask(
-            int objectiveID,
+            String objectiveID,
             String eventName,
             String dueDate,
             String completionTime,
@@ -631,7 +631,7 @@ public class Database extends SQLiteOpenHelper {
         String eventName = cursor.getString(
                 cursor.getColumnIndexOrThrow("event_name"));
         return new Objective(
-                cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                cursor.getString(cursor.getColumnIndexOrThrow("id")),
                 eventName,
                 cursor.getString(cursor.getColumnIndexOrThrow("objective_date")),
                 cursor.getString(cursor.getColumnIndexOrThrow("completion_time")),
@@ -640,7 +640,8 @@ public class Database extends SQLiteOpenHelper {
         );
     }
 
-    public int deletePastObjectives(int userID, String date) {
+
+    public int deletePastObjectives(String userID, String date) {
 
         SQLiteDatabase db = getWritableDatabase();
 

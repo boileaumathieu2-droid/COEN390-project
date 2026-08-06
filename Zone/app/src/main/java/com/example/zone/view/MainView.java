@@ -69,7 +69,7 @@ public class MainView extends Fragment {
     private Button pauseButton;
     private Button resetButton;
     private Button completeButton;
-    
+
     private boolean reflectionScreenOpen;
 
     private final Runnable timerUiUpdater = new Runnable() {
@@ -118,7 +118,7 @@ public class MainView extends Fragment {
 
         handleIntent(getActivity() != null ? getActivity().getIntent() : null);
         updateTimerUi();
-        
+
         return view;
     }
 
@@ -133,20 +133,32 @@ public class MainView extends Fragment {
         resetButton = view.findViewById(R.id.resetTimer);
         completeButton = view.findViewById(R.id.completeTimer);
     }
-
+//    System.out.println("this function is getting called");
+//    VirtualDatabase db = new VirtualDatabase();
+//    String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+//        db.GetDailyObjectives(todayList -> {
+//        System.out.println("Today's Objectives:");
+//        for (Objective objective : todayList) {
+//            System.out.println(objective.getEventName());
+//        }
+//        todayObjectives.clear();
+//        todayObjectives.addAll(todayList);
+//        to
     private void setupDailyObjectives() {
         dailyObjectives = new ArrayList<>();
         objectiveAdapter = new MainViewObjectiveAdapter(requireContext(), dailyObjectives);
         dailyGoals.setAdapter(objectiveAdapter);
-        dailyGoals.setOnItemClickListener((parent, view, position, id) ->
-                startActivity(new Intent(requireContext(), ObjectiveView.class)));
+        dailyGoals.setOnItemClickListener((parent, view, position, id) -> {
+            if (getActivity() instanceof MainContainerActivity) {
+                ((MainContainerActivity) getActivity()).switchToTab(0);
+            }
+        });
         objectivesPrompt.setOnClickListener(v -> {
             if (getActivity() instanceof MainContainerActivity) {
                 ((MainContainerActivity) getActivity()).switchToTab(0);
             }
         });
     }
-
     private void setupStudyTips() {
         tipModel = new StudyTipsModel();
         if (tipText != null) {
@@ -158,11 +170,11 @@ public class MainView extends Fragment {
 
     private void setupButtons(View view) {
         view.findViewById(R.id.timerSettings).setOnClickListener(v -> mainController.onTimerSettingsClicked());
-        
+
         // Swiping replaces these buttons
         view.findViewById(R.id.objectivesButton).setVisibility(View.GONE);
         view.findViewById(R.id.analyticsButton).setVisibility(View.GONE);
-        view.findViewById(R.id.gradesTrackerButton).setOnClickListener(v -> 
+        view.findViewById(R.id.gradesTrackerButton).setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), GradesTrackerView.class)));
 
         startButton.setOnClickListener(v -> startStudyOrBreak());
@@ -187,7 +199,6 @@ public class MainView extends Fragment {
             intent.removeExtra("complete");
         }
     }
-
     private void startStudyOrBreak() {
         if (!timer.isBreakTime()) {
             BlockedAppsStore.requestPermissionIfNeeded(requireActivity());
@@ -198,7 +209,6 @@ public class MainView extends Fragment {
         }
         updateTimerUi();
     }
-
     private void pauseOrResume() {
         if (timer.isRunning()) {
             timer.pauseTimer();
@@ -241,28 +251,26 @@ public class MainView extends Fragment {
         manageDnD(false);
         startActivity(new Intent(requireContext(), reflectionView.class));
     }
-
     private void refreshDailyObjectives() {
-        if (dailyObjectives == null || objectiveController == null) {
+        if (dailyObjectives == null) {
             return;
         }
-        dailyObjectives.clear();
-        int userId = Session.getUserID();
-        if (userId >= 0) {
-            dailyObjectives.addAll(
-                    objectiveController.getObjectivesForDate(userId, today)
-            );
-        }
-        objectiveAdapter.notifyDataSetChanged();
-
-        boolean empty = dailyObjectives.isEmpty();
-        dailyGoals.setVisibility(empty ? View.GONE : View.VISIBLE);
-        objectivesPrompt.setVisibility(empty ? View.VISIBLE : View.GONE);
-        if (empty) {
-            objectivesPrompt.setText("You have not set any goals for today. Swipe left to set goals.");
-        }
-        resizeDailyGoalsList();
+        VirtualDatabase vdb = new VirtualDatabase();
+        vdb.GetDailyObjectives(objectives -> {
+            dailyObjectives.clear();
+            dailyObjectives.addAll(objectives);
+            objectiveAdapter.notifyDataSetChanged();
+            boolean empty = dailyObjectives.isEmpty();
+            dailyGoals.setVisibility(empty ? View.GONE : View.VISIBLE);
+            objectivesPrompt.setVisibility(empty ? View.VISIBLE : View.GONE);
+            if (empty) {
+                objectivesPrompt.setText("You have not set any goals for today. Swipe left to set goals.");
+            }
+            resizeDailyGoalsList();
+        }, today);
     }
+
+
 
     private void resizeDailyGoalsList() {
         if (dailyObjectives.isEmpty()) {
