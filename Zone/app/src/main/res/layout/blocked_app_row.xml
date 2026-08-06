@@ -47,5 +47,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:contentDescription="@string/manage_blocked_apps" />
+        android:contentDescription="@string/manage_blocked_apps" 
+        app:thumbTint="@color/switch_color_thumb"
+        app:trackTint="@color/switch_color_track"
+        app:useMaterialThemeColors="false"/>
 </LinearLayout>
