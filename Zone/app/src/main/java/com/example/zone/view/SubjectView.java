@@ -50,33 +50,6 @@ public class SubjectView extends AppCompatActivity {
         return true;
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.action_menu1, menu);
-        return true;
-    }
-
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem option) {
-
-        int id = option.getItemId();
-
-        if (id == R.id.action_delete_subject) {
-            controller.deleteSubject(subjectID);
-            Intent intent = new Intent(this, GradesTrackerView.class);
-            startActivity(intent);
-            Toast.makeText(
-                    getApplicationContext(),
-                    "Subject deleted",
-                    Toast.LENGTH_SHORT
-            ).show();
-        }
-
-        return super.onOptionsItemSelected(option);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,7 +57,7 @@ public class SubjectView extends AppCompatActivity {
 
 
         controller = new SubjectController(new Database(this));
-        
+
         subjectName = getIntent().getStringExtra("subjectName");
         subjectID = getIntent().getIntExtra("subjectID", -1);
         Button newGrade = findViewById(R.id.newGradeButton);
