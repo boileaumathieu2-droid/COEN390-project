@@ -148,15 +148,17 @@ public class MainView extends Fragment {
         dailyObjectives = new ArrayList<>();
         objectiveAdapter = new MainViewObjectiveAdapter(requireContext(), dailyObjectives);
         dailyGoals.setAdapter(objectiveAdapter);
-        dailyGoals.setOnItemClickListener((parent, view, position, id) ->
-                startActivity(new Intent(requireContext(), ObjectiveView.class)));
+        dailyGoals.setOnItemClickListener((parent, view, position, id) -> {
+            if (getActivity() instanceof MainContainerActivity) {
+                ((MainContainerActivity) getActivity()).switchToTab(0);
+            }
+        });
         objectivesPrompt.setOnClickListener(v -> {
             if (getActivity() instanceof MainContainerActivity) {
                 ((MainContainerActivity) getActivity()).switchToTab(0);
             }
         });
     }
-
     private void setupStudyTips() {
         tipModel = new StudyTipsModel();
         if (tipText != null) {
@@ -197,7 +199,6 @@ public class MainView extends Fragment {
             intent.removeExtra("complete");
         }
     }
-
     private void startStudyOrBreak() {
         if (!timer.isBreakTime()) {
             BlockedAppsStore.requestPermissionIfNeeded(requireActivity());
@@ -208,7 +209,6 @@ public class MainView extends Fragment {
         }
         updateTimerUi();
     }
-
     private void pauseOrResume() {
         if (timer.isRunning()) {
             timer.pauseTimer();
