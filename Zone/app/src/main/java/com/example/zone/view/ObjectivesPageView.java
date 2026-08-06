@@ -2,7 +2,9 @@ package com.example.zone.view;
 
 import android.os.Bundle;
 import android.content.Intent;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +15,7 @@ import com.example.zone.model.Database;
 import com.example.zone.model.Objective;
 import com.example.zone.model.ObjectiveAdapter;
 import com.example.zone.model.Session;
-import com.example.zone.model.VirtualDatabase;
+import com.google.android.material.card.MaterialCardView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +28,10 @@ public class ObjectivesPageView extends AppCompatActivity {
     private ObjectiveController controller;
     private ObjectiveAdapter todayAdapter;
     private ObjectiveAdapter futureAdapter;
+    private MaterialCardView todayObjCard;
+    private MaterialCardView futureObjCard;
+    private TextView todayObjText;
+    private TextView futureObjText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +46,10 @@ public class ObjectivesPageView extends AppCompatActivity {
         controller = new ObjectiveController(new Database(this));
         ListView todayList = findViewById(R.id.todayObjectivesList);
         ListView futureList = findViewById(R.id.futureObjectivesList);
+        todayObjText = findViewById(R.id.todayObjectivesTextView);
+        futureObjText = findViewById(R.id.futureObjectivesTextView);
+        todayObjCard = findViewById(R.id.todayCard);
+        futureObjCard = findViewById(R.id.futureCard);
         todayAdapter = new ObjectiveAdapter(this, todayObjectives);
         futureAdapter = new ObjectiveAdapter(this, futureObjectives);
         todayList.setAdapter(todayAdapter);
@@ -94,12 +104,11 @@ public class ObjectivesPageView extends AppCompatActivity {
     }
 
     private void confirmDelete(Objective objective) {
-        VirtualDatabase db  = new VirtualDatabase();
         new AlertDialog.Builder(this)
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
-                    db.deleteTask(objective.getObjectiveID());
+                    controller.deleteObjective(objective.getObjectiveID());
                     refreshObjectives();
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -107,31 +116,29 @@ public class ObjectivesPageView extends AppCompatActivity {
     }
 
     private void refreshObjectives() {
-        System.out.println("this function is getting called");
-        VirtualDatabase db = new VirtualDatabase();
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        db.GetDailyObjectives(todayList -> {
-            System.out.println("Today's Objectives:");
-            for (Objective objective : todayList) {
-                System.out.println(objective.getEventName());
-            }
-            todayObjectives.clear();
-            todayObjectives.addAll(todayList);
-            todayAdapter.notifyDataSetChanged();
+        todayObjectives.clear();
+        todayObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), today));
+        futureObjectives.clear();
+        futureObjectives.addAll(controller.getObjectivesForFuture(Session.getUserID(), today));
+        todayAdapter.notifyDataSetChanged();
+        futureAdapter.notifyDataSetChanged();
+        if (todayObjectives.isEmpty()){
+            todayObjText.setVisibility(View.VISIBLE);
+            todayObjCard.setVisibility(View.GONE);
+        }
+        else {
+            todayObjText.setVisibility(View.GONE);
+            todayObjCard.setVisibility(View.VISIBLE);
+        }
+        if (futureObjectives.isEmpty()){
+            futureObjText.setVisibility(View.VISIBLE);
+            futureObjCard.setVisibility(View.GONE);
+        }
+        else {
+            futureObjText.setVisibility(View.GONE);
+            futureObjCard.setVisibility(View.VISIBLE);
+        }
 
-            db.GetFutureObjectives(futureList -> {
-
-                System.out.println("Future Objectives:");
-                for (Objective objective : futureList) {
-                    System.out.println(objective.getEventName());
-                }
-
-                futureObjectives.clear();
-                futureObjectives.addAll(futureList);
-                futureAdapter.notifyDataSetChanged();
-
-            }, today);
-
-        }, today);
     }
 }
