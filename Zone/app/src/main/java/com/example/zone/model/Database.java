@@ -211,47 +211,31 @@ public class Database extends SQLiteOpenHelper {
         return db.insert("subjects", null, values);
     }
 
-    public ArrayList<Subject> getSubjects(int userID){
-
-        ArrayList<Subject> subjects = new ArrayList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-
-
-        Cursor cursor = db.query(
-                "subjects",
-                null,
-                "user_id=?",
-                new String[]{String.valueOf(userID)},
-                null,
-                null,
-                null
-        );
-
-
-        while(cursor.moveToNext()){
-
-            int subjectID = cursor.getInt(
-                    cursor.getColumnIndexOrThrow("id")
-            );
-
-            String name = cursor.getString(
-                    cursor.getColumnIndexOrThrow("subject_name")
-            );
-
-
-            ArrayList<String> grades = getGrades(subjectID);
-
-
-            subjects.add(new Subject(subjectID, name, grades));
-        }
-
-
-        cursor.close();
-
-        return subjects;
-    }
-
+//    public ArrayList<Subject> getSubjects(int userID){
+//        ArrayList<Subject> subjects = new ArrayList<>();
+//        SQLiteDatabase db = getReadableDatabase();
+//        Cursor cursor = db.query(
+//                "subjects",
+//                null,
+//                "user_id=?",
+//                new String[]{String.valueOf(userID)},
+//                null,
+//                null,
+//                null
+//        );
+//        while(cursor.moveToNext()){
+//            int subjectID = cursor.getInt(
+//                    cursor.getColumnIndexOrThrow("id")
+//            );
+//            String name = cursor.getString(
+//                    cursor.getColumnIndexOrThrow("subject_name")
+//            );
+//            ArrayList<String> grades = getGrades(subjectID);
+//            subjects.add(new Subject(subjectID, name, grades));
+//        }
+//        cursor.close();
+//        return subjects;
+//    }
     public boolean subjectAlreadyExists(int userID, String subjectName) {
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.query(
@@ -284,9 +268,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public ArrayList<String> getGrades(int subjectID){
-
         ArrayList<String> grades = new ArrayList<>();
-
         SQLiteDatabase db = getReadableDatabase();
 
 

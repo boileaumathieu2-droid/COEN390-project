@@ -252,9 +252,6 @@ public class MainView extends Fragment {
         startActivity(new Intent(requireContext(), reflectionView.class));
     }
     private void refreshDailyObjectives() {
-        if (dailyObjectives == null) {
-            return;
-        }
         VirtualDatabase vdb = new VirtualDatabase();
         vdb.GetDailyObjectives(objectives -> {
             dailyObjectives.clear();

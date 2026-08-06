@@ -50,17 +50,13 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
                 intent.putExtra("subjectID", currentSubject.getSubjectID());
                 getContext().startActivity(intent);
             });
-
             deleteButton.setOnClickListener(v -> {
-
-                controller.deleteSubject(currentSubject.getSubjectID());
-
+                VirtualDatabase db = new VirtualDatabase();
+                db.deleteSubject(currentSubject.getSubjectID());
                 remove(currentSubject);
-
                 notifyDataSetChanged();
             });
         }
-
         return convertView;
     }
 }
