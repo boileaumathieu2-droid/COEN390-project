@@ -1,98 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/zone_background"
-    android:padding="16dp">
+    android:background="@drawable/background_gradient"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/studyTimesTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginTop="20dp"
+        android:gravity="center"
         android:text="@string/recommended_study_times_title"
         android:textColor="@color/black"
         android:textSize="28sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/chartDescription"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:gravity="center"
         android:text="@string/recommended_study_times_desc"
         android:textColor="@color/black"
-        android:textSize="16sp"
-        android:gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/studyTimesTitle" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/chartStatusText"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:gravity="center"
         android:text="@string/loading_recommendations"
         android:textColor="@color/zone_text_secondary"
-        android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/chartDescription" />
+        android:textSize="15sp" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/performanceBarChart"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="332dp"
+        android:layout_gravity="center"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="14dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="1dp"
         android:background="@drawable/device_list_background"
-        android:padding="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/xAxisLabel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/chartStatusText" />
+        android:padding="8dp" />
 
     <TextView
         android:id="@+id/xAxisLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginTop="8dp"
+        android:layout_marginBottom="20dp"
         android:text="@string/time_of_day_label"
         android:textColor="@color/black"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@id/backToAnalyticsButton"
-        app:layout_constraintEnd_toEndOf="@+id/performanceBarChart"
-        app:layout_constraintStart_toStartOf="@+id/performanceBarChart"
-        app:layout_constraintTop_toBottomOf="@+id/performanceBarChart" />
+        android:textSize="14sp" />
 
     <Button
         android:id="@+id/backToAnalyticsButton"
-        android:layout_width="0dp"
+        android:layout_width="335dp"
         android:layout_height="52dp"
+        android:layout_gravity="center"
         android:layout_marginBottom="12dp"
+        android:backgroundTint="#1E3A6F"
+        android:gravity="center"
+        android:paddingLeft="20dp"
         android:text="@string/back_to_analytics"
-        app:layout_constraintBottom_toTopOf="@+id/mainMenuButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.7" />
+        android:textSize="16sp"
+        app:icon="@drawable/ic_graph"
+        app:iconGravity="start" />
 
-    <Button
-        android:id="@+id/mainMenuButton"
-        android:layout_width="0dp"
-        android:layout_height="52dp"
-        android:layout_marginBottom="24dp"
-        android:text="@string/return_to_main_menu"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.7" />
+</LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
