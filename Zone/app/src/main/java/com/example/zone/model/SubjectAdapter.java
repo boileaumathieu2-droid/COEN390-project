@@ -27,7 +27,6 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
         this.controller = new SubjectController(new Database(context));
     }
 
-
     @Override
     @NonNull
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
@@ -51,22 +50,13 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
                 intent.putExtra("subjectID", currentSubject.getSubjectID());
                 getContext().startActivity(intent);
             });
-
             deleteButton.setOnClickListener(v -> {
-
-                controller.deleteSubject(currentSubject.getSubjectID());
-
+                VirtualDatabase db = new VirtualDatabase();
+                db.deleteSubject(currentSubject.getSubjectID());
                 remove(currentSubject);
-
                 notifyDataSetChanged();
             });
-        if (subject != null) {
-            System.out.println("Subject ID: " + subject.getSubjectID());
-            System.out.println("Subject Name: " + subject.getSubjectName());
-
-            text.setText(subject.getSubjectName());
         }
-
         return convertView;
     }
 }

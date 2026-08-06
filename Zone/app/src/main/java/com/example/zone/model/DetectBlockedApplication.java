@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
 import com.example.zone.model.StudySessionModel;
+import com.example.zone.view.MainContainerActivity;
 import com.example.zone.view.MainView;
 
 public class DetectBlockedApplication extends AppCompatActivity {
