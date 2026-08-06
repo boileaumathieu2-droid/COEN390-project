@@ -3,62 +3,83 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <LinearLayout
+    android:layout_height="match_parent"
+    android:padding="16dp">
+    
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/switch_color_track"
+        app:strokeWidth="1dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop = "50dp" >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Notification Settings"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchStudyReminders"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+        
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:checked="true"
-            android:paddingVertical="12dp"
-            android:text="Study reminders"
-            android:textSize="16sp" />
+            android:background="#F0F0F0"
+            android:divider="?android:attr/listDivider"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:showDividers="middle">
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchSessionComplete"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Session complete notifications"
-            android:textSize="16sp"
-            android:paddingVertical="12dp"
-            android:checked="true" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchStudyReminders"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F0F0F0"
+                android:checked="true"
+                android:paddingVertical="12dp"
+                android:text="Study reminders"
+                android:textSize="16sp"
+                app:thumbTint="@color/switch_color_thumb"
+                app:trackTint="@color/switch_color_track"
+                app:useMaterialThemeColors="false" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchBreakReminders"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Break reminders"
-            android:textSize="16sp"
-            android:paddingVertical="12dp"
-            android:checked="true" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchSessionComplete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F0F0F0"
+                android:checked="true"
+                android:paddingVertical="12dp"
+                android:text="Session complete notifications"
+                android:textSize="16sp"
+                app:thumbTint="@color/switch_color_thumb"
+                app:trackTint="@color/switch_color_track"
+                app:useMaterialThemeColors="false" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchMuteDuringStudy"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Mute notifications during study session"
-            android:textSize="16sp"
-            android:paddingVertical="12dp"
-            android:checked="false" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchBreakReminders"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F0F0F0"
+                android:checked="true"
+                android:paddingVertical="12dp"
+                android:text="Break reminders"
+                android:textSize="16sp"
+                app:thumbTint="@color/switch_color_thumb"
+                app:trackTint="@color/switch_color_track"
+                app:useMaterialThemeColors="false" />
 
-    </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchMuteDuringStudy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F0F0F0"
+                android:checked="false"
+                android:paddingVertical="12dp"
+                android:text="Mute notifications during study session"
+                android:textSize="16sp"
+                app:thumbTint="@color/switch_color_thumb"
+                app:trackTint="@color/switch_color_track"
+                app:useMaterialThemeColors="false" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
