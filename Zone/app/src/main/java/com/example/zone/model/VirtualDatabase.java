@@ -1,9 +1,13 @@
 package com.example.zone.model;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -20,11 +24,17 @@ public class VirtualDatabase {
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
     }
+    public String getCurrentUserID() {
+        if (auth.getCurrentUser() == null) {
+            return null;
+        }
+        return auth.getCurrentUser().getUid();
+    }
+
 
     public interface AuthCallback {
         void onResult(boolean success);
     }
-
     public void createAccount(String email, String password, Context context, AuthCallback callback) {
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
@@ -224,7 +234,127 @@ public class VirtualDatabase {
     }
 
 
+
     public interface StudySessionCallback {
         void onComplete(ArrayList<StudySessionModel> sessions);
     }
+    public void GetFutureObjectives(ObjectiveCallback callback, String date) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .whereNotEqualTo("objectiveDate", date)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Objective objective = document.toObject(Objective.class);
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+    public interface ObjectiveCallback {
+        void onComplete(ArrayList<Objective> objectives);
+    }
+
+    public void getObjectives(ObjectiveCallback callback) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        String objectiveID = document.getString("objectiveID");
+                        String objectiveText = document.getString("objectiveText");
+                        String objectiveDate = document.getString("objectiveDate");
+                        String eventName = document.getString("eventName");
+                        String completionTime = document.getString("completionTime");
+                        String taskType = document.getString("taskType");
+                        Objective objective = new Objective(
+                                objectiveID,
+                                eventName,
+                                objectiveDate,
+                                completionTime,
+                                taskType,
+                                objectiveText
+                        );
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+    public void GetDailyObjectives(ObjectiveCallback callback, String date) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .whereEqualTo("objectiveDate", date)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<Objective> objectives = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Objective objective = document.toObject(Objective.class);
+                        objectives.add(objective);
+                    }
+                    callback.onComplete(objectives);
+                });
+    }
+    public void saveObjective(String objective, String date, String name, String time, String type) {
+        String userId = getCurrentUserId();
+        DocumentReference docRef = db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .document();
+        String id = docRef.getId();
+        Map<String, Object> data = new HashMap<>();
+        data.put("objectiveID", id);
+        data.put("objectiveText", objective);
+        data.put("objectiveDate", date);
+        data.put("eventName", name);
+        data.put("completionTime", time);
+        data.put("taskType", type);
+        docRef.set(data);
+    }
+
+    public void deleteTask(String objective) {
+        String userId = getCurrentUserId();
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .document(objective)
+                .delete();
+    }
+    public void editTask(String id, String objective, String date,
+                         String name, String time, String type) {
+
+        String userId = getCurrentUserId();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("objectiveText", objective);
+        data.put("objectiveDate", date);
+        data.put("eventName", name);
+        data.put("completionTime", time);
+        data.put("taskType", type);
+        db.collection("users")
+                .document(userId)
+                .collection("objectives")
+                .document(id)
+                .update(data)
+                .addOnSuccessListener(unused ->
+                        Log.d("Firestore", "Task updated"))
+                .addOnFailureListener(e ->
+                        Log.e("Firestore", "Error updating task", e));
+    }
+    public static boolean isInternetAvailable(Context context) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnected();
+    }
 }
+
+
+

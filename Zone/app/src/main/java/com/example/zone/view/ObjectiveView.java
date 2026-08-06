@@ -21,6 +21,7 @@ import com.example.zone.controller.ObjectiveController;
 import com.example.zone.model.Database;
 import com.example.zone.model.Objective;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -111,10 +112,12 @@ public class ObjectiveView extends Fragment {
     }
 
     private void confirmDelete(Objective objective) {
+        VirtualDatabase db = new VirtualDatabase();
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
+                    db.deleteTask(objective.getObjectiveID());
                     controller.deleteObjective(objective.getObjectiveID());
                     refreshSelectedDateTasks();
                 })
@@ -123,15 +126,20 @@ public class ObjectiveView extends Fragment {
     }
 
     private void refreshSelectedDateTasks() {
-        selectedObjectives.clear();
-        selectedObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), date));
-        objectiveLabels.clear();
-        for (Objective objective : selectedObjectives) {
-            objectiveLabels.add(objective.getEventName());
-        }
-        if (selectedDateTitle != null) {
-            selectedDateTitle.setText(getString(R.string.selected_date_tasks, date));
-        }
-        objectiveAdapter.notifyDataSetChanged();
+        VirtualDatabase db = new VirtualDatabase();
+        db.GetDailyObjectives(objectives -> {
+            selectedObjectives.clear();
+            selectedObjectives.addAll(objectives);
+
+            objectiveLabels.clear();
+            for (Objective objective : selectedObjectives) {
+                objectiveLabels.add(objective.getEventName());
+            }
+            if (selectedDateTitle != null) {
+                selectedDateTitle.setText(getString(R.string.selected_date_tasks, date));
+            }
+
+            objectiveAdapter.notifyDataSetChanged();
+        }, date);
     }
 }

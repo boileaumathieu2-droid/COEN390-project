@@ -9,12 +9,12 @@ public class ObjectiveController {
     private Database database;
     public ObjectiveController(Database database) {this.database = database;}
 
-    public long addObjective(int userID, String text, String date){
+    public long addObjective(String userID, String text, String date){
         return database.addObjective(userID, text, date);
     }
 
     public long addTask(
-            int userID,
+            String userID,
             String eventName,
             String dueDate,
             String completionTime,
@@ -24,16 +24,16 @@ public class ObjectiveController {
                 userID, eventName, dueDate, completionTime, taskType, objectives);
     }
 
-    public boolean deleteObjective(int objectiveID){
+    public boolean deleteObjective(String objectiveID){
         return database.deleteObjective(objectiveID);
     }
 
-    public boolean updateObjective(int objectiveID, String text, String date) {
+    public boolean updateObjective(String objectiveID, String text, String date) {
         return database.updateObjective(objectiveID, text, date);
     }
 
     public boolean updateTask(
-            int objectiveID,
+            String objectiveID,
             String eventName,
             String dueDate,
             String completionTime,
@@ -55,7 +55,7 @@ public class ObjectiveController {
         return database.getObjectivesForFuture(userID, date);
     }
 
-    public int deletePastObjectives(int userID, String date){
+    public int deletePastObjectives(String userID, String date){
         return database.deletePastObjectives(userID, date);
     }
 

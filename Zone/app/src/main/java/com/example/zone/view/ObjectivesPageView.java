@@ -13,6 +13,7 @@ import com.example.zone.model.Database;
 import com.example.zone.model.Objective;
 import com.example.zone.model.ObjectiveAdapter;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -93,11 +94,12 @@ public class ObjectivesPageView extends AppCompatActivity {
     }
 
     private void confirmDelete(Objective objective) {
+        VirtualDatabase db  = new VirtualDatabase();
         new AlertDialog.Builder(this)
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
-                    controller.deleteObjective(objective.getObjectiveID());
+                    db.deleteTask(objective.getObjectiveID());
                     refreshObjectives();
                 })
                 .setNegativeButton(R.string.cancel, null)
@@ -105,12 +107,31 @@ public class ObjectivesPageView extends AppCompatActivity {
     }
 
     private void refreshObjectives() {
+        System.out.println("this function is getting called");
+        VirtualDatabase db = new VirtualDatabase();
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        todayObjectives.clear();
-        todayObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), today));
-        futureObjectives.clear();
-        futureObjectives.addAll(controller.getObjectivesForFuture(Session.getUserID(), today));
-        todayAdapter.notifyDataSetChanged();
-        futureAdapter.notifyDataSetChanged();
+        db.GetDailyObjectives(todayList -> {
+            System.out.println("Today's Objectives:");
+            for (Objective objective : todayList) {
+                System.out.println(objective.getEventName());
+            }
+            todayObjectives.clear();
+            todayObjectives.addAll(todayList);
+            todayAdapter.notifyDataSetChanged();
+
+            db.GetFutureObjectives(futureList -> {
+
+                System.out.println("Future Objectives:");
+                for (Objective objective : futureList) {
+                    System.out.println(objective.getEventName());
+                }
+
+                futureObjectives.clear();
+                futureObjectives.addAll(futureList);
+                futureAdapter.notifyDataSetChanged();
+
+            }, today);
+
+        }, today);
     }
 }
