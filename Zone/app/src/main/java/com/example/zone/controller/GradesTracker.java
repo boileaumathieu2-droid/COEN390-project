@@ -16,7 +16,7 @@ public class GradesTracker {
     public boolean subjectAlreadyExists(int userID, String subjectName) {
         return database.subjectAlreadyExists(userID, subjectName);
     }
-    public ArrayList<Subject> getSubjects(int userID) {
-        return database.getSubjects(userID);
-    }
+//    public ArrayList<Subject> getSubjects(int userID) {
+//        return database.getSubjects(userID);
+//    }
 }

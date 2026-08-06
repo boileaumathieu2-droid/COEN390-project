@@ -19,6 +19,7 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
         super(context, 0, subjects);
     }
 
+
     @Override
     @NonNull
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -33,6 +34,9 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
         TextView text = convertView.findViewById(R.id.subjectName);
 
         if (subject != null) {
+            System.out.println("Subject ID: " + subject.getSubjectID());
+            System.out.println("Subject Name: " + subject.getSubjectName());
+
             text.setText(subject.getSubjectName());
         }
 
