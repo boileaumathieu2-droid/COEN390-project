@@ -34,9 +34,18 @@ public class ObjectiveAdapter extends ArrayAdapter<Objective> {
 
         if (objective != null) {
 
-            String display = objective.getObjectiveDate() + " - " + objective.getEventName();
+            String status = objective.isCompleted() ? " [DONE]" : "";
+            String display = objective.getObjectiveDate() + " - " + objective.getEventName() + status;
 
             objectiveText.setText(display);
+            
+            if (objective.isCompleted()) {
+                objectiveText.setAlpha(0.5f);
+                objectiveText.setPaintFlags(objectiveText.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
+            } else {
+                objectiveText.setAlpha(1.0f);
+                objectiveText.setPaintFlags(objectiveText.getPaintFlags() & (~android.graphics.Paint.STRIKE_THRU_TEXT_FLAG));
+            }
         }
 
         return convertView;
