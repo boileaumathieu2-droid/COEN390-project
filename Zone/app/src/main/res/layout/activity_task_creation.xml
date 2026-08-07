@@ -2,7 +2,6 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/zone_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -71,6 +70,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/completion_time_hint"
             android:inputType="number"
+            android:maxLength="4"
             android:minHeight="52dp"
             android:textColor="@color/zone_text_primary"
             android:textColorHint="@color/zone_text_secondary" />
@@ -105,7 +105,7 @@
         <EditText
             android:id="@+id/objectivesInput"
             android:layout_width="match_parent"
-            android:layout_height="110dp"
+            android:layout_height="90dp"
             android:gravity="top|start"
             android:hint="@string/objectives_hint"
             android:inputType="textCapSentences|textMultiLine"
@@ -120,5 +120,23 @@
             android:layout_marginTop="24dp"
             android:text="@string/save_task"
             android:textColor="@color/white" />
+
+        <TextView
+            android:id="@+id/completedTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Completed Objectives Today"
+            android:textColor="@color/zone_success"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <ListView
+            android:id="@+id/completedObjectivesList"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>
