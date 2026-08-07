@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -58,7 +59,8 @@
             android:layout_marginTop="18dp"
             android:layout_marginBottom="8dp"
             android:gravity="center"
-            android:text="A study tip will be displayed here"
+            android:padding="8dp"
+            android:text="Study Tip: A study tip will be displayed here"
             android:textColor="@color/zone_text_primary" />
 
         <Button
@@ -67,13 +69,6 @@
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
             android:text="Timer Settings" />
-
-        <Button
-            android:id="@+id/startStudySeshButton"
-            android:layout_width="260dp"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
-            android:text="Start Study Session" />
 
         <Button
             android:id="@+id/gradesTrackerButton"
@@ -89,50 +84,13 @@
             android:layout_marginTop="12dp"
             android:text="Analytics" />
 
-        <TextView
-            android:id="@+id/timerTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:gravity="center"
-            android:text="Study Time"
-            android:textColor="@color/zone_text_primary"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/timerDisplay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="12dp"
-            android:text="00:00"
-            android:textColor="@color/zone_text_primary"
-            android:textSize="48sp"
-            android:textStyle="bold" />
-
         <Button
-            android:id="@+id/pauseTimer"
-            android:layout_width="140dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:text="Pause"
-            android:visibility="gone" />
+            android:id="@+id/launchTimerButton"
+            android:layout_width="260dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="Open Timer"
+            android:backgroundTint="@color/zone_primary" />
 
-        <Button
-            android:id="@+id/resetTimer"
-            android:layout_width="140dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:text="Reset"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/completeTimer"
-            android:layout_width="140dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:text="Complete"
-            android:visibility="gone" />
     </LinearLayout>
 </ScrollView>
