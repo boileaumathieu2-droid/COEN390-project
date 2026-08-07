@@ -6,96 +6,104 @@
 
     <LinearLayout
         android:id="@+id/layout"
-        android:layout_width="374dp"
-        android:layout_height="593dp"
-        android:layout_marginStart="18dp"
-        android:layout_marginTop="42dp"
-        android:layout_marginEnd="18dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="24dp"
+        android:background="@drawable/reading_details_background"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:padding="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/studySeshFinishTextView"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Study Session Finished!"
-            android:textColor="#000000"
-            android:textSize="34sp"
+            android:text="Session Complete!"
+            android:textColor="@color/zone_primary"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textView"
             android:layout_width="match_parent"
-            android:layout_height="74dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:gravity="center"
-            android:text="Did you complete your goal for the session?"
-            android:textColor="#000000"
-            android:textSize="20sp" />
+            android:text="Did you complete your goal for this session?"
+            android:textColor="@color/zone_text_primary"
+            android:textSize="18sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="49dp"
+            android:layout_height="60dp"
             android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnYes"
-                android:layout_width="111dp"
-                android:layout_height="match_parent"
-                android:backgroundTint="#2A9E05"
-                android:text="Yes"
-                android:textColor="#FFFFFF" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnNo"
-                android:layout_width="111dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:backgroundTint="#FF0000"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
                 android:text="No"
-                android:textColor="#FFFFFF" />
+                android:textColor="@color/zone_alert"
+                app:strokeColor="@color/zone_alert" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnYes"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Yes"
+                android:textColor="@color/zone_success"
+                app:strokeColor="@color/zone_success" />
 
         </LinearLayout>
 
         <TextView
             android:id="@+id/rateProductivityTextView"
             android:layout_width="match_parent"
-            android:layout_height="77dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
             android:gravity="center"
-            android:text="Rate your productivity out of 10"
-            android:textColor="#000000"
-            android:textSize="20sp" />
+            android:text="Rate your productivity (0-10)"
+            android:textColor="@color/zone_text_primary"
+            android:textSize="18sp" />
 
         <EditText
             android:id="@+id/editTextNumber"
-            android:layout_width="337dp"
-            android:layout_height="59dp"
-            android:ems="10"
-            android:hint="1-10"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:hint="Rate 0 to 10"
             android:inputType="number"
-            android:textSize="20sp" />
-
-        <Button
-            android:id="@+id/extendSeshButton"
-            android:layout_width="335dp"
-            android:layout_height="68dp"
-            android:text="Extend Session"
+            android:maxLength="2"
             android:textSize="20sp" />
 
         <Button
             android:id="@+id/finishSeshButton"
             android:layout_width="match_parent"
-            android:layout_height="68dp"
-            android:text="Finish Session"
-            android:textSize="20sp" />
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:text="Finish and Save"
+            android:backgroundTint="@color/zone_primary" />
+
+        <Button
+            android:id="@+id/extendSeshButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="Extend Session"
+            android:textColor="@color/zone_text_secondary" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
