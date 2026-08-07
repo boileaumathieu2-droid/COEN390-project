@@ -3,26 +3,37 @@ package com.example.zone.model;
 public class Objective {
     private String objectiveText;
     private String objectiveDate;
-    private int objectiveID;
+    private String objectiveID;
     private String eventName;
     private String completionTime;
     private String taskType;
     private boolean completed;
-    private boolean failed;
 
-    public Objective(int objectiveID, String objectiveText, String objectiveDate) {
-        this(objectiveID, objectiveText, objectiveDate, "", "Other", objectiveText, false, false);
+    public Objective(String objectiveID, String objectiveText, String objectiveDate) {
+        this(objectiveID, objectiveText, objectiveDate, "", "Other", objectiveText, false);
+    }
+
+    public Objective() {
     }
 
     public Objective(
-            int objectiveID,
+            String objectiveID,
+            String eventName,
+            String objectiveDate,
+            String completionTime,
+            String taskType,
+            String objectiveText) {
+        this(objectiveID, eventName, objectiveDate, completionTime, taskType, objectiveText, false);
+    }
+
+    public Objective(
+            String objectiveID,
             String eventName,
             String objectiveDate,
             String completionTime,
             String taskType,
             String objectiveText,
-            boolean completed,
-            boolean failed) {
+            boolean completed) {
         this.objectiveID = objectiveID;
         this.objectiveText = objectiveText;
         this.objectiveDate = objectiveDate;
@@ -30,7 +41,6 @@ public class Objective {
         this.completionTime = completionTime;
         this.taskType = taskType;
         this.completed = completed;
-        this.failed = failed;
     }
 
     public void setObjectiveText(String objectiveText){
@@ -41,30 +51,14 @@ public class Objective {
         this.objectiveDate = objectiveDate;
     }
 
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
-    }
-
-    public void setFailed(boolean failed) {
-        this.failed = failed;
-    }
-
     public String getObjectiveText(){
         return objectiveText;
     }
     public String getObjectiveDate(){
         return objectiveDate;
     }
-    public int getObjectiveID(){
+    public String getObjectiveID(){
         return objectiveID;
-    }
-
-    public boolean isCompleted() {
-        return completed;
-    }
-
-    public boolean isFailed() {
-        return failed;
     }
 
     public String getEventName() {
@@ -77,5 +71,13 @@ public class Objective {
 
     public String getTaskType() {
         return taskType == null || taskType.trim().isEmpty() ? "Other" : taskType;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 }
