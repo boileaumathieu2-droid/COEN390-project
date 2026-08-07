@@ -61,7 +61,7 @@ public class LoginView extends AppCompatActivity {
                 loginButton.setEnabled(true);
                 if (success) {
                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
-                    
+
                     // Initialize local session
                     ensureLocalSession(userStr);
 
@@ -77,23 +77,8 @@ public class LoginView extends AppCompatActivity {
             });
         });
         forgot_password.setOnClickListener(v -> {
-            String email = username.getText().toString()
-                    .trim()
-                    .toLowerCase(Locale.ROOT);
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                username.setError("Enter your email first");
-                username.requestFocus();
-                return;
-            }
-            forgot_password.setEnabled(false);
-            db.sendPasswordResetEmail(email, (success, message) -> {
-                forgot_password.setEnabled(true);
-                Toast.makeText(
-                        LoginView.this,
-                        message,
-                        success ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT
-                ).show();
-            });
+          Intent intent = new Intent(this, ForgotPasswordView.class);
+          startActivity(intent);
         });
         Register_now.setOnClickListener(v -> {
             Intent intent = new Intent(this, RegistrationView.class);
