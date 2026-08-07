@@ -49,6 +49,7 @@
     <string name="connected_receiving_data">Connected — receiving live data</string>
     <string name="no_signal_instructions">No signal — place your finger firmly on the sensor</string>
     <string name="calculating_bpm">Signal found — keep still while BPM is calculated</string>
+    <string name="heart_rate_holding">Stable reading — adjusting through a brief signal gap</string>
     <string name="live_reading">Live heart-rate reading</string>
     <string name="ble_device_label_rssi">%1$s\nDevice ID: %2$s\nSignal: %3$d dBm</string>
     <string name="bluno_reconnecting">Bluno disconnected. Reconnecting in %1$d seconds…</string>

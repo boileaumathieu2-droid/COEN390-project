@@ -81,6 +81,14 @@
             </intent-filter>
         </activity>
         <activity android:name=".view.MainContainerActivity" android:exported="true"/>
+        <activity
+            android:name=".view.HeartRateWellnessAlertActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:finishOnTaskLaunch="true"
+            android:launchMode="singleTop"
+            android:noHistory="true"
+            android:theme="@style/Theme.Zone.WellnessHost" />
         <activity android:name=".view.RecommendedStudyTimesView" android:exported="false"/>
         <activity android:name=".view.AboutHelpView" android:exported="false"/>
         <activity android:name=".view.HeartRateMonitorView" android:exported="false"/>

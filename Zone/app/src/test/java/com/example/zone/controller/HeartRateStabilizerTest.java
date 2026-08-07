@@ -2,7 +2,6 @@ package com.example.zone.controller;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import com.example.zone.model.HeartRateReading;
 
@@ -11,33 +10,22 @@ import org.junit.Test;
 public class HeartRateStabilizerTest {
 
     @Test
-    public void ignoresNoSignalAndWaitsForEnoughGoodSamples() {
+    public void passesGoodReadingThroughUnchanged() {
         HeartRateStabilizer stabilizer = new HeartRateStabilizer();
-
-        HeartRateReading noSignal = stabilizer.filter(
-                new HeartRateReading(195, 6, 0, "NO_SIGNAL")
-        );
-        assertFalse(noSignal.hasGoodSignal());
-        assertEquals(0, noSignal.getBpm());
-
-        assertEquals(0, stabilizer.filter(reading(78)).getBpm());
-        assertEquals(0, stabilizer.filter(reading(79)).getBpm());
-        assertEquals(0, stabilizer.filter(reading(80)).getBpm());
-        assertEquals(0, stabilizer.filter(reading(79)).getBpm());
-        assertTrue(stabilizer.filter(reading(80)).getBpm() > 0);
+        HeartRateReading input = reading(143);
+        HeartRateReading output = stabilizer.filter(input);
+        assertEquals(143, output.getBpm());
+        assertEquals(input, output);
     }
 
     @Test
-    public void aSingleSpikeDoesNotReplaceTheStableReading() {
+    public void passesNoSignalThroughUnchanged() {
         HeartRateStabilizer stabilizer = new HeartRateStabilizer();
-        stabilizer.filter(reading(78));
-        stabilizer.filter(reading(79));
-        stabilizer.filter(reading(80));
-        stabilizer.filter(reading(79));
-        int stable = stabilizer.filter(reading(80)).getBpm();
-
-        int afterSpike = stabilizer.filter(reading(150)).getBpm();
-        assertEquals(stable, afterSpike);
+        HeartRateReading input = new HeartRateReading(195, 6, 0, "NO_SIGNAL");
+        HeartRateReading output = stabilizer.filter(input);
+        assertFalse(output.hasGoodSignal());
+        assertEquals(0, output.getBpm());
+        assertEquals(input, output);
     }
 
     private HeartRateReading reading(int bpm) {

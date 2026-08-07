@@ -31,7 +31,12 @@ public final class HeartRateReading {
     }
 
     public boolean hasGoodSignal() {
-        return "OK".equalsIgnoreCase(status);
+        return "OK".equalsIgnoreCase(status) || "HOLD".equalsIgnoreCase(status);
+    }
+
+    /** True when the filter is bridging a short sensor-contact interruption. */
+    public boolean isHeldReading() {
+        return "HOLD".equalsIgnoreCase(status);
     }
 
     public String toPacketString() {

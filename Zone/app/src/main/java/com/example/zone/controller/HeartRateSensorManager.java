@@ -2,6 +2,7 @@ package com.example.zone.controller;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -12,6 +13,7 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
@@ -24,6 +26,7 @@ import com.example.zone.R;
 import com.example.zone.model.HeartRateReading;
 import com.example.zone.model.StudySessionModel;
 import com.example.zone.model.TimerModel;
+import com.example.zone.view.HeartRateWellnessAlertActivity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
@@ -333,17 +336,39 @@ public final class HeartRateSensorManager {
 
     private void publishWellnessSuggestion(String message) {
         mainHandler.post(() -> {
-            if (wellnessListeners.isEmpty()) {
+            if (!wellnessListeners.isEmpty()) {
+                for (WellnessListener listener : wellnessListeners) {
+                    listener.onWellnessSuggestion(message);
+                }
+            } else if (isApplicationInForeground()) {
+                Intent intent = new Intent(
+                        applicationContext,
+                        HeartRateWellnessAlertActivity.class
+                );
+                intent.putExtra(HeartRateWellnessAlertActivity.EXTRA_MESSAGE, message);
+                intent.addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                );
+                applicationContext.startActivity(intent);
+            } else {
                 new NotificationController(applicationContext).sendNotifications(
                         applicationContext.getString(R.string.heart_rate_check_in_title),
                         message
                 );
-                return;
-            }
-            for (WellnessListener listener : wellnessListeners) {
-                listener.onWellnessSuggestion(message);
             }
         });
+    }
+
+    private boolean isApplicationInForeground() {
+        ActivityManager.RunningAppProcessInfo processInfo =
+                new ActivityManager.RunningAppProcessInfo();
+        ActivityManager.getMyMemoryState(processInfo);
+        return processInfo.importance
+                == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                || processInfo.importance
+                == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
     }
 
     private void markSignalUnavailable() {

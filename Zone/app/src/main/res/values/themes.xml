@@ -23,6 +23,14 @@
 
     <style name="Theme.Zone" parent="Base.Theme.Zone" />
 
+    <style name="Theme.Zone.WellnessHost" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+
     <style name="CalendarDateText" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textColor">@color/zone_text_primary</item>
     </style>

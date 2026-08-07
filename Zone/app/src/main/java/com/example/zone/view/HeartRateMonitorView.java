@@ -667,7 +667,12 @@ public class HeartRateMonitorView extends AppCompatActivity {
             );
         } else {
             bpmText.setText(String.valueOf(stableReading.getBpm()));
-            showHeartRateRange(stableReading.getBpm());
+            if (stableReading.isHeldReading()) {
+                signalStatusText.setText(R.string.heart_rate_holding);
+                setHeartRateColour(R.color.zone_caution);
+            } else {
+                showHeartRateRange(stableReading.getBpm());
+            }
         }
     }
 

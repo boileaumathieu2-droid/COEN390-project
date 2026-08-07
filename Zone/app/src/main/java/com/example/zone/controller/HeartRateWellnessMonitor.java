@@ -6,7 +6,7 @@ import com.example.zone.model.HeartRateReading;
 public final class HeartRateWellnessMonitor {
 
     static final int ELEVATED_THRESHOLD_BPM = 100;
-    static final long REQUIRED_DURATION_MS = 30_000L;
+    static final long REQUIRED_DURATION_MS = 10_000L;
     private static final long MAX_SAMPLE_GAP_MS = 5_000L;
     private static final long REPEAT_INTERVAL_MS = 5 * 60_000L;
 

@@ -13,25 +13,46 @@ import java.util.List;
 public final class HeartRateStabilizer {
     private static final int MIN_VALID_BPM = 35;
     private static final int MAX_VALID_BPM = 220;
-    private static final int WINDOW_SIZE = 9;
-    private static final int REQUIRED_SAMPLES = 5;
-    private static final int MAX_CHANGE_PER_UPDATE = 2;
-    private static final long MIN_UPDATE_INTERVAL_MS = 1_000L;
+    private static final int WINDOW_SIZE = 7;
+    private static final int REQUIRED_SAMPLES = 3;
+    private static final int MAX_CHANGE_PER_UPDATE = 3;
+    private static final long MIN_UPDATE_INTERVAL_MS = 800L;
+    private static final long SIGNAL_HOLD_MS = 6_000L;
 
     private final List<Integer> recentBpm = new ArrayList<>();
     private Integer stableBpm;
     private long lastStableUpdate;
+    private long lastGoodSampleTime = -1L;
 
     public synchronized HeartRateReading filter(HeartRateReading reading) {
+        return filter(reading, System.nanoTime() / 1_000_000L);
+    }
+
+    synchronized HeartRateReading filter(HeartRateReading reading, long nowMs) {
         if (reading == null) {
             return null;
         }
 
         int bpm = reading.getBpm();
         if (!reading.hasGoodSignal() || bpm < MIN_VALID_BPM || bpm > MAX_VALID_BPM) {
-            recentBpm.clear();
-            stableBpm = null;
-            lastStableUpdate = 0L;
+            if (lastGoodSampleTime >= 0L
+                    && nowMs - lastGoodSampleTime <= SIGNAL_HOLD_MS) {
+                if (stableBpm != null) {
+                    return new HeartRateReading(
+                            reading.getRawValue(),
+                            reading.getSignalRange(),
+                            stableBpm,
+                            "HOLD");
+                }
+                // Keep the samples already collected so one brief gap does not
+                // force the calculation to start over from the beginning.
+                return new HeartRateReading(
+                        reading.getRawValue(),
+                        reading.getSignalRange(),
+                        0,
+                        "OK");
+            }
+            clearReadings();
             return new HeartRateReading(
                     reading.getRawValue(),
                     reading.getSignalRange(),
@@ -39,6 +60,7 @@ public final class HeartRateStabilizer {
                     reading.getStatus());
         }
 
+        lastGoodSampleTime = nowMs;
         recentBpm.add(bpm);
         if (recentBpm.size() > WINDOW_SIZE) {
             recentBpm.remove(0);
@@ -58,10 +80,9 @@ public final class HeartRateStabilizer {
 
         if (stableBpm == null) {
             stableBpm = median;
-            lastStableUpdate = System.currentTimeMillis();
+            lastStableUpdate = nowMs;
         } else {
-            long now = System.currentTimeMillis();
-            if (now - lastStableUpdate < MIN_UPDATE_INTERVAL_MS) {
+            if (nowMs - lastStableUpdate < MIN_UPDATE_INTERVAL_MS) {
                 return new HeartRateReading(
                         reading.getRawValue(),
                         reading.getSignalRange(),
@@ -76,7 +97,7 @@ public final class HeartRateStabilizer {
                 smoothed = stableBpm - MAX_CHANGE_PER_UPDATE;
             }
             stableBpm = smoothed;
-            lastStableUpdate = now;
+            lastStableUpdate = nowMs;
         }
 
         return new HeartRateReading(
@@ -87,8 +108,13 @@ public final class HeartRateStabilizer {
     }
 
     public synchronized void reset() {
+        clearReadings();
+    }
+
+    private void clearReadings() {
         recentBpm.clear();
         stableBpm = null;
         lastStableUpdate = 0L;
+        lastGoodSampleTime = -1L;
     }
 }
