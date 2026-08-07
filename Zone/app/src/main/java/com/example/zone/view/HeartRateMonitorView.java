@@ -53,7 +53,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
     private static final UUID BLUNO_SERVICE_UUID =
             UUID.fromString("0000dfb0-0000-1000-8000-00805f9b34fb");
     private static final String TARGET_BLUNO_ADDRESS = "D0:39:72:DF:D5:0E";
-    private static final long SCAN_DURATION_MS = 15_000L;
+    private static final long SCAN_DURATION_MS = 20_000L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final List<BluetoothDevice> discoveredDevices = new ArrayList<>();
@@ -117,6 +117,8 @@ public class HeartRateMonitorView extends AppCompatActivity {
                     displayReading(rawReading, stableReading);
                 }
             };
+    private final HeartRateSensorManager.WellnessListener wellnessListener =
+            this::showWellnessSuggestion;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(
@@ -256,12 +258,14 @@ public class HeartRateMonitorView extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         sensorManager.addListener(sensorListener);
+        sensorManager.addWellnessListener(wellnessListener);
         requestAutomaticBlunoConnection();
     }
 
     @Override
     protected void onStop() {
         sensorManager.removeListener(sensorListener);
+        sensorManager.removeWellnessListener(wellnessListener);
         super.onStop();
     }
 
@@ -388,7 +392,6 @@ public class HeartRateMonitorView extends AppCompatActivity {
         deviceSignalStrengths.clear();
         blunoCandidateAddresses.clear();
         deviceListAdapter.notifyDataSetChanged();
-        addPairedDevices();
         emptyDeviceText.setText(R.string.scanning_for_nearby_devices);
         emptyDeviceText.setVisibility(
                 discoveredDevices.isEmpty() ? View.VISIBLE : View.GONE
@@ -450,22 +453,8 @@ public class HeartRateMonitorView extends AppCompatActivity {
     }
 
     @SuppressLint("MissingPermission")
-    private void addPairedDevices() {
-        if (!hasRequiredPermissions() || bluetoothAdapter == null) {
-            return;
-        }
-        try {
-            for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
-                addClassicDevice(device, getString(R.string.paired_device_source));
-            }
-        } catch (SecurityException ignored) {
-            // Permission can be changed while this screen is open.
-        }
-    }
-
-    @SuppressLint("MissingPermission")
     private void addClassicDevice(BluetoothDevice device, String source) {
-        if (!hasRequiredPermissions() || device == null) {
+        if (!hasRequiredPermissions() || device == null || isPreviouslyPaired(device)) {
             return;
         }
         String address = device.getAddress();
@@ -526,6 +515,9 @@ public class HeartRateMonitorView extends AppCompatActivity {
         }
 
         BluetoothDevice device = result.getDevice();
+        if (isPreviouslyPaired(device)) {
+            return;
+        }
         String address = device.getAddress();
         String reportedName = device.getName();
         if ((reportedName == null || reportedName.trim().isEmpty())
@@ -604,6 +596,29 @@ public class HeartRateMonitorView extends AppCompatActivity {
                 showConnectionState(getString(R.string.bluno_found), false);
             }
         });
+    }
+
+    @SuppressLint("MissingPermission")
+    private boolean isPreviouslyPaired(BluetoothDevice device) {
+        if (device == null || !hasRequiredPermissions()) {
+            return false;
+        }
+        try {
+            return device.getBondState() == BluetoothDevice.BOND_BONDED;
+        } catch (SecurityException ignored) {
+            return false;
+        }
+    }
+
+    private void showWellnessSuggestion(String message) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.heart_rate_check_in_title)
+                .setMessage(message + "\n\n" + getString(R.string.wellness_not_medical_advice))
+                .setPositiveButton(R.string.dismiss, null)
+                .show();
     }
 
     @SuppressLint("MissingPermission")

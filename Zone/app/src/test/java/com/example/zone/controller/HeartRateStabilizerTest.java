@@ -23,7 +23,8 @@ public class HeartRateStabilizerTest {
         assertEquals(0, stabilizer.filter(reading(78)).getBpm());
         assertEquals(0, stabilizer.filter(reading(79)).getBpm());
         assertEquals(0, stabilizer.filter(reading(80)).getBpm());
-        assertTrue(stabilizer.filter(reading(79)).getBpm() > 0);
+        assertEquals(0, stabilizer.filter(reading(79)).getBpm());
+        assertTrue(stabilizer.filter(reading(80)).getBpm() > 0);
     }
 
     @Test
@@ -32,7 +33,8 @@ public class HeartRateStabilizerTest {
         stabilizer.filter(reading(78));
         stabilizer.filter(reading(79));
         stabilizer.filter(reading(80));
-        int stable = stabilizer.filter(reading(79)).getBpm();
+        stabilizer.filter(reading(79));
+        int stable = stabilizer.filter(reading(80)).getBpm();
 
         int afterSpike = stabilizer.filter(reading(150)).getBpm();
         assertEquals(stable, afterSpike);

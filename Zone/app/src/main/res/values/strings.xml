@@ -55,12 +55,17 @@
     <string name="bluno_reconnect_paused">Bluno reconnect paused. Open Connect Device to retry.</string>
 
     <string name="manage_blocked_apps">Manage blocked apps</string>
-    <string name="manage_blocked_apps_subtitle">Choose which apps are unavailable during an active study session.</string>
+    <string name="manage_blocked_apps_subtitle">Choose which apps cannot be opened and whose notifications are hidden during an active study session.</string>
     <string name="no_launchable_apps">No launchable apps were found.</string>
     <string name="app_blocking_access_on">App blocking access is enabled</string>
     <string name="app_blocking_access_off">Enable app blocking access</string>
     <string name="app_blocking_permission_title">App blocking permission</string>
     <string name="app_blocking_permission_message">Zone needs Accessibility access to stop the apps you selected during a study session. Open Android settings now?</string>
+    <string name="notification_blocking_access_on">Selected-app notification blocking is enabled</string>
+    <string name="notification_blocking_access_off">Enable selected-app notification blocking</string>
+    <string name="notification_blocking_permission_title">Notification blocking permission</string>
+    <string name="notification_blocking_permission_message">Zone needs Notification access to remove notifications from the apps you selected while a study session is active. Open Android settings now?</string>
+    <string name="notification_and_reminder_settings">Do Not Disturb and reminder settings</string>
     <string name="open_settings">Open settings</string>
     <string name="not_now">Not now</string>
     <string name="blocked_app_package">Package: %1$s</string>
@@ -109,9 +114,9 @@
     <string name="heart_rate_no_reading">Waiting for a reliable sensor reading</string>
     <string name="heart_rate_range_note">Colours use the general adult resting range of 60–100 BPM. They are informational and are not a medical diagnosis.</string>
     <string name="scan_nearby_devices">Scan Nearby Devices</string>
-    <string name="tap_scan_to_find_devices">Tap Scan Nearby Devices to list BLE advertisers, discoverable Bluetooth devices, and devices already paired with this phone.</string>
+    <string name="tap_scan_to_find_devices">Tap Scan Nearby Devices to list new BLE advertisers and discoverable Bluetooth devices. Devices already paired with this phone are hidden.</string>
     <string name="scanning_for_nearby_devices">Scanning for nearby Bluetooth devices…</string>
-    <string name="no_bluetooth_devices_found">No devices were found. Make the other device discoverable or enable BLE advertising, then scan again.</string>
+    <string name="no_bluetooth_devices_found">No new devices were found. Put the other device into pairing/discoverable mode or enable BLE advertising, then scan again.</string>
     <string name="paired_device_source">Paired device</string>
     <string name="classic_device_source">Discoverable Bluetooth device</string>
     <string name="bluetooth_device_label">%1$s\nDevice ID: %2$s\n%3$s</string>
@@ -121,4 +126,8 @@
         <item>Project</item>
         <item>Other</item>
     </string-array>
+    <string name="heart_rate_check_in_title">Heart-rate check-in</string>
+    <string name="wellness_not_medical_advice">This is a general wellness suggestion, not a medical diagnosis.</string>
+    <string name="open_timer">Open timer</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

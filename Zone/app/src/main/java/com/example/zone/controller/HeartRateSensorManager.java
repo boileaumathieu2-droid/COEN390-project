@@ -16,6 +16,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import androidx.core.content.ContextCompat;
 
@@ -44,6 +45,10 @@ public final class HeartRateSensorManager {
         void onHeartRateReading(HeartRateReading rawReading, HeartRateReading stableReading);
     }
 
+    public interface WellnessListener {
+        void onWellnessSuggestion(String message);
+    }
+
     private static final UUID BLUNO_SERVICE_UUID =
             UUID.fromString("0000dfb0-0000-1000-8000-00805f9b34fb");
     private static final UUID BLUNO_SERIAL_UUID =
@@ -61,7 +66,11 @@ public final class HeartRateSensorManager {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final HeartRatePacketParser packetParser = new HeartRatePacketParser();
     private final HeartRateStabilizer stabilizer = new HeartRateStabilizer();
+    private final HeartRateWellnessMonitor wellnessMonitor =
+            new HeartRateWellnessMonitor();
     private final Set<Listener> listeners = new CopyOnWriteArraySet<>();
+    private final Set<WellnessListener> wellnessListeners =
+            new CopyOnWriteArraySet<>();
 
     private volatile BluetoothGatt bluetoothGatt;
     private volatile boolean connected;
@@ -121,6 +130,16 @@ public final class HeartRateSensorManager {
 
     public void removeListener(Listener listener) {
         listeners.remove(listener);
+    }
+
+    public void addWellnessListener(WellnessListener listener) {
+        if (listener != null) {
+            wellnessListeners.add(listener);
+        }
+    }
+
+    public void removeWellnessListener(WellnessListener listener) {
+        wellnessListeners.remove(listener);
     }
 
     public boolean isConnected() {
@@ -205,6 +224,7 @@ public final class HeartRateSensorManager {
         if (resetReadings) {
             packetParser.reset();
             stabilizer.reset();
+            wellnessMonitor.reset();
             lastRawReading = null;
             lastStableReading = null;
             markSignalUnavailable();
@@ -244,6 +264,7 @@ public final class HeartRateSensorManager {
         busy = false;
         packetParser.reset();
         stabilizer.reset();
+        wellnessMonitor.reset();
         markSignalUnavailable();
         if (gatt != null) {
             if (hasConnectPermission()) {
@@ -294,9 +315,33 @@ public final class HeartRateSensorManager {
             liveSession.setCurrentHeartRateReading(stableReading);
         }
 
+        String suggestion = wellnessMonitor.evaluate(
+                stableReading,
+                TimerModel.getInstance().isStudySessionActive(),
+                SystemClock.elapsedRealtime()
+        );
+        if (suggestion != null) {
+            publishWellnessSuggestion(suggestion);
+        }
+
         mainHandler.post(() -> {
             for (Listener listener : listeners) {
                 listener.onHeartRateReading(rawReading, stableReading);
+            }
+        });
+    }
+
+    private void publishWellnessSuggestion(String message) {
+        mainHandler.post(() -> {
+            if (wellnessListeners.isEmpty()) {
+                new NotificationController(applicationContext).sendNotifications(
+                        applicationContext.getString(R.string.heart_rate_check_in_title),
+                        message
+                );
+                return;
+            }
+            for (WellnessListener listener : wellnessListeners) {
+                listener.onWellnessSuggestion(message);
             }
         });
     }
@@ -447,6 +492,7 @@ public final class HeartRateSensorManager {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 packetParser.reset();
                 stabilizer.reset();
+                wellnessMonitor.reset();
                 markSignalUnavailable();
                 if (gatt == bluetoothGatt) {
                     bluetoothGatt = null;

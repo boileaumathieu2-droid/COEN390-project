@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.zone.R;
+import com.example.zone.controller.HeartRateSensorManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainContainerActivity extends AppCompatActivity {
@@ -23,11 +24,16 @@ public class MainContainerActivity extends AppCompatActivity {
     private ImageView cloudFar;
     private ImageView cloudNear;
     private float screenDensity;
+    private HeartRateSensorManager sensorManager;
+    private boolean wellnessDialogShowing;
+    private final HeartRateSensorManager.WellnessListener wellnessListener =
+            this::showWellnessSuggestion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_container);
+        sensorManager = HeartRateSensorManager.getInstance(getApplicationContext());
 
         screenDensity = getResources().getDisplayMetrics().density;
         viewPager = findViewById(R.id.mainViewPager);
@@ -100,6 +106,32 @@ public class MainContainerActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        sensorManager.addWellnessListener(wellnessListener);
+    }
+
+    @Override
+    protected void onStop() {
+        sensorManager.removeWellnessListener(wellnessListener);
+        super.onStop();
+    }
+
+    private void showWellnessSuggestion(String message) {
+        if (isFinishing() || isDestroyed() || wellnessDialogShowing) {
+            return;
+        }
+        wellnessDialogShowing = true;
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.heart_rate_check_in_title)
+                .setMessage(message + "\n\n" + getString(R.string.wellness_not_medical_advice))
+                .setPositiveButton(R.string.open_timer, (dialog, which) -> switchToTab(1))
+                .setNegativeButton(R.string.dismiss, null)
+                .setOnDismissListener(dialog -> wellnessDialogShowing = false)
+                .show();
     }
 
     private void syncBottomNav(int position) {

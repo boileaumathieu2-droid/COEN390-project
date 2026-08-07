@@ -36,7 +36,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Notification silencing settings" />
+        android:text="@string/notification_and_reminder_settings" />
+
+    <Button
+        android:id="@+id/notificationBlockingPermissionButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/notification_blocking_access_off" />
 
     <FrameLayout
         android:layout_width="match_parent"

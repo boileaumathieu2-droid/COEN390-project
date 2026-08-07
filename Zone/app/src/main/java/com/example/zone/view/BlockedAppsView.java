@@ -30,6 +30,8 @@ import java.util.Set;
 public class BlockedAppsView extends AppCompatActivity {
     private final List<AppEntry> apps = new ArrayList<>();
     private AppsAdapter adapter;
+    private Button appBlockingPermissionButton;
+    private Button notificationBlockingPermissionButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,31 +44,41 @@ public class BlockedAppsView extends AppCompatActivity {
 
         ListView appList = findViewById(R.id.availableAppsList);
         TextView emptyText = findViewById(R.id.emptyAppsText);
-        Button permissionButton = findViewById(R.id.appBlockingPermissionButton);
-        permissionButton.setOnClickListener(view ->
+        appBlockingPermissionButton = findViewById(R.id.appBlockingPermissionButton);
+        notificationBlockingPermissionButton =
+                findViewById(R.id.notificationBlockingPermissionButton);
+        appBlockingPermissionButton.setOnClickListener(view ->
                 BlockedAppsStore.requestPermission(this));
+        notificationBlockingPermissionButton.setOnClickListener(view ->
+                BlockedAppsStore.requestNotificationAccess(this));
         findViewById(R.id.notificationSilencingButton).setOnClickListener(view ->
                 startActivity(new Intent(this, NotificationSetting.class)));
         adapter = new AppsAdapter();
         appList.setAdapter(adapter);
         appList.setEmptyView(emptyText);
         loadLaunchableApps();
-        updatePermissionButton(permissionButton);
+        updatePermissionButtons();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Button permissionButton = findViewById(R.id.appBlockingPermissionButton);
-        updatePermissionButton(permissionButton);
+        updatePermissionButtons();
     }
 
-    private void updatePermissionButton(Button button) {
-        boolean enabled = BlockedAppsStore.isAccessibilityEnabled(this);
-        button.setText(enabled
+    private void updatePermissionButtons() {
+        boolean appBlockingEnabled = BlockedAppsStore.isAccessibilityEnabled(this);
+        appBlockingPermissionButton.setText(appBlockingEnabled
                 ? R.string.app_blocking_access_on
                 : R.string.app_blocking_access_off);
-        button.setEnabled(!enabled);
+        appBlockingPermissionButton.setEnabled(!appBlockingEnabled);
+
+        boolean notificationAccessEnabled =
+                BlockedAppsStore.isNotificationAccessEnabled(this);
+        notificationBlockingPermissionButton.setText(notificationAccessEnabled
+                ? R.string.notification_blocking_access_on
+                : R.string.notification_blocking_access_off);
+        notificationBlockingPermissionButton.setEnabled(!notificationAccessEnabled);
     }
 
     @Override

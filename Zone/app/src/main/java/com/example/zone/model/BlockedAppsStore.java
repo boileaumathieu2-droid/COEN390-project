@@ -9,6 +9,7 @@ import android.provider.Settings;
 import android.view.accessibility.AccessibilityManager;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.example.zone.R;
 
@@ -112,6 +113,29 @@ public final class BlockedAppsStore {
         }
 
         showAccessibilityPrompt(activity);
+        return true;
+    }
+
+    /** True when Android has allowed Zone to dismiss selected-app notifications. */
+    public static boolean isNotificationAccessEnabled(Context context) {
+        return NotificationManagerCompat.getEnabledListenerPackages(context)
+                .contains(context.getPackageName());
+    }
+
+    public static boolean requestNotificationAccess(Activity activity) {
+        if (isNotificationAccessEnabled(activity)) {
+            return false;
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.notification_blocking_permission_title)
+                .setMessage(R.string.notification_blocking_permission_message)
+                .setPositiveButton(R.string.open_settings, (dialog, which) ->
+                        activity.startActivity(
+                                new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        ))
+                .setNegativeButton(R.string.not_now, (dialog, which) -> dialog.dismiss())
+                .show();
         return true;
     }
 

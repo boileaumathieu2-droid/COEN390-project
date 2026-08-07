@@ -13,10 +13,10 @@ import java.util.List;
 public final class HeartRateStabilizer {
     private static final int MIN_VALID_BPM = 35;
     private static final int MAX_VALID_BPM = 220;
-    private static final int WINDOW_SIZE = 7;
-    private static final int REQUIRED_SAMPLES = 4;
-    private static final int MAX_CHANGE_PER_UPDATE = 3;
-    private static final long MIN_UPDATE_INTERVAL_MS = 500L;
+    private static final int WINDOW_SIZE = 9;
+    private static final int REQUIRED_SAMPLES = 5;
+    private static final int MAX_CHANGE_PER_UPDATE = 2;
+    private static final long MIN_UPDATE_INTERVAL_MS = 1_000L;
 
     private final List<Integer> recentBpm = new ArrayList<>();
     private Integer stableBpm;
@@ -29,6 +29,9 @@ public final class HeartRateStabilizer {
 
         int bpm = reading.getBpm();
         if (!reading.hasGoodSignal() || bpm < MIN_VALID_BPM || bpm > MAX_VALID_BPM) {
+            recentBpm.clear();
+            stableBpm = null;
+            lastStableUpdate = 0L;
             return new HeartRateReading(
                     reading.getRawValue(),
                     reading.getSignalRange(),

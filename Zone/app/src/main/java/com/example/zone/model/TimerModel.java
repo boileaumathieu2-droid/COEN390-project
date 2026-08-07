@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 
 import com.example.zone.controller.NotificationController;
+import com.example.zone.controller.RestrictedNotificationListener;
 import com.example.zone.view.MainView;
 
 import java.util.concurrent.Executors;
@@ -318,10 +319,11 @@ public final class TimerModel {
 
     private void syncAppBlockingState() {
         if (applicationContext != null) {
-            BlockedAppsStore.setStudySessionActive(
-                    applicationContext,
-                    running && !breakTime && session != null
-            );
+            boolean active = running && !breakTime && session != null;
+            BlockedAppsStore.setStudySessionActive(applicationContext, active);
+            if (active) {
+                RestrictedNotificationListener.cancelBlockedNotificationsIfConnected();
+            }
         }
     }
 

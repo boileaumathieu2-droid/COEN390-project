@@ -30,6 +30,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AnalyticsView extends Fragment {
@@ -43,7 +44,7 @@ public class AnalyticsView extends Fragment {
     private TextView minValue;
     private TextView maxValue;
     private LineChart chart;
-    private int lastPlottedCount = -1;
+    private int lastPlottedSignature = Integer.MIN_VALUE;
 
     private final Runnable refreshRunnable = new Runnable() {
         @Override
@@ -61,6 +62,7 @@ public class AnalyticsView extends Fragment {
         controller = new AnalyticsController();
 
         currentValue = view.findViewById(R.id.heartRateValue);
+        currentStatus = view.findViewById(R.id.heartRateStatus);
         restingValue = view.findViewById(R.id.restingHeartRateValue);
         minValue = view.findViewById(R.id.minHeartRateValue);
         maxValue = view.findViewById(R.id.maxHeartRateValue);
@@ -108,14 +110,15 @@ public class AnalyticsView extends Fragment {
         int currentBpm = (stableReading != null && stableReading.hasGoodSignal()) ? stableReading.getBpm() : 0;
         
         if (currentValue != null) currentValue.setText(valueOrDash(currentBpm));
+        applyHeartRateColour(currentBpm);
 
         controller.getSessionData(session -> {
             if (session == null) {
                 if (restingValue != null) restingValue.setText("--");
                 if (minValue != null) minValue.setText("--");
                 if (maxValue != null) maxValue.setText("--");
-                if (lastPlottedCount != 0) {
-                    lastPlottedCount = 0;
+                if (lastPlottedSignature != 0) {
+                    lastPlottedSignature = 0;
                     chart.clear();
                     chart.invalidate();
                 }
@@ -127,7 +130,8 @@ public class AnalyticsView extends Fragment {
             if (maxValue != null) maxValue.setText(valueOrDash(session.getMaxHeartRate()));
 
             int[] data = session.getHeartRateData();
-            if (data.length != lastPlottedCount) {
+            int signature = Arrays.hashCode(data);
+            if (signature != lastPlottedSignature) {
                 displayGraph(chart, data);
             }
         });
@@ -138,6 +142,9 @@ public class AnalyticsView extends Fragment {
     }
 
     private void applyHeartRateColour(int bpm) {
+        if (currentValue == null || currentStatus == null || getContext() == null) {
+            return;
+        }
         HeartRateRange.Level level = HeartRateRange.classify(bpm);
         int colourId;
         int statusId;
@@ -180,7 +187,8 @@ public class AnalyticsView extends Fragment {
     }
 
     private void displayGraph(LineChart chart, int[] heartRateData) {
-        lastPlottedCount = heartRateData == null ? 0 : heartRateData.length;
+        lastPlottedSignature = heartRateData == null
+                ? 0 : Arrays.hashCode(heartRateData);
         if (chart == null) return;
         if (heartRateData == null || heartRateData.length == 0) {
             chart.clear();
