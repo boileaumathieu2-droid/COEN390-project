@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -13,6 +14,9 @@ import com.example.zone.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainContainerActivity extends AppCompatActivity {
+
+    public static final String EXTRA_OPEN_TAB = "open_tab";
+    private static final String STATE_SELECTED_TAB = "selected_tab";
 
     private ViewPager2 viewPager;
     private BottomNavigationView bottomNavigationView;
@@ -34,10 +38,13 @@ public class MainContainerActivity extends AppCompatActivity {
         MainPagerAdapter adapter = new MainPagerAdapter(this);
         viewPager.setAdapter(adapter);
 
-        // Set MainView (index 1) as the default page
-        viewPager.setCurrentItem(1, false);
-        bottomNavigationView.setSelectedItemId(R.id.nav_timer);
-        updateTitle(1);
+        int initialTab = savedInstanceState == null
+                ? getIntent().getIntExtra(EXTRA_OPEN_TAB, 1)
+                : savedInstanceState.getInt(STATE_SELECTED_TAB, 1);
+        initialTab = Math.max(0, Math.min(3, initialTab));
+        viewPager.setCurrentItem(initialTab, false);
+        syncBottomNav(initialTab);
+        updateTitle(initialTab);
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
@@ -82,6 +89,17 @@ public class MainContainerActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (viewPager.getCurrentItem() != 1) {
+                    viewPager.setCurrentItem(1, true);
+                } else {
+                    moveTaskToBack(true);
+                }
+            }
+        });
     }
 
     private void syncBottomNav(int position) {
@@ -97,6 +115,13 @@ public class MainContainerActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        switchToTab(intent.getIntExtra(EXTRA_OPEN_TAB, viewPager.getCurrentItem()));
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putInt(STATE_SELECTED_TAB, viewPager.getCurrentItem());
+        super.onSaveInstanceState(outState);
     }
 
     private void updateTitle(int position) {

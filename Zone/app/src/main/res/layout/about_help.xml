@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="24dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="40dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Zone Study App"
+            android:text="Welcome to Zone"
             android:textColor="@color/zone_text_primary"
             android:textSize="30sp"
             android:textStyle="bold" />
@@ -21,7 +25,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Zone combines study sessions, objectives, app restriction and optional heart-rate analytics in one app."
+            android:text="Zone helps you plan your work, stay focused and understand your study habits in one place."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="17sp" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Start a focus session" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Set your study and break times, then tap Start Study Session. You can pause, resume, reset or complete the session at any time."
             android:textColor="@color/zone_text_secondary"
             android:textSize="16sp" />
 
@@ -30,12 +49,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Connect the Bluno Nano" />
+            android:text="Plan tasks" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Open Settings → Connect Device. Zone tries the saved Bluno address D0:39:72:DF:D5:0E automatically. You can also scan to demonstrate all nearby BLE devices or use the direct MAC-address button. Keep the sensor connected when you return to the timer."
+            android:text="Use Calendar to add a task, choose its due date and enter an estimated completion time. Tasks due today appear on the Timer page."
             android:textColor="@color/zone_text_secondary"
             android:textSize="16sp" />
 
@@ -44,12 +64,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Use App Restrict" />
+            android:text="Reduce interruptions" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Open Settings → App Restrict, choose the apps to block, then enable Zone in Android Accessibility settings. Selected apps are stopped only while the study timer is active."
+            android:text="Open Settings, then Focus Restrictions. Choose the apps you want unavailable during a session and enable the requested Android access. Notification silencing can be configured from the same screen."
             android:textColor="@color/zone_text_secondary"
             android:textSize="16sp" />
 
@@ -58,12 +79,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Analytics and History" />
+            android:text="Heart-rate insights" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Good sensor readings are sampled during the session. After completing the reflection, the session is saved under your account. Analytics shows the live or latest graph, and Session History lets you filter, inspect or delete saved sessions."
+            android:text="If you own a compatible sensor, open Connect Device and follow the on-screen connection steps. Reliable readings can be included in your session analytics."
             android:textColor="@color/zone_text_secondary"
             android:textSize="16sp" />
 
@@ -72,12 +94,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Heart-rate note" />
+            android:text="Account help" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="The SEN0203 readings are for project feedback and are not medical measurements. NO_SIGNAL packets and invalid values are not used in Analytics."
+            android:text="Forgot your password? Enter your email on the sign-in screen and tap Forgot your password. To permanently remove your account and saved data, use Delete Account in Settings."
+            android:textColor="@color/zone_text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Important note" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Zone supports study and wellness awareness. Heart-rate information is not a medical diagnosis and should not replace advice from a qualified healthcare professional."
             android:textColor="@color/zone_text_secondary"
             android:textSize="16sp" />
     </LinearLayout>

@@ -44,7 +44,9 @@ public class BlockedAppsView extends AppCompatActivity {
         TextView emptyText = findViewById(R.id.emptyAppsText);
         Button permissionButton = findViewById(R.id.appBlockingPermissionButton);
         permissionButton.setOnClickListener(view ->
-                BlockedAppsStore.requestPermissionIfNeeded(this));
+                BlockedAppsStore.requestPermission(this));
+        findViewById(R.id.notificationSilencingButton).setOnClickListener(view ->
+                startActivity(new Intent(this, NotificationSetting.class)));
         adapter = new AppsAdapter();
         appList.setAdapter(adapter);
         appList.setEmptyView(emptyText);

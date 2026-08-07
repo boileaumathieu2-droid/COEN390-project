@@ -70,6 +70,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/completion_time_hint"
             android:inputType="number"
+            android:maxLength="4"
             android:minHeight="52dp"
             android:textColor="@color/zone_text_primary"
             android:textColorHint="@color/zone_text_secondary" />

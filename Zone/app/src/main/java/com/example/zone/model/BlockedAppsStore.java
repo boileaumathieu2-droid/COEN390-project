@@ -21,6 +21,7 @@ public final class BlockedAppsStore {
 
     private static final String PREFERENCES_NAME = "app_restrict_preferences";
     private static final String BLOCKED_PACKAGES_KEY = "blocked_packages";
+    private static final String STUDY_SESSION_ACTIVE_KEY = "study_session_active";
 
     private BlockedAppsStore() {
     }
@@ -40,6 +41,18 @@ public final class BlockedAppsStore {
 
     public static boolean isBlocked(Context context, String packageName) {
         return getBlockedPackages(context).contains(packageName);
+    }
+
+    public static void setStudySessionActive(Context context, boolean active) {
+        context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(STUDY_SESSION_ACTIVE_KEY, active)
+                .apply();
+    }
+
+    public static boolean isStudySessionActive(Context context) {
+        return context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+                .getBoolean(STUDY_SESSION_ACTIVE_KEY, false);
     }
 
     public static void setBlocked(
@@ -89,6 +102,20 @@ public final class BlockedAppsStore {
             return false;
         }
 
+        showAccessibilityPrompt(activity);
+        return true;
+    }
+
+    public static boolean requestPermission(Activity activity) {
+        if (isAccessibilityEnabled(activity)) {
+            return false;
+        }
+
+        showAccessibilityPrompt(activity);
+        return true;
+    }
+
+    private static void showAccessibilityPrompt(Activity activity) {
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.app_blocking_permission_title)
                 .setMessage(R.string.app_blocking_permission_message)
@@ -98,13 +125,12 @@ public final class BlockedAppsStore {
                         ))
                 .setNegativeButton(R.string.not_now, (dialog, which) -> dialog.dismiss())
                 .show();
-        return true;
     }
 
     /** Backwards-compatible entry point used by older screens. */
     public static void getPermission(Context context) {
         if (context instanceof Activity) {
-            requestPermissionIfNeeded((Activity) context);
+            requestPermission((Activity) context);
         }
     }
 
@@ -112,6 +138,7 @@ public final class BlockedAppsStore {
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
                 .edit()
                 .remove(BLOCKED_PACKAGES_KEY)
+                .remove(STUDY_SESSION_ACTIVE_KEY)
                 .apply();
     }
 }

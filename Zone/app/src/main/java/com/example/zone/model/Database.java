@@ -201,6 +201,61 @@ public class Database extends SQLiteOpenHelper {
         return userID;
     }
 
+    /**
+     * Keeps Firebase email accounts mapped to the local tables. The original
+     * username validator only accepts letters and numbers, so it cannot be used
+     * for an email address containing '@' or '.'.
+     */
+    public int ensureRemoteUser(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return -1;
+        }
+        String normalizedEmail = email.trim().toLowerCase(java.util.Locale.ROOT);
+        int existingId = getUserID(normalizedEmail);
+        if (existingId != -1) {
+            return existingId;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put("username", normalizedEmail);
+        values.put("password", "FIREBASE_AUTHED");
+        getWritableDatabase().insertWithOnConflict(
+                "users",
+                null,
+                values,
+                SQLiteDatabase.CONFLICT_IGNORE
+        );
+        return getUserID(normalizedEmail);
+    }
+
+    public boolean deleteUserAndLocalData(String username) {
+        if (username == null) {
+            return false;
+        }
+        int userId = getUserID(username.trim().toLowerCase(java.util.Locale.ROOT));
+        if (userId == -1) {
+            return true;
+        }
+
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.delete(
+                    "grades",
+                    "subject_id IN (SELECT id FROM subjects WHERE user_id=?)",
+                    new String[]{String.valueOf(userId)}
+            );
+            db.delete("subjects", "user_id=?", new String[]{String.valueOf(userId)});
+            db.delete("objectives", "user_id=?", new String[]{String.valueOf(userId)});
+            db.delete("sessions", "user_id=?", new String[]{String.valueOf(userId)});
+            int deleted = db.delete("users", "id=?", new String[]{String.valueOf(userId)});
+            db.setTransactionSuccessful();
+            return deleted == 1;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public long addSubject(int userID, String subjectName){
 
         SQLiteDatabase db = getWritableDatabase();

@@ -62,8 +62,11 @@ public class TimerSettingsView extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem option) {
         if (option.getItemId() == R.id.action_settings) {
-            Intent intent = new Intent(this, SettingsView.class);
+            Intent intent = new Intent(this, MainContainerActivity.class);
+            intent.putExtra(MainContainerActivity.EXTRA_OPEN_TAB, 3);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+            finish();
             return true;
         }
 

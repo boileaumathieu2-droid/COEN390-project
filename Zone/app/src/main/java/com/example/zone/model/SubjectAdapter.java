@@ -53,10 +53,18 @@ public class SubjectAdapter extends ArrayAdapter<Subject> {
 
             deleteButton.setOnClickListener(v -> {
                 VirtualDatabase db = new VirtualDatabase();
-                db.deleteSubject(currentSubject.getSubjectID());
-                remove(currentSubject);
-
-                notifyDataSetChanged();
+                db.deleteSubject(currentSubject.getSubjectID(), success -> {
+                    if (success) {
+                        remove(currentSubject);
+                        notifyDataSetChanged();
+                    } else {
+                        android.widget.Toast.makeText(
+                                getContext(),
+                                "Subject could not be deleted",
+                                android.widget.Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                });
             });
         }
 

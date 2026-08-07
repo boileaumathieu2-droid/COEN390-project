@@ -117,9 +117,18 @@ public class ObjectiveView extends Fragment {
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
-                    db.deleteTask(objective.getObjectiveID());
-                    controller.deleteObjective(objective.getObjectiveID());
-                    refreshSelectedDateTasks();
+                    db.deleteTask(objective.getObjectiveID(), success -> {
+                        if (success) {
+                            selectedObjectives.remove(objective);
+                            refreshSelectedDateTasks();
+                        } else {
+                            android.widget.Toast.makeText(
+                                    requireContext(),
+                                    "Task could not be deleted",
+                                    android.widget.Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                    });
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();

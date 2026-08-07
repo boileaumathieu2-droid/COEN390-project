@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -400,7 +401,11 @@ public class HeartRateMonitorView extends AppCompatActivity {
         try {
             if (bluetoothLeScanner != null) {
                 // No filter: show all BLE advertisers, not only the Bluno.
-                bluetoothLeScanner.startScan(scanCallback);
+                ScanSettings settings = new ScanSettings.Builder()
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                        .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                        .build();
+                bluetoothLeScanner.startScan(null, settings, scanCallback);
                 discoveryStarted = true;
             }
             if (bluetoothAdapter.isDiscovering()) {
@@ -492,15 +497,14 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
     private void registerBluetoothDiscoveryReceiver() {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(
-                    bluetoothDiscoveryReceiver,
-                    filter,
-                    Context.RECEIVER_NOT_EXPORTED
-            );
-        } else {
-            registerReceiver(bluetoothDiscoveryReceiver, filter);
-        }
+        // ACTION_FOUND is sent by Android's Bluetooth service (outside this
+        // app), so the receiver must accept system broadcasts.
+        ContextCompat.registerReceiver(
+                this,
+                bluetoothDiscoveryReceiver,
+                filter,
+                ContextCompat.RECEIVER_EXPORTED
+        );
         bluetoothReceiverRegistered = true;
     }
 

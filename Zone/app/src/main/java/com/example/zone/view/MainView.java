@@ -104,6 +104,7 @@ public class MainView extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
+        timer.initialize(requireContext());
         TimerSettingsModel timerSettingsModel = new TimerSettingsModel(requireContext());
         timer.setStudyDuration(timerSettingsModel.getStudyDuration());
         timer.setBreakDuration(timerSettingsModel.getBreakDuration());

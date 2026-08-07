@@ -27,7 +27,7 @@ public class TimerSettingsControllerTest {
         MockitoAnnotations.openMocks(this);
         // We use Robolectric to build the actual activity so findViewById works
         activity = Robolectric.buildActivity(TimerSettingsView.class).create().get();
-        controller = new TimerSettingsController(activity);
+        controller = new TimerSettingsController(activity, activity);
         model = TimerModel.getInstance();
         model.stopAndReset();
     }
@@ -56,7 +56,7 @@ public class TimerSettingsControllerTest {
         activity.setBreakSecs("15");
         activity.setBreakEnabled(true);
 
-        controller.saveSettings();
+        controller.saveSettings(activity);
 
         assertEquals(20 * 60 + 30, model.getStudyDuration());
         assertEquals(5 * 60 + 15, model.getBreakDuration());
@@ -70,10 +70,11 @@ public class TimerSettingsControllerTest {
         activity.setBreakMins("");
         activity.setBreakSecs("");
 
-        controller.saveSettings();
+        int originalStudyDuration = model.getStudyDuration();
+        int originalBreakDuration = model.getBreakDuration();
+        controller.saveSettings(activity);
 
-        // Check defaults from parseOrDefault
-        assertEquals(25 * 60 + 0, model.getStudyDuration());
-        assertEquals(5 * 60 + 0, model.getBreakDuration());
+        assertEquals(originalStudyDuration, model.getStudyDuration());
+        assertEquals(originalBreakDuration, model.getBreakDuration());
     }
 }

@@ -4,6 +4,7 @@ import static androidx.core.content.ContentProviderCompat.requireContext;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 
 import androidx.core.app.ActivityCompat;
@@ -48,6 +49,7 @@ public final class TimerModel {
     private StudySessionModel lastCompletedSession;
     private boolean reflectionPending;
     private ScheduledFuture<?> clockTask;
+    private Context applicationContext;
 
     private TimerModel() {
     }
@@ -61,6 +63,13 @@ public final class TimerModel {
             }
         }
         return instance;
+    }
+
+    public synchronized void initialize(Context context) {
+        if (context != null) {
+            applicationContext = context.getApplicationContext();
+            syncAppBlockingState();
+        }
     }
 
     public synchronized void setStudyDuration(int duration) {
@@ -129,6 +138,7 @@ public final class TimerModel {
     }
     private void finishCurrentPeriod() {
         running = false;
+        syncAppBlockingState();
         cancelClock();
         lastClockUpdate = 0L;
 
@@ -174,6 +184,7 @@ public final class TimerModel {
 
     private void switchToBreak() {
         breakTime = true;
+        syncAppBlockingState();
         remainingTime = breakDuration;
         sampleSeconds = 0;
     }
@@ -181,6 +192,7 @@ public final class TimerModel {
     public synchronized void completeSession() {
         updateFromClock();
         running = false;
+        syncAppBlockingState();
         cancelClock();
         lastClockUpdate = 0L;
 
@@ -227,6 +239,7 @@ public final class TimerModel {
         }
 
         running = true;
+        syncAppBlockingState();
         sampleSeconds = 0;
         lastClockUpdate = System.currentTimeMillis();
         startClock();
@@ -236,7 +249,7 @@ public final class TimerModel {
     public synchronized void startNewStudySession() {
         running = false;
         cancelClock();
-        breakTime = true;
+        breakTime = false;
         remainingTime = studyDuration;
         session = null;
         startTimer();
@@ -245,6 +258,7 @@ public final class TimerModel {
     public synchronized void pauseTimer() {
         updateFromClock();
         running = false;
+        syncAppBlockingState();
         cancelClock();
         lastClockUpdate = 0L;
         if (session != null && !breakTime) {
@@ -257,6 +271,7 @@ public final class TimerModel {
             return;
         }
         running = true;
+        syncAppBlockingState();
         lastClockUpdate = System.currentTimeMillis();
         if (session != null && !breakTime) {
             session.setStatus(StudySessionModel.Status.ACTIVE);
@@ -268,6 +283,7 @@ public final class TimerModel {
     public synchronized void stopAndReset() {
         updateFromClock();
         running = false;
+        syncAppBlockingState();
         cancelClock();
         lastClockUpdate = 0L;
         sampleSeconds = 0;
@@ -297,6 +313,15 @@ public final class TimerModel {
         if (clockTask != null) {
             clockTask.cancel(false);
             clockTask = null;
+        }
+    }
+
+    private void syncAppBlockingState() {
+        if (applicationContext != null) {
+            BlockedAppsStore.setStudySessionActive(
+                    applicationContext,
+                    running && !breakTime && session != null
+            );
         }
     }
 

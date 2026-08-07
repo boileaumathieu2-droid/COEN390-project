@@ -5,6 +5,7 @@ import com.example.zone.model.HeartRateReading;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Reassembles BLE chunks into Arduino lines and parses:
@@ -58,7 +59,7 @@ public final class HeartRatePacketParser {
             int rawValue = Integer.parseInt(parts[1].trim());
             int signalRange = Integer.parseInt(parts[2].trim());
             int bpm = Integer.parseInt(parts[3].trim());
-            String status = parts[4].trim().toUpperCase();
+            String status = parts[4].trim().toUpperCase(Locale.ROOT);
 
             if (rawValue < 0 || rawValue > 1023
                     || signalRange < 0 || signalRange > 1023

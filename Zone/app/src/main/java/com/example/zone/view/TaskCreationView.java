@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class TaskCreationView extends AppCompatActivity {
+    private static final int MAX_ESTIMATED_MINUTES = 1440;
     public static final String EXTRA_TASK_ID = "task_id";
     public static final String EXTRA_EVENT_NAME = "event_name";
     public static final String EXTRA_DUE_DATE = "due_date";
@@ -42,6 +43,7 @@ public class TaskCreationView extends AppCompatActivity {
     private EditText objectivesInput;
     private Spinner taskTypeSpinner;
     private Button dueDateButton;
+    private Button saveButton;
     private String taskId;
 
     @Override
@@ -62,7 +64,7 @@ public class TaskCreationView extends AppCompatActivity {
         objectivesInput = findViewById(R.id.objectivesInput);
         taskTypeSpinner = findViewById(R.id.taskTypeSpinner);
         dueDateButton = findViewById(R.id.dueDateButton);
-        Button saveButton = findViewById(R.id.saveTaskButton);
+        saveButton = findViewById(R.id.saveTaskButton);
 
         ArrayAdapter<CharSequence> typeAdapter = ArrayAdapter.createFromResource(
                 this, R.array.task_types, android.R.layout.simple_spinner_item);
@@ -151,19 +153,55 @@ public class TaskCreationView extends AppCompatActivity {
             completionTimeInput.setError(getString(R.string.completion_time_required));
             return;
         }
+        int estimatedMinutes;
+        try {
+            estimatedMinutes = Integer.parseInt(completionTime);
+        } catch (NumberFormatException error) {
+            completionTimeInput.setError(getString(R.string.completion_time_range));
+            return;
+        }
+        if (estimatedMinutes < 1 || estimatedMinutes > MAX_ESTIMATED_MINUTES) {
+            completionTimeInput.setError(getString(R.string.completion_time_range));
+            return;
+        }
+        String normalizedCompletionTime = String.valueOf(estimatedMinutes);
         if (isBeforeToday(selectedCalendar)) {
             Toast.makeText(this, R.string.past_due_date_not_allowed, Toast.LENGTH_LONG).show();
             return;
         }
 
+        saveButton.setEnabled(false);
+        VirtualDatabase.AuthCallback callback = success -> {
+            saveButton.setEnabled(true);
+            if (!success) {
+                Toast.makeText(this, "Task could not be saved", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(this, R.string.task_saved, Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        };
+
         if (taskId != null) {
-            db.editTask(taskId, objectives, dueDate, eventName, completionTime, taskType);
+            db.editTask(
+                    taskId,
+                    objectives,
+                    dueDate,
+                    eventName,
+                    normalizedCompletionTime,
+                    taskType,
+                    callback
+            );
         } else {
-            db.saveObjective(objectives, dueDate, eventName, completionTime, taskType);
+            db.saveObjective(
+                    objectives,
+                    dueDate,
+                    eventName,
+                    normalizedCompletionTime,
+                    taskType,
+                    callback
+            );
         }
-        Toast.makeText(this, R.string.task_saved, Toast.LENGTH_SHORT).show();
-        setResult(RESULT_OK);
-        finish();
     }
 
     private boolean isBeforeToday(Calendar date) {

@@ -2,6 +2,7 @@ package com.example.zone.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Patterns;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -11,6 +12,8 @@ import com.example.zone.controller.Login;
 import com.example.zone.model.Database;
 import com.example.zone.model.Session;
 import com.example.zone.model.VirtualDatabase;
+
+import java.util.Locale;
 
 
 public class LoginView extends AppCompatActivity {
@@ -27,6 +30,8 @@ public class LoginView extends AppCompatActivity {
                 ensureLocalSession(email);
             }
             Intent intent = new Intent(this, MainContainerActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
             return;
@@ -40,8 +45,20 @@ public class LoginView extends AppCompatActivity {
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
-            String userStr = username.getText().toString();
+            String userStr = username.getText().toString()
+                    .trim()
+                    .toLowerCase(Locale.ROOT);
+            if (!Patterns.EMAIL_ADDRESS.matcher(userStr).matches()) {
+                username.setError("Enter a valid email address");
+                return;
+            }
+            if (password.getText().toString().isEmpty()) {
+                password.setError("Enter your password");
+                return;
+            }
+            loginButton.setEnabled(false);
             db.signIn(userStr, password.getText().toString(), success-> {
+                loginButton.setEnabled(true);
                 if (success) {
                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show();
                     
@@ -49,17 +66,34 @@ public class LoginView extends AppCompatActivity {
                     ensureLocalSession(userStr);
 
                     Intent intent = new Intent(this, MainContainerActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
                 }
                 else {
-                    Toast.makeText(this, "Incorect information, Try Again!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Incorrect email or password.", Toast.LENGTH_SHORT).show();
                 }
             });
         });
         forgot_password.setOnClickListener(v -> {
-            //Intent intent = new Intent(this, MainView.class);
-            //startActivity(intent);
+            String email = username.getText().toString()
+                    .trim()
+                    .toLowerCase(Locale.ROOT);
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                username.setError("Enter your email first");
+                username.requestFocus();
+                return;
+            }
+            forgot_password.setEnabled(false);
+            db.sendPasswordResetEmail(email, (success, message) -> {
+                forgot_password.setEnabled(true);
+                Toast.makeText(
+                        LoginView.this,
+                        message,
+                        success ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT
+                ).show();
+            });
         });
         Register_now.setOnClickListener(v -> {
             Intent intent = new Intent(this, RegistrationView.class);
@@ -69,12 +103,9 @@ public class LoginView extends AppCompatActivity {
 
     private void ensureLocalSession(String username) {
         Database localDatabase = new Database(this);
-        int localId = localDatabase.getUserID(username);
-        if (localId == -1) {
-            localDatabase.addUser(username, "FIREBASE_AUTHED");
-            localId = localDatabase.getUserID(username);
-        }
+        String normalizedUsername = username.trim().toLowerCase(Locale.ROOT);
+        int localId = localDatabase.ensureRemoteUser(normalizedUsername);
         Session.setUserID(localId);
-        Session.setUsername(username);
+        Session.setUsername(normalizedUsername);
     }
 }

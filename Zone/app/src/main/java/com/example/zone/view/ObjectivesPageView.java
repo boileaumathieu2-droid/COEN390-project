@@ -110,8 +110,21 @@ public class ObjectivesPageView extends AppCompatActivity {
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
-                    db.deleteTask(objective.getObjectiveID());
-                    refreshObjectives();
+                    db.deleteTask(objective.getObjectiveID(), success -> {
+                        if (success) {
+                            todayObjectives.remove(objective);
+                            futureObjectives.remove(objective);
+                            todayAdapter.notifyDataSetChanged();
+                            futureAdapter.notifyDataSetChanged();
+                            refreshObjectives();
+                        } else {
+                            android.widget.Toast.makeText(
+                                    this,
+                                    "Task could not be deleted",
+                                    android.widget.Toast.LENGTH_SHORT
+                            ).show();
+                        }
+                    });
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();

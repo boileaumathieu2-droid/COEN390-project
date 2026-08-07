@@ -73,19 +73,24 @@ public class SubjectView extends AppCompatActivity {
         int id = option.getItemId();
 
         if (id == R.id.action_delete_subject) {
-            VirtualDatabase db = new VirtualDatabase();
-            System.out.println("SUBJECTID IS: " +subjectID);
-            db.deleteSubject(subjectID);
-
-          //  controller.deleteSubject(subjectID);
-            Intent intent = new Intent(this, GradesTrackerView.class);
-            startActivity(intent);
-            finish();
-            Toast.makeText(
-                    getApplicationContext(),
-                    "Subject deleted",
-                    Toast.LENGTH_SHORT
-            ).show();
+            new AlertDialog.Builder(this)
+                    .setTitle("Delete this subject?")
+                    .setMessage("The subject and its grades will be permanently deleted.")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        VirtualDatabase db = new VirtualDatabase();
+                        db.deleteSubject(subjectID, success -> {
+                            if (success) {
+                                setResult(RESULT_OK);
+                                Toast.makeText(this, "Subject deleted", Toast.LENGTH_SHORT).show();
+                                finish();
+                            } else {
+                                Toast.makeText(this, "Subject could not be deleted", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            return true;
         }
 
         return super.onOptionsItemSelected(option);
@@ -135,12 +140,29 @@ public class SubjectView extends AppCompatActivity {
                     userGrade.setError("Grade must be a number from 0 to 100");
                     return;
                 }
-                db.saveGrade("", grade, subjectID);
-                refresh();
-                dialog.dismiss();
+                db.saveGrade("", grade, subjectID, success -> {
+                    if (success) {
+                        refresh();
+                        dialog.dismiss();
+                    } else {
+                        Toast.makeText(
+                                SubjectView.this,
+                                "Grade could not be saved",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                });
             });
             dialog.show();
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            refresh();
+        }
     }
 }
 

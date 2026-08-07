@@ -7,15 +7,26 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import org.w3c.dom.Document;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class VirtualDatabase {
 
@@ -37,29 +48,67 @@ public class VirtualDatabase {
     public interface AuthCallback {
         void onResult(boolean success);
     }
-    public void createAccount(String email, String password, Context context, AuthCallback callback) {
+
+    public interface DetailedAuthCallback {
+        void onResult(boolean success, String message);
+    }
+
+    public void createAccount(
+            String email,
+            String password,
+            DetailedAuthCallback callback
+    ) {
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener(result -> {
-                    assert auth.getCurrentUser() != null;
-                    String uid = auth.getCurrentUser().getUid();
+                    FirebaseUser currentUser = auth.getCurrentUser();
+                    if (currentUser == null) {
+                        callback.onResult(false, "Account could not be created. Please try again.");
+                        return;
+                    }
+                    String uid = currentUser.getUid();
                     Map<String, Object> user = new HashMap<>();
                     user.put("email", email);
 
+                    // Authentication is the account authority. The profile document is
+                    // useful metadata, but a temporary Firestore failure must not report
+                    // that a successfully created account failed.
                     db.collection("users")
                             .document(uid)
                             .set(user)
-                            .addOnSuccessListener(unused -> {
-                                callback.onResult(true);
-                            })
-                            .addOnFailureListener(e -> callback.onResult(false));
+                            .addOnFailureListener(error -> Log.w(
+                                    "VirtualDatabase",
+                                    "Account created, but the profile document was not saved",
+                                    error
+                            ));
+                    callback.onResult(true, "Account created successfully.");
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(context,
-                            "Account creation failed",
-                            Toast.LENGTH_SHORT).show();
-
-                    callback.onResult(false);
+                    if (e instanceof FirebaseAuthUserCollisionException) {
+                        callback.onResult(false, "An account already exists for this email.");
+                    } else if (e instanceof FirebaseAuthWeakPasswordException) {
+                        callback.onResult(false, "Use a password with at least 6 characters.");
+                    } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
+                        callback.onResult(false, "Enter a valid email address.");
+                    } else {
+                        String message = e.getLocalizedMessage();
+                        callback.onResult(
+                                false,
+                                message == null || message.trim().isEmpty()
+                                        ? "Account creation failed. Please try again."
+                                        : message
+                        );
+                    }
                 });
+    }
+
+    /** Compatibility overload retained for older callers. */
+    public void createAccount(
+            String email,
+            String password,
+            Context context,
+            AuthCallback callback
+    ) {
+        createAccount(email, password, (success, message) -> callback.onResult(success));
     }
 
     public void signIn(String email,
@@ -72,6 +121,122 @@ public class VirtualDatabase {
                 .addOnFailureListener(e -> {
                     callback.onResult(false);
                 });
+    }
+
+    public void sendPasswordResetEmail(String email, DetailedAuthCallback callback) {
+        auth.sendPasswordResetEmail(email)
+                .addOnSuccessListener(unused -> callback.onResult(
+                        true,
+                        "Password reset email sent. Check your inbox and spam folder."
+                ))
+                .addOnFailureListener(error -> {
+                    String message = error.getLocalizedMessage();
+                    callback.onResult(
+                            false,
+                            message == null || message.trim().isEmpty()
+                                    ? "Password reset email could not be sent."
+                                    : message
+                    );
+                });
+    }
+
+    public void deleteAccount(DetailedAuthCallback callback) {
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null) {
+            callback.onResult(false, "No signed-in account was found.");
+            return;
+        }
+
+        String userId = currentUser.getUid();
+        DocumentReference userDocument = db.collection("users").document(userId);
+
+        deleteCollection(userDocument.collection("objectives"))
+                .continueWithTask(task -> requireSuccessful(task,
+                        () -> deleteCollection(userDocument.collection("studySessions"))))
+                .continueWithTask(task -> requireSuccessful(task,
+                        () -> deleteCollection(userDocument.collection("timerSettings"))))
+                .continueWithTask(task -> requireSuccessful(task,
+                        () -> deleteSubjects(userDocument.collection("Subjects"))))
+                .continueWithTask(task -> requireSuccessful(task,
+                        () -> deleteSubjects(userDocument.collection("subjects"))))
+                .continueWithTask(task -> requireSuccessful(task, userDocument::delete))
+                .continueWithTask(task -> requireSuccessful(task, currentUser::delete))
+                .addOnSuccessListener(unused -> callback.onResult(
+                        true,
+                        "Your account and Zone data were deleted."
+                ))
+                .addOnFailureListener(error -> {
+                    if (error instanceof FirebaseAuthRecentLoginRequiredException) {
+                        callback.onResult(
+                                false,
+                                "For security, sign out and sign in again before deleting your account."
+                        );
+                    } else {
+                        String message = error.getLocalizedMessage();
+                        callback.onResult(
+                                false,
+                                message == null || message.trim().isEmpty()
+                                        ? "The account could not be deleted. Please try again."
+                                        : message
+                        );
+                    }
+                });
+    }
+
+    private Task<Void> requireSuccessful(
+            Task<?> previous,
+            Supplier<Task<Void>> next
+    ) {
+        if (!previous.isSuccessful()) {
+            Exception error = previous.getException();
+            return Tasks.forException(error == null
+                    ? new IllegalStateException("Cloud data operation failed")
+                    : error);
+        }
+        return next.get();
+    }
+
+    private Task<Void> deleteCollection(CollectionReference collection) {
+        return collection.get().continueWithTask(queryTask -> {
+            if (!queryTask.isSuccessful()) {
+                Exception error = queryTask.getException();
+                return Tasks.forException(error == null
+                        ? new IllegalStateException("Could not load account data")
+                        : error);
+            }
+            if (queryTask.getResult().isEmpty()) {
+                return Tasks.forResult(null);
+            }
+            WriteBatch batch = db.batch();
+            for (DocumentSnapshot document : queryTask.getResult().getDocuments()) {
+                batch.delete(document.getReference());
+            }
+            return batch.commit();
+        });
+    }
+
+    private Task<Void> deleteSubjects(CollectionReference subjects) {
+        return subjects.get().continueWithTask(queryTask -> {
+            if (!queryTask.isSuccessful()) {
+                Exception error = queryTask.getException();
+                return Tasks.forException(error == null
+                        ? new IllegalStateException("Could not load subjects")
+                        : error);
+            }
+            List<Task<?>> deletions = new ArrayList<>();
+            for (DocumentSnapshot subject : queryTask.getResult().getDocuments()) {
+                deletions.add(deleteCollection(subject.getReference().collection("Grades"))
+                        .continueWithTask(task -> requireSuccessful(
+                                task,
+                                () -> deleteCollection(subject.getReference().collection("grades"))
+                        ))
+                        .continueWithTask(task -> requireSuccessful(
+                                task,
+                                subject.getReference()::delete
+                        )));
+            }
+            return Tasks.whenAll(deletions);
+        });
     }
 
     public String getCurrentUserId() {
@@ -242,19 +407,27 @@ public class VirtualDatabase {
     }
     public void GetFutureObjectives(ObjectiveCallback callback, String date) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onComplete(new ArrayList<>());
+            return;
+        }
+        String requestedDate = normalizeObjectiveDate(date);
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
-                .whereNotEqualTo("objectiveDate", date)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        Objective objective = document.toObject(Objective.class);
-                        objectives.add(objective);
+                        Objective objective = parseObjective(document);
+                        if (normalizeObjectiveDate(objective.getObjectiveDate())
+                                .compareTo(requestedDate) > 0) {
+                            objectives.add(objective);
+                        }
                     }
                     callback.onComplete(objectives);
-                });
+                })
+                .addOnFailureListener(error -> callback.onComplete(new ArrayList<>()));
     }
     public interface ObjectiveCallback {
         void onComplete(ArrayList<Objective> objectives);
@@ -262,6 +435,10 @@ public class VirtualDatabase {
 
     public void getObjectives(ObjectiveCallback callback) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onComplete(new ArrayList<>());
+            return;
+        }
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
@@ -269,43 +446,53 @@ public class VirtualDatabase {
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        String objectiveID = document.getString("objectiveID");
-                        String objectiveText = document.getString("objectiveText");
-                        String objectiveDate = document.getString("objectiveDate");
-                        String eventName = document.getString("eventName");
-                        String completionTime = document.getString("completionTime");
-                        String taskType = document.getString("taskType");
-                        Objective objective = new Objective(
-                                objectiveID,
-                                eventName,
-                                objectiveDate,
-                                completionTime,
-                                taskType,
-                                objectiveText
-                        );
-                        objectives.add(objective);
+                        objectives.add(parseObjective(document));
                     }
                     callback.onComplete(objectives);
-                });
+                })
+                .addOnFailureListener(error -> callback.onComplete(new ArrayList<>()));
     }
     public void GetDailyObjectives(ObjectiveCallback callback, String date) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onComplete(new ArrayList<>());
+            return;
+        }
+        String requestedDate = normalizeObjectiveDate(date);
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
-                .whereEqualTo("objectiveDate", date)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     ArrayList<Objective> objectives = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-                        Objective objective = document.toObject(Objective.class);
-                        objectives.add(objective);
+                        Objective objective = parseObjective(document);
+                        if (requestedDate.equals(normalizeObjectiveDate(
+                                objective.getObjectiveDate()))) {
+                            objectives.add(objective);
+                        }
                     }
                     callback.onComplete(objectives);
-                });
+                })
+                .addOnFailureListener(error -> callback.onComplete(new ArrayList<>()));
     }
     public void saveObjective(String objective, String date, String name, String time, String type) {
+        saveObjective(objective, date, name, time, type, success -> { });
+    }
+
+    public void saveObjective(
+            String objective,
+            String date,
+            String name,
+            String time,
+            String type,
+            AuthCallback callback
+    ) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onResult(false);
+            return;
+        }
         DocumentReference docRef = db.collection("users")
                 .document(userId)
                 .collection("objectives")
@@ -318,21 +505,49 @@ public class VirtualDatabase {
         data.put("eventName", name);
         data.put("completionTime", time);
         data.put("taskType", type);
-        docRef.set(data);
+        docRef.set(data)
+                .addOnSuccessListener(unused -> callback.onResult(true))
+                .addOnFailureListener(error -> callback.onResult(false));
     }
 
     public void deleteTask(String objective) {
+        deleteTask(objective, success -> { });
+    }
+
+    public void deleteTask(String objective, AuthCallback callback) {
         String userId = getCurrentUserId();
+        if (userId == null || objective == null) {
+            callback.onResult(false);
+            return;
+        }
         db.collection("users")
                 .document(userId)
                 .collection("objectives")
                 .document(objective)
-                .delete();
+                .delete()
+                .addOnSuccessListener(unused -> callback.onResult(true))
+                .addOnFailureListener(error -> callback.onResult(false));
     }
     public void editTask(String id, String objective, String date,
                          String name, String time, String type) {
+        editTask(id, objective, date, name, time, type, success -> { });
+    }
+
+    public void editTask(
+            String id,
+            String objective,
+            String date,
+            String name,
+            String time,
+            String type,
+            AuthCallback callback
+    ) {
 
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onResult(false);
+            return;
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("objectiveText", objective);
@@ -345,10 +560,14 @@ public class VirtualDatabase {
                 .collection("objectives")
                 .document(id)
                 .update(data)
-                .addOnSuccessListener(unused ->
-                        Log.d("Firestore", "Task updated"))
-                .addOnFailureListener(e ->
-                        Log.e("Firestore", "Error updating task", e));
+                .addOnSuccessListener(unused -> {
+                    Log.d("Firestore", "Task updated");
+                    callback.onResult(true);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Firestore", "Error updating task", e);
+                    callback.onResult(false);
+                });
     }
     public static boolean isInternetAvailable(Context context) {
         ConnectivityManager connectivityManager =
@@ -416,7 +635,15 @@ public class VirtualDatabase {
     }
 
     public void saveSubject(String subjectName) {
+        saveSubject(subjectName, success -> { });
+    }
+
+    public void saveSubject(String subjectName, AuthCallback callback) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onResult(false);
+            return;
+        }
      DocumentReference docRef = db.collection("users")
                 .document(userId)
                 .collection("Subjects")
@@ -425,10 +652,25 @@ public class VirtualDatabase {
      Map <String, Object> data = new HashMap<>();
      data.put("SubjectID", id);
      data.put("SubjectName", subjectName);
-     docRef.set(data);
+     docRef.set(data)
+             .addOnSuccessListener(unused -> callback.onResult(true))
+             .addOnFailureListener(error -> callback.onResult(false));
     }
     public void saveGrade(String type, String grade, String SubjectId) {
+        saveGrade(type, grade, SubjectId, success -> { });
+    }
+
+    public void saveGrade(
+            String type,
+            String grade,
+            String SubjectId,
+            AuthCallback callback
+    ) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onResult(false);
+            return;
+        }
         DocumentReference docRef = db.collection("users")
                 .document(userId)
                 .collection("Subjects")
@@ -440,16 +682,36 @@ public class VirtualDatabase {
         data.put("GradeId", id);
         data.put("type", type);
         data.put("grade", grade);
-        docRef.set(data);
+        docRef.set(data)
+                .addOnSuccessListener(unused -> callback.onResult(true))
+                .addOnFailureListener(error -> callback.onResult(false));
     }
 
     public void deleteSubject(String subject) {
+        deleteSubject(subject, success -> { });
+    }
+
+    public void deleteSubject(String subject, AuthCallback callback) {
         String userId = getCurrentUserId();
-        db.collection("users")
+        if (userId == null || subject == null) {
+            callback.onResult(false);
+            return;
+        }
+        DocumentReference subjectDocument = db.collection("users")
                 .document(userId)
                 .collection("Subjects")
-                .document(subject)
-                .delete();
+                .document(subject);
+        deleteCollection(subjectDocument.collection("Grades"))
+                .continueWithTask(task -> requireSuccessful(
+                        task,
+                        () -> deleteCollection(subjectDocument.collection("grades"))
+                ))
+                .continueWithTask(task -> requireSuccessful(
+                        task,
+                        subjectDocument::delete
+                ))
+                .addOnSuccessListener(unused -> callback.onResult(true))
+                .addOnFailureListener(error -> callback.onResult(false));
     }
     public interface SubjectsCallback {
         void onSubjectsLoaded(ArrayList<Subject> subjects);
@@ -505,6 +767,10 @@ public class VirtualDatabase {
 
     public void getSubjects(SubjectsCallback callback) {
         String userId = getCurrentUserId();
+        if (userId == null) {
+            callback.onSubjectsLoaded(new ArrayList<>());
+            return;
+        }
         db.collection("users")
                 .document(userId)
                 .collection("Subjects")
@@ -523,6 +789,31 @@ public class VirtualDatabase {
                 .addOnFailureListener(e -> {
                     callback.onSubjectsLoaded(new ArrayList<>());
                 });
+    }
+
+    private Objective parseObjective(DocumentSnapshot document) {
+        return new Objective(
+                valueOrFallback(document.getString("objectiveID"), document.getId()),
+                valueOrFallback(document.getString("eventName"), "Untitled task"),
+                normalizeObjectiveDate(document.getString("objectiveDate")),
+                valueOrFallback(document.getString("completionTime"), ""),
+                valueOrFallback(document.getString("taskType"), "Other"),
+                valueOrFallback(document.getString("objectiveText"), "")
+        );
+    }
+
+    private String valueOrFallback(String value, String fallback) {
+        return value == null ? fallback : value;
+    }
+
+    private String normalizeObjectiveDate(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = value.trim();
+        return normalized.length() >= 10
+                ? normalized.substring(0, 10)
+                : normalized;
     }
 //    public void getObjectives(ObjectiveCallback callback) {
 //        String userId = getCurrentUserId();

@@ -106,19 +106,36 @@ public class GradesTrackerView extends AppCompatActivity {
                                 Toast.LENGTH_SHORT
                         ).show();
                     } else {
-                        db.saveSubject(name);
-                        Toast.makeText(
-                                GradesTrackerView.this,
-                                "Subject saved",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                        refresh();
-                        dialog.dismiss();
+                        db.saveSubject(name, success -> {
+                            if (success) {
+                                Toast.makeText(
+                                        GradesTrackerView.this,
+                                        "Subject saved",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                                refresh();
+                                dialog.dismiss();
+                            } else {
+                                Toast.makeText(
+                                        GradesTrackerView.this,
+                                        "Subject could not be saved",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                            }
+                        });
                     }
                 });
             });
             dialog.show();
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            refresh();
+        }
     }
 }
 
