@@ -130,7 +130,6 @@ public class ObjectiveView extends Fragment {
         db.GetDailyObjectives(objectives -> {
             selectedObjectives.clear();
             selectedObjectives.addAll(objectives);
-
             objectiveLabels.clear();
             for (Objective objective : selectedObjectives) {
                 objectiveLabels.add(objective.getEventName());

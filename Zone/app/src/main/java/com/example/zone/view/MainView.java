@@ -297,7 +297,6 @@ public class MainView extends Fragment {
                 minutes,
                 seconds
         ));
-
         int fullDuration = timer.isBreakTime()
                 ? timer.getBreakDuration() : timer.getStudyDuration();
         boolean activeOrPaused = timer.isRunning()
@@ -316,15 +315,6 @@ public class MainView extends Fragment {
             startButton.setVisibility(activeOrPaused ? View.GONE : View.VISIBLE);
             startButton.setText(timer.isBreakTime()
                 ? "Start Break" : "Start Study Session");
-        }
-        
-        if (minutes == 0 && seconds == 0 && timer.isRunning()) {
-            // Timer just finished
-            if (hasDndAccess()) manageDnD(false);
-            NotificationController notificationHelper = new NotificationController(requireContext());
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-                notificationHelper.sendNotifications("STUDY APP", "Session Finished!");
-            }
         }
     }
 

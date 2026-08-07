@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresPermission;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -25,8 +27,10 @@ public class NotificationController {
 
     public NotificationController(Context context) {
         this.context = context;
+        Log.d("Notification", "NotificationController constructor");
         createNotificationChannel();
     }
+
     public void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel =
@@ -45,38 +49,42 @@ public class NotificationController {
             }
         }
     }
-    public boolean hasNotificationPermission() {
-        prefs = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
-        boolean Notifications = prefs.getBoolean("Notifications", false);
-        if(!Notifications) {
-            return false;
-        }
 
+    public boolean hasNotificationPermission() {
+//        prefs = context.getSharedPreferences("Settings", Context.MODE_PRIVATE);
+//        boolean Notifications = prefs.getBoolean("Notifications", false);
+//        if (!Notifications) {
+//            return false;
+//        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(
+            return ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED;
         }
         return true;
     }
+
+
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     public void sendNotifications(String title, String message) {
         if (!hasNotificationPermission()) {
+            Log.d("Notification", "No notification permission");
             return;
         }
+
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(context, CHANNEL_ID)
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setContentTitle(title)
                         .setContentText(message)
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setAutoCancel(true);
+
         NotificationManagerCompat manager =
                 NotificationManagerCompat.from(context);
-        manager.notify(
-                NOTIFICATION_ID,
-                builder.build()
-        );
+
+        Log.d("Notification", "Posting notification");
+        manager.notify(NOTIFICATION_ID, builder.build());
     }
 }

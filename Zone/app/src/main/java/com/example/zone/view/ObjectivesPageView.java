@@ -15,6 +15,7 @@ import com.example.zone.model.Database;
 import com.example.zone.model.Objective;
 import com.example.zone.model.ObjectiveAdapter;
 import com.example.zone.model.Session;
+import com.example.zone.model.VirtualDatabase;
 import com.google.android.material.card.MaterialCardView;
 
 import java.text.SimpleDateFormat;
@@ -104,41 +105,86 @@ public class ObjectivesPageView extends AppCompatActivity {
     }
 
     private void confirmDelete(Objective objective) {
+        VirtualDatabase db = new VirtualDatabase();
         new AlertDialog.Builder(this)
                 .setTitle(R.string.delete_task_question)
                 .setMessage(R.string.delete_task_message)
                 .setPositiveButton(R.string.delete_task, (dialog, which) -> {
-                    controller.deleteObjective(objective.getObjectiveID());
+                    db.deleteTask(objective.getObjectiveID());
                     refreshObjectives();
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }
 
+
     private void refreshObjectives() {
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        todayObjectives.clear();
-        todayObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), today));
-        futureObjectives.clear();
-        futureObjectives.addAll(controller.getObjectivesForFuture(Session.getUserID(), today));
-        todayAdapter.notifyDataSetChanged();
-        futureAdapter.notifyDataSetChanged();
-        if (todayObjectives.isEmpty()){
-            todayObjText.setVisibility(View.VISIBLE);
-            todayObjCard.setVisibility(View.GONE);
-        }
-        else {
-            todayObjText.setVisibility(View.GONE);
-            todayObjCard.setVisibility(View.VISIBLE);
-        }
-        if (futureObjectives.isEmpty()){
-            futureObjText.setVisibility(View.VISIBLE);
-            futureObjCard.setVisibility(View.GONE);
-        }
-        else {
-            futureObjText.setVisibility(View.GONE);
-            futureObjCard.setVisibility(View.VISIBLE);
-        }
+        VirtualDatabase db = new VirtualDatabase();
+        db.GetDailyObjectives(Objectives -> {
+            todayObjectives.clear();
+            todayObjectives.addAll(Objectives);
+            todayAdapter.notifyDataSetChanged();
+            if (todayObjectives.isEmpty()) {
+                todayObjText.setVisibility(View.VISIBLE);
+                todayObjCard.setVisibility(View.GONE);
+            } else {
+                todayObjText.setVisibility(View.GONE);
+                todayObjCard.setVisibility(View.VISIBLE);
+            }
+        }, today);
 
+        db.GetFutureObjectives(Objectives -> {
+            futureObjectives.clear();
+            futureObjectives.addAll(Objectives);
+            futureAdapter.notifyDataSetChanged();
+            if (futureObjectives.isEmpty()) {
+                futureObjText.setVisibility(View.VISIBLE);
+                futureObjCard.setVisibility(View.GONE);
+            } else {
+                futureObjText.setVisibility(View.GONE);
+                futureObjCard.setVisibility(View.VISIBLE);
+            }
+        }, today);
     }
+
+
+//     db.GetDailyObjectives(objectives -> {
+//        selectedObjectives.clear();
+//        selectedObjectives.addAll(objectives);
+//        objectiveLabels.clear();
+//        for (Objective objective : selectedObjectives) {
+//            objectiveLabels.add(objective.getEventName());
+//        }
+//        if (selectedDateTitle != null) {
+//            selectedDateTitle.setText(getString(R.string.selected_date_tasks, date));
+//        }
+//    private void refreshObjectives() {
+//        VirtualDatabase db = new VirtualDatabase();
+//        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+//        todayObjectives.clear();
+//        todayObjectives.addAll(controller.getObjectivesForDate(Session.getUserID(), today));
+//        futureObjectives.clear();
+//        futureObjectives.addAll(controller.getObjectivesForFuture(Session.getUserID(), today));
+//        todayAdapter.notifyDataSetChanged();
+//        futureAdapter.notifyDataSetChanged();
+//        if (todayObjectives.isEmpty()){
+//            todayObjText.setVisibility(View.VISIBLE);
+//            todayObjCard.setVisibility(View.GONE);
+//        }
+//        else {
+//            todayObjText.setVisibility(View.GONE);
+//            todayObjCard.setVisibility(View.VISIBLE);
+//        }
+//        if (futureObjectives.isEmpty()){
+//            futureObjText.setVisibility(View.VISIBLE);
+//            futureObjCard.setVisibility(View.GONE);
+//        }
+//        else {
+//            futureObjText.setVisibility(View.GONE);
+//            futureObjCard.setVisibility(View.VISIBLE);
+//        }
+//
+//    }
+//}
 }

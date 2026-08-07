@@ -1,5 +1,16 @@
 package com.example.zone.model;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
+import android.Manifest;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
+
+import androidx.core.app.ActivityCompat;
+
+import com.example.zone.controller.NotificationController;
+import com.example.zone.view.MainView;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -14,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 public final class TimerModel {
 
     private static final int HEART_RATE_SAMPLE_SECONDS = 5;
+    private boolean breakJustFinished;
     private static volatile TimerModel instance;
 
     private final ScheduledExecutorService clock =
@@ -87,13 +99,11 @@ public final class TimerModel {
         if (!running) {
             return;
         }
-
         long now = System.currentTimeMillis();
         int elapsedSeconds = (int) ((now - lastClockUpdate) / 1000L);
         if (elapsedSeconds < 1) {
             return;
         }
-
         lastClockUpdate += elapsedSeconds * 1000L;
         advanceTimer(elapsedSeconds);
     }
@@ -102,7 +112,6 @@ public final class TimerModel {
         if (!running || elapsedSeconds <= 0) {
             return;
         }
-
         int used = Math.min(elapsedSeconds, remainingTime);
         remainingTime -= used;
         sampleSeconds += used;
@@ -118,23 +127,37 @@ public final class TimerModel {
             finishCurrentPeriod();
         }
     }
-
     private void finishCurrentPeriod() {
         running = false;
         cancelClock();
         lastClockUpdate = 0L;
 
         if (!breakTime) {
+            // Study session finished
             finishStudySession(studyDuration);
-        }
+            if (breakEnabled) {
+                switchToBreak();
+            } else {
+                breakTime = false;
+                remainingTime = studyDuration;
+            }
 
-        if (!breakTime && breakEnabled) {
-            switchToBreak();
         } else {
+            breakJustFinished = true;
+
             breakTime = false;
             remainingTime = studyDuration;
         }
     }
+    public  boolean getBreakJustFinished() {
+        return breakJustFinished;
+    }
+    public void setBreakJustFinished(boolean enable) {
+        breakJustFinished = enable;
+    }
+
+
+
 
     private void finishStudySession(int elapsedSeconds) {
         if (session == null) {
@@ -213,7 +236,7 @@ public final class TimerModel {
     public synchronized void startNewStudySession() {
         running = false;
         cancelClock();
-        breakTime = false;
+        breakTime = true;
         remainingTime = studyDuration;
         session = null;
         startTimer();

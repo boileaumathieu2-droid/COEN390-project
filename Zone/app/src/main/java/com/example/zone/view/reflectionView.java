@@ -154,14 +154,12 @@ public class reflectionView extends AppCompatActivity {
                 .setNegativeButton("Stay", null)
                 .show();
     }
-
     private void returnToMain() {
         Intent intent = new Intent(this, MainContainerActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         startActivity(intent);
         finish();
     }
-
     private void returnToMainWithAction(String action) {
         Intent intent = new Intent(this, MainContainerActivity.class);
         intent.putExtra(action, true);
