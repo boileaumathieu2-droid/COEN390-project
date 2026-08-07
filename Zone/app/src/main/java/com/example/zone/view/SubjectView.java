@@ -80,6 +80,7 @@ public class SubjectView extends AppCompatActivity {
           //  controller.deleteSubject(subjectID);
             Intent intent = new Intent(this, GradesTrackerView.class);
             startActivity(intent);
+            finish();
             Toast.makeText(
                     getApplicationContext(),
                     "Subject deleted",
