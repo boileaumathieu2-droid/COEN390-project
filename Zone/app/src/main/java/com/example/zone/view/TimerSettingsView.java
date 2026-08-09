@@ -53,7 +53,11 @@ public class TimerSettingsView extends AppCompatActivity {
         breakTimerSwitch = findViewById(R.id.switch_break_timer);
     }
 
-
+        @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
+    }
 
 
     // View setters called by TimerSettingsController
