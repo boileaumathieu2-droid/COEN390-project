@@ -53,31 +53,8 @@ public class TimerSettingsView extends AppCompatActivity {
         breakTimerSwitch = findViewById(R.id.switch_break_timer);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.action_menu, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem option) {
-        if (option.getItemId() == R.id.action_settings) {
-            Intent intent = new Intent(this, MainContainerActivity.class);
-            intent.putExtra(MainContainerActivity.EXTRA_OPEN_TAB, 3);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-            return true;
-        }
 
-        return super.onOptionsItemSelected(option);
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
-    }
 
     // View setters called by TimerSettingsController
 
