@@ -17,6 +17,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainContainerActivity extends AppCompatActivity {
 
     public static final String EXTRA_OPEN_TAB = "open_tab";
+    public static final String EXTRA_BLOCKED_APP_NAME = "blocked_app_name";
     private static final String STATE_SELECTED_TAB = "selected_tab";
 
     private ViewPager2 viewPager;
@@ -26,6 +27,7 @@ public class MainContainerActivity extends AppCompatActivity {
     private float screenDensity;
     private HeartRateSensorManager sensorManager;
     private boolean wellnessDialogShowing;
+    private boolean blockedAppDialogShowing;
     private final HeartRateSensorManager.WellnessListener wellnessListener =
             this::showWellnessSuggestion;
 
@@ -106,6 +108,8 @@ public class MainContainerActivity extends AppCompatActivity {
                 }
             }
         });
+
+        handleBlockedAppIntent(getIntent());
     }
 
     @Override
@@ -148,6 +152,28 @@ public class MainContainerActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         switchToTab(intent.getIntExtra(EXTRA_OPEN_TAB, viewPager.getCurrentItem()));
+        handleBlockedAppIntent(intent);
+    }
+
+    private void handleBlockedAppIntent(Intent intent) {
+        if (intent == null || blockedAppDialogShowing) {
+            return;
+        }
+        String appName = intent.getStringExtra(EXTRA_BLOCKED_APP_NAME);
+        if (appName == null || appName.trim().isEmpty()) {
+            return;
+        }
+        intent.removeExtra(EXTRA_BLOCKED_APP_NAME);
+        blockedAppDialogShowing = true;
+        switchToTab(1);
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("App blocked during study session")
+                .setMessage(appName + " is restricted until your active study "
+                        + "session ends. Zone has returned you to the study timer.")
+                .setCancelable(false)
+                .setPositiveButton("Stay in Zone", null)
+                .setOnDismissListener(dialog -> blockedAppDialogShowing = false)
+                .show();
     }
 
     @Override
