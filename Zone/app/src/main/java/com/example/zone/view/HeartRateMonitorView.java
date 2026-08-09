@@ -392,6 +392,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
         deviceSignalStrengths.clear();
         blunoCandidateAddresses.clear();
         deviceListAdapter.notifyDataSetChanged();
+        addPairedDevices();
         emptyDeviceText.setText(R.string.scanning_for_nearby_devices);
         emptyDeviceText.setVisibility(
                 discoveredDevices.isEmpty() ? View.VISIBLE : View.GONE
@@ -454,7 +455,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
 
     @SuppressLint("MissingPermission")
     private void addClassicDevice(BluetoothDevice device, String source) {
-        if (!hasRequiredPermissions() || device == null || isPreviouslyPaired(device)) {
+        if (!hasRequiredPermissions() || device == null) {
             return;
         }
         String address = device.getAddress();
@@ -482,6 +483,20 @@ public class HeartRateMonitorView extends AppCompatActivity {
         deviceLabels.add(insertAt, label);
         deviceListAdapter.notifyDataSetChanged();
         emptyDeviceText.setVisibility(View.GONE);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void addPairedDevices() {
+        if (bluetoothAdapter == null || !hasRequiredPermissions()) {
+            return;
+        }
+        try {
+            for (BluetoothDevice device : bluetoothAdapter.getBondedDevices()) {
+                addClassicDevice(device, getString(R.string.paired_device_source));
+            }
+        } catch (SecurityException ignored) {
+            // Bluetooth permission can be revoked while this screen is open.
+        }
     }
 
     private void registerBluetoothDiscoveryReceiver() {
@@ -515,9 +530,6 @@ public class HeartRateMonitorView extends AppCompatActivity {
         }
 
         BluetoothDevice device = result.getDevice();
-        if (isPreviouslyPaired(device)) {
-            return;
-        }
         String address = device.getAddress();
         String reportedName = device.getName();
         if ((reportedName == null || reportedName.trim().isEmpty())
@@ -598,18 +610,6 @@ public class HeartRateMonitorView extends AppCompatActivity {
         });
     }
 
-    @SuppressLint("MissingPermission")
-    private boolean isPreviouslyPaired(BluetoothDevice device) {
-        if (device == null || !hasRequiredPermissions()) {
-            return false;
-        }
-        try {
-            return device.getBondState() == BluetoothDevice.BOND_BONDED;
-        } catch (SecurityException ignored) {
-            return false;
-        }
-    }
-
     private void showWellnessSuggestion(String message) {
         if (isFinishing() || isDestroyed()) {
             return;
@@ -667,12 +667,7 @@ public class HeartRateMonitorView extends AppCompatActivity {
             );
         } else {
             bpmText.setText(String.valueOf(stableReading.getBpm()));
-            if (stableReading.isHeldReading()) {
-                signalStatusText.setText(R.string.heart_rate_holding);
-                setHeartRateColour(R.color.zone_caution);
-            } else {
-                showHeartRateRange(stableReading.getBpm());
-            }
+            showHeartRateRange(stableReading.getBpm());
         }
     }
 

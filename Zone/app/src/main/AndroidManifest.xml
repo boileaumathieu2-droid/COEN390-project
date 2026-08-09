@@ -7,6 +7,7 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- BLE permissions for the Bluno Nano. Android 12+ uses the Bluetooth
@@ -55,6 +56,14 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/blocked_apps"/>
         </service>
+        <receiver
+            android:name=".controller.StudyReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="com.example.zone.action.DAILY_STUDY_REMINDER" />
+            </intent-filter>
+        </receiver>
         <service
             android:name=".controller.RestrictedNotificationListener"
             android:exported="true"

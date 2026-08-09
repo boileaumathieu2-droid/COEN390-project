@@ -28,6 +28,7 @@ import com.example.zone.controller.HeartRateSensorManager;
 import com.example.zone.controller.MainController;
 import com.example.zone.controller.NotificationController;
 import com.example.zone.controller.ObjectiveController;
+import com.example.zone.controller.RestrictedNotificationListener;
 import com.example.zone.model.BlockedAppsStore;
 import com.example.zone.model.Database;
 import com.example.zone.model.MainViewObjectiveAdapter;
@@ -208,13 +209,41 @@ public class MainView extends Fragment {
     }
     private void startStudyOrBreak() {
         if (!timer.isBreakTime()) {
-            BlockedAppsStore.requestPermissionIfNeeded(requireActivity());
+            if (requestRestrictionSetupIfNeeded()) {
+                return;
+            }
         }
         timer.startTimer();
         if (!timer.isBreakTime() && hasDndAccess()) {
             manageDnD(true);
         }
         updateTimerUi();
+    }
+
+    private boolean requestRestrictionSetupIfNeeded() {
+        if (!BlockedAppsStore.hasBlockedPackages(requireContext())) {
+            return false;
+        }
+        if (!BlockedAppsStore.isNotificationAccessEnabled(requireContext())) {
+            BlockedAppsStore.requestNotificationAccess(requireActivity());
+            Toast.makeText(
+                    requireContext(),
+                    R.string.enable_restriction_access_before_study,
+                    Toast.LENGTH_LONG
+            ).show();
+            return true;
+        }
+        if (!BlockedAppsStore.isAccessibilityEnabled(requireContext())) {
+            BlockedAppsStore.requestPermission(requireActivity());
+            Toast.makeText(
+                    requireContext(),
+                    R.string.enable_restriction_access_before_study,
+                    Toast.LENGTH_LONG
+            ).show();
+            return true;
+        }
+        RestrictedNotificationListener.requestReconnect(requireContext());
+        return false;
     }
     private void pauseOrResume() {
         if (timer.isRunning()) {

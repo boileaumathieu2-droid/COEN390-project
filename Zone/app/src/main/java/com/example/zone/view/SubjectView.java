@@ -16,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
 import com.example.zone.controller.SubjectController;
-import com.example.zone.model.Database;
 import com.example.zone.model.GradeAdapter;
 import com.example.zone.model.VirtualDatabase;
 
@@ -24,21 +23,25 @@ import java.util.ArrayList;
 
 public class SubjectView extends AppCompatActivity {
 
-    private SubjectController controller;
     private String subjectName;
     private String subjectID;
     private ListView gradesList;
     private TextView noGrades;
     private ArrayList<String> subjectGrades;
+    private ArrayList<VirtualDatabase.GradeRecord> gradeRecords;
 
     private GradeAdapter adapter;
 
     private void refresh() {
         VirtualDatabase db = new VirtualDatabase();
 
-        db.getGrades(grades -> {
+        db.getGradeRecords(records -> {
+            gradeRecords.clear();
+            gradeRecords.addAll(records);
             subjectGrades.clear();
-            subjectGrades.addAll(grades);
+            for (VirtualDatabase.GradeRecord record : records) {
+                subjectGrades.add(record.getGrade());
+            }
 
             adapter.notifyDataSetChanged();
 
@@ -100,8 +103,6 @@ public class SubjectView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.subject_page);
-        controller = new SubjectController(new Database(this));
-
         subjectName = getIntent().getStringExtra("subjectName");
         subjectID = getIntent().getStringExtra("subjectID");
         Button newGrade = findViewById(R.id.newGradeButton);
@@ -109,6 +110,7 @@ public class SubjectView extends AppCompatActivity {
         noGrades = findViewById(R.id.noGradesTextView);
         VirtualDatabase db = new VirtualDatabase();
         subjectGrades = new ArrayList<>();
+        gradeRecords = new ArrayList<>();
 
 
         adapter = new GradeAdapter(
@@ -116,45 +118,108 @@ public class SubjectView extends AppCompatActivity {
                 subjectGrades
         );
         gradesList.setAdapter(adapter);
+        gradesList.setOnItemClickListener((parent, view, position, id) -> {
+            if (position >= 0 && position < gradeRecords.size()) {
+                showGradeActions(gradeRecords.get(position));
+            }
+        });
         refresh();
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(subjectName);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-        newGrade.setOnClickListener(view -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(SubjectView.this);
-            View popupView = getLayoutInflater().inflate(R.layout.add_grade_popup, null);
-            builder.setView(popupView);
-            AlertDialog dialog = builder.create();
-            Button cancel = popupView.findViewById(R.id.buttonCancel);
-            Button save = popupView.findViewById(R.id.buttonSave);
-            EditText userGrade = popupView.findViewById(R.id.gradeEditText);
-            cancel.setOnClickListener(x -> dialog.dismiss());
-            save.setOnClickListener(View -> {
-                String grade = userGrade.getText().toString().trim();
-                if (grade.isEmpty()) {
-                    userGrade.setError("Enter a grade");
-                    return;
-                }
-                if (!SubjectController.isGradeInRange(grade)) {
-                    userGrade.setError("Grade must be a number from 0 to 100");
-                    return;
-                }
-                db.saveGrade("", grade, subjectID, success -> {
-                    if (success) {
-                        refresh();
-                        dialog.dismiss();
+        newGrade.setOnClickListener(view -> showGradeEditor(null));
+    }
+
+    private void showGradeActions(VirtualDatabase.GradeRecord record) {
+        new AlertDialog.Builder(this)
+                .setTitle(record.getGrade() + "%")
+                .setItems(new String[]{"Edit grade", "Delete grade"}, (dialog, which) -> {
+                    if (which == 0) {
+                        showGradeEditor(record);
                     } else {
-                        Toast.makeText(
-                                SubjectView.this,
-                                "Grade could not be saved",
-                                Toast.LENGTH_SHORT
-                        ).show();
+                        confirmDeleteGrade(record);
                     }
-                });
-            });
-            dialog.show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showGradeEditor(VirtualDatabase.GradeRecord existingGrade) {
+        View popupView = getLayoutInflater().inflate(R.layout.add_grade_popup, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(existingGrade == null ? "Add grade" : "Edit grade")
+                .setView(popupView)
+                .create();
+        Button cancel = popupView.findViewById(R.id.buttonCancel);
+        Button save = popupView.findViewById(R.id.buttonSave);
+        EditText userGrade = popupView.findViewById(R.id.gradeEditText);
+        if (existingGrade != null) {
+            userGrade.setText(existingGrade.getGrade());
+            userGrade.setSelection(userGrade.length());
+        }
+        cancel.setOnClickListener(view -> dialog.dismiss());
+        save.setOnClickListener(view -> {
+            String normalizedGrade = SubjectController.normalizeGrade(
+                    userGrade.getText().toString()
+            );
+            if (normalizedGrade == null) {
+                userGrade.setError("Grade must be a number from 0 to 100");
+                return;
+            }
+
+            VirtualDatabase database = new VirtualDatabase();
+            if (existingGrade == null) {
+                database.saveGrade("", normalizedGrade, subjectID, success ->
+                        finishGradeChange(success, dialog, "Grade could not be saved"));
+            } else {
+                database.editGrade(
+                        success -> finishGradeChange(
+                                success,
+                                dialog,
+                                "Grade could not be updated"
+                        ),
+                        subjectID,
+                        existingGrade.getId(),
+                        normalizedGrade,
+                        existingGrade.getType()
+                );
+            }
         });
+        dialog.show();
+    }
+
+    private void confirmDeleteGrade(VirtualDatabase.GradeRecord record) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete this grade?")
+                .setMessage(record.getGrade() + "% will be permanently deleted.")
+                .setPositiveButton("Delete", (dialog, which) ->
+                        new VirtualDatabase().deleteGrade(
+                                subjectID,
+                                record.getId(),
+                                success -> finishGradeChange(
+                                        success,
+                                        null,
+                                        "Grade could not be deleted"
+                                )
+                        ))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void finishGradeChange(
+            boolean success,
+            AlertDialog dialog,
+            String errorMessage
+    ) {
+        if (success) {
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+            refresh();
+        } else {
+            Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

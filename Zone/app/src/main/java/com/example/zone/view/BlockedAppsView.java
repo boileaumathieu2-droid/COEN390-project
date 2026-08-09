@@ -13,10 +13,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.zone.R;
+import com.example.zone.controller.RestrictedNotificationListener;
 import com.example.zone.model.BlockedAppsStore;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -32,6 +34,7 @@ public class BlockedAppsView extends AppCompatActivity {
     private AppsAdapter adapter;
     private Button appBlockingPermissionButton;
     private Button notificationBlockingPermissionButton;
+    private boolean permissionSetupPending;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +67,27 @@ public class BlockedAppsView extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         updatePermissionButtons();
+        if (BlockedAppsStore.isNotificationAccessEnabled(this)) {
+            RestrictedNotificationListener.requestReconnect(this);
+        }
+        if (permissionSetupPending) {
+            findViewById(android.R.id.content).post(this::requestNextRequiredPermission);
+        }
+    }
+
+    private void requestNextRequiredPermission() {
+        if (!BlockedAppsStore.isNotificationAccessEnabled(this)) {
+            BlockedAppsStore.requestNotificationAccess(this);
+            return;
+        }
+        RestrictedNotificationListener.requestReconnect(this);
+        if (!BlockedAppsStore.isAccessibilityEnabled(this)) {
+            BlockedAppsStore.requestPermission(this);
+            return;
+        }
+        permissionSetupPending = false;
+        updatePermissionButtons();
+        Toast.makeText(this, R.string.app_restriction_ready, Toast.LENGTH_SHORT).show();
     }
 
     private void updatePermissionButtons() {
@@ -156,7 +180,8 @@ public class BlockedAppsView extends AppCompatActivity {
                         checked
                 );
                 if (checked) {
-                    BlockedAppsStore.requestPermissionIfNeeded(BlockedAppsView.this);
+                    permissionSetupPending = true;
+                    requestNextRequiredPermission();
                 }
             });
             SwitchMaterial rowToggle = holder.toggle;

@@ -1,17 +1,9 @@
 package com.example.zone.model;
 
-import static androidx.core.content.ContentProviderCompat.requireContext;
-
-import android.Manifest;
-import android.app.NotificationManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
-
-import androidx.core.app.ActivityCompat;
 
 import com.example.zone.controller.NotificationController;
 import com.example.zone.controller.RestrictedNotificationListener;
-import com.example.zone.view.MainView;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -155,6 +147,10 @@ public final class TimerModel {
 
         } else {
             breakJustFinished = true;
+            sendBreakNotification(
+                    "Break complete",
+                    "Your break is finished. You can begin another study session."
+            );
 
             breakTime = false;
             remainingTime = studyDuration;
@@ -181,6 +177,13 @@ public final class TimerModel {
         lastCompletedSession = session;
         reflectionPending = true;
         session = null;
+        if (applicationContext != null
+                && NotificationPreferences.sessionCompleteEnabled(applicationContext)) {
+            new NotificationController(applicationContext).sendNotifications(
+                    "Study session complete",
+                    "Nice work. Your completed session is ready for reflection."
+            );
+        }
     }
 
     private void switchToBreak() {
@@ -188,6 +191,10 @@ public final class TimerModel {
         syncAppBlockingState();
         remainingTime = breakDuration;
         sampleSeconds = 0;
+        sendBreakNotification(
+                "Break started",
+                "Take a moment to rest. Zone will let you know when the break ends."
+        );
     }
 
     public synchronized void completeSession() {
@@ -204,8 +211,21 @@ public final class TimerModel {
         if (!breakTime && breakEnabled) {
             switchToBreak();
         } else {
+            if (breakTime) {
+                sendBreakNotification(
+                        "Break complete",
+                        "Your break is finished. You can begin another study session."
+                );
+            }
             breakTime = false;
             remainingTime = studyDuration;
+        }
+    }
+
+    private void sendBreakNotification(String title, String message) {
+        if (applicationContext != null
+                && NotificationPreferences.breakRemindersEnabled(applicationContext)) {
+            new NotificationController(applicationContext).sendNotifications(title, message);
         }
     }
 

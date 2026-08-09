@@ -110,10 +110,7 @@ public class AnalyticsView extends Fragment {
         int currentBpm = (stableReading != null && stableReading.hasGoodSignal()) ? stableReading.getBpm() : 0;
         
         if (currentValue != null) currentValue.setText(valueOrDash(currentBpm));
-        applyHeartRateColour(
-                currentBpm,
-                stableReading != null && stableReading.isHeldReading()
-        );
+        applyHeartRateColour(currentBpm);
 
         controller.getSessionData(session -> {
             if (session == null) {
@@ -144,15 +141,8 @@ public class AnalyticsView extends Fragment {
         return value > 0 ? String.valueOf(value) : "--";
     }
 
-    private void applyHeartRateColour(int bpm, boolean heldReading) {
+    private void applyHeartRateColour(int bpm) {
         if (currentValue == null || currentStatus == null || getContext() == null) {
-            return;
-        }
-        if (heldReading && bpm > 0) {
-            int colour = ContextCompat.getColor(requireContext(), R.color.zone_caution);
-            currentValue.setTextColor(colour);
-            currentStatus.setTextColor(colour);
-            currentStatus.setText(R.string.heart_rate_holding);
             return;
         }
         HeartRateRange.Level level = HeartRateRange.classify(bpm);

@@ -33,7 +33,7 @@
                 android:background="#F0F0F0"
                 android:checked="true"
                 android:paddingVertical="12dp"
-                android:text="Study reminders"
+                android:text="Daily study reminder (7:00 PM)"
                 android:textSize="16sp"
                 app:thumbTint="@color/switch_color_thumb"
                 app:trackTint="@color/switch_color_track"

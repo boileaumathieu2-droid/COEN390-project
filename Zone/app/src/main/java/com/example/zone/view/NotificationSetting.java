@@ -3,7 +3,6 @@ package com.example.zone.view;
 import android.Manifest;
 import android.app.NotificationManager;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,12 +15,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.zone.R;
+import com.example.zone.controller.StudyReminderScheduler;
+import com.example.zone.model.NotificationPreferences;
 
 public class NotificationSetting extends AppCompatActivity {
 
     private static final int NOTIFICATION_PERMISSION_REQUEST = 101;
-    private SharedPreferences preferences;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,35 +31,49 @@ public class NotificationSetting extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        preferences = getSharedPreferences("settings", MODE_PRIVATE);
         SwitchCompat reminders = findViewById(R.id.switchStudyReminders);
         SwitchCompat complete = findViewById(R.id.switchSessionComplete);
         SwitchCompat breaks = findViewById(R.id.switchBreakReminders);
         SwitchCompat mute = findViewById(R.id.switchMuteDuringStudy);
 
-        reminders.setChecked(preferences.getBoolean("Notifications", false));
-        complete.setChecked(preferences.getBoolean("temporary", false));
-        breaks.setChecked(preferences.getBoolean("alsoTemp", false));
-        mute.setChecked(preferences.getBoolean("Mute", false));
+        reminders.setChecked(NotificationPreferences.studyRemindersEnabled(this));
+        complete.setChecked(NotificationPreferences.sessionCompleteEnabled(this));
+        breaks.setChecked(NotificationPreferences.breakRemindersEnabled(this));
+        mute.setChecked(NotificationPreferences.muteDuringStudyEnabled(this));
 
         reminders.setOnCheckedChangeListener((button, checked) -> {
-            preferences.edit().putBoolean("Notifications", checked).apply();
+            NotificationPreferences.setStudyRemindersEnabled(this, checked);
+            if (checked) {
+                requestNotificationPermissionIfNeeded();
+                StudyReminderScheduler.schedule(this);
+            } else {
+                StudyReminderScheduler.cancel(this);
+            }
+        });
+        complete.setOnCheckedChangeListener((button, checked) -> {
+            NotificationPreferences.setSessionCompleteEnabled(this, checked);
             if (checked) {
                 requestNotificationPermissionIfNeeded();
             }
         });
-        complete.setOnCheckedChangeListener((button, checked) ->
-                preferences.edit().putBoolean("temporary", checked).apply());
-        breaks.setOnCheckedChangeListener((button, checked) ->
-                preferences.edit().putBoolean("alsoTemp", checked).apply());
+        breaks.setOnCheckedChangeListener((button, checked) -> {
+            NotificationPreferences.setBreakRemindersEnabled(this, checked);
+            if (checked) {
+                requestNotificationPermissionIfNeeded();
+            }
+        });
         mute.setOnCheckedChangeListener((button, checked) -> {
-            preferences.edit().putBoolean("Mute", checked).apply();
+            NotificationPreferences.setMuteDuringStudyEnabled(this, checked);
             if (checked) {
                 requestDndAccessIfNeeded();
             }
         });
 
         if (reminders.isChecked()) {
+            requestNotificationPermissionIfNeeded();
+            StudyReminderScheduler.schedule(this);
+        }
+        if (complete.isChecked() || breaks.isChecked()) {
             requestNotificationPermissionIfNeeded();
         }
         if (mute.isChecked()) {

@@ -580,21 +580,77 @@ public class VirtualDatabase {
 
 
     public void deleteGrade(String subjectId, String gradeId) {
+        deleteGrade(subjectId, gradeId, success -> { });
+    }
+
+    public void deleteGrade(
+            String subjectId,
+            String gradeId,
+            AuthCallback callback
+    ) {
         String userId = getCurrentUserId();
+        if (userId == null || subjectId == null || gradeId == null) {
+            callback.onResult(false);
+            return;
+        }
         db.collection("users")
                 .document(userId)
-                .collection("subjects")
+                .collection("Subjects")
                 .document(subjectId)
-                .collection("grades")
+                .collection("Grades")
                 .document(gradeId)
-                .delete();
+                .delete()
+                .addOnSuccessListener(unused -> callback.onResult(true))
+                .addOnFailureListener(error -> callback.onResult(false));
     }
     public interface GradesCallback {
         void onComplete(ArrayList<String> Grades);
     }
 
     public void getGrades(GradesCallback callback, String subjectId) {
+        getGradeRecords(records -> {
+            ArrayList<String> grades = new ArrayList<>();
+            for (GradeRecord record : records) {
+                grades.add(record.getGrade());
+            }
+            callback.onComplete(grades);
+        }, subjectId);
+    }
+
+    public static final class GradeRecord {
+        private final String id;
+        private final String grade;
+        private final String type;
+
+        public GradeRecord(String id, String grade, String type) {
+            this.id = id;
+            this.grade = grade;
+            this.type = type;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getGrade() {
+            return grade;
+        }
+
+        public String getType() {
+            return type;
+        }
+    }
+
+    public interface GradeRecordsCallback {
+        void onComplete(ArrayList<GradeRecord> records);
+    }
+
+    public void getGradeRecords(GradeRecordsCallback callback, String subjectId) {
         String userId = getCurrentUserId();
+        if (userId == null || subjectId == null) {
+            callback.onComplete(new ArrayList<>());
+            return;
+        }
         db.collection("users")
                 .document(userId)
                 .collection("Subjects")
@@ -602,22 +658,46 @@ public class VirtualDatabase {
                 .collection("Grades")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    ArrayList<String> Grades = new ArrayList<>();
+                    ArrayList<GradeRecord> records = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
                         String grade = document.getString("grade");
-                        Grades.add(grade);
+                        if (grade == null && document.get("grade") != null) {
+                            grade = String.valueOf(document.get("grade"));
+                        }
+                        if (grade != null) {
+                            records.add(new GradeRecord(
+                                    document.getId(),
+                                    grade,
+                                    document.getString("type")
+                            ));
+                        }
                     }
-                    callback.onComplete(Grades);
-                });
+                    callback.onComplete(records);
+                })
+                .addOnFailureListener(error -> callback.onComplete(new ArrayList<>()));
     }
     public interface GradeEditCallback {
         void onComplete(boolean success);
     }
     public void editGrade(GradeEditCallback callback, String subjectId, String gradeId, int grade, String type) {
+        editGrade(callback, subjectId, gradeId, String.valueOf(grade), type);
+    }
+
+    public void editGrade(
+            GradeEditCallback callback,
+            String subjectId,
+            String gradeId,
+            String grade,
+            String type
+    ) {
         String userId = getCurrentUserId();
+        if (userId == null || subjectId == null || gradeId == null) {
+            callback.onComplete(false);
+            return;
+        }
         Map<String, Object> updates = new HashMap<>();
         updates.put("grade", grade);
-        updates.put("type", type);
+        updates.put("type", type == null ? "" : type);
         db.collection("users")
                 .document(userId)
                 .collection("Subjects")

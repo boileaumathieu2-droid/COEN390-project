@@ -1,5 +1,8 @@
 package com.example.zone.controller;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.os.Build;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 
@@ -67,5 +70,16 @@ public class RestrictedNotificationListener extends NotificationListenerService 
         if (listener != null) {
             listener.cancelBlockedNotifications();
         }
+    }
+
+    /** Reconnects the listener after Notification access is granted. */
+    public static void requestReconnect(Context context) {
+        if (context == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            return;
+        }
+        NotificationListenerService.requestRebind(new ComponentName(
+                context,
+                RestrictedNotificationListener.class
+        ));
     }
 }
