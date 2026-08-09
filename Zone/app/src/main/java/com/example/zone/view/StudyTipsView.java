@@ -28,23 +28,6 @@ public class StudyTipsView extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.action_menu, menu);
-        return true;
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem option) {
-        if (option.getItemId() == R.id.action_settings) {
-            Intent intent = new Intent(this, MainContainerActivity.class);
-            intent.putExtra(MainContainerActivity.EXTRA_OPEN_TAB, 3);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(option);
-    }
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.study_tips_activity);
