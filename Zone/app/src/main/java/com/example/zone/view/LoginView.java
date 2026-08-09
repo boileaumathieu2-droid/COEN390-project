@@ -1,5 +1,7 @@
 package com.example.zone.view;
 
+import static com.example.zone.model.VirtualDatabase.isInternetAvailable;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
@@ -45,6 +47,10 @@ public class LoginView extends AppCompatActivity {
         TextView Register_now = findViewById(R.id.registerButton);
         controller = new Login(new Database(this));
         loginButton.setOnClickListener(v -> {
+            if(!isInternetAvailable(this)) {
+                Toast.makeText(this, "internet required for first time login", Toast.LENGTH_SHORT).show();
+                return;
+            }
             String userStr = username.getText().toString()
                     .trim()
                     .toLowerCase(Locale.ROOT);

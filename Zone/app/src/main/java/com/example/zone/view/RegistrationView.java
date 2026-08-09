@@ -1,4 +1,6 @@
 package com.example.zone.view;
+import static com.example.zone.model.VirtualDatabase.isInternetAvailable;
+
 import com.example.zone.controller.Registration;
 import android.content.Intent;
 import android.os.Bundle;
@@ -31,6 +33,10 @@ public class RegistrationView extends AppCompatActivity {
         TextView login = findViewById(R.id.alreadyHaveAccountButton);
         controller = new Registration(new Database(this));
         register.setOnClickListener(v -> {
+            if(!isInternetAvailable(this)) {
+                Toast.makeText(this, "internet required for registration", Toast.LENGTH_SHORT).show();
+                return;
+            }
             VirtualDatabase db = new VirtualDatabase();
             String Username = username.getText().toString()
                     .trim()
